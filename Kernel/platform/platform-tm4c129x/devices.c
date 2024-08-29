@@ -4,6 +4,7 @@
 #include <devsd.h>
 #include <blkdev.h>
 #include <tty.h>
+#include "lcd.h"
 #ifdef CONFIG_NET
 #include <netdev.h>
 #include "eth.h"
@@ -23,6 +24,8 @@ struct devsw dev_tab[] =  /* The device driver switch table */
   {  no_open,       no_close,   no_rdwr,        no_rdwr,        no_ioctl  },
   /* 4: /dev/mem etc - System devices (one offs) */
   {  no_open,       no_close,   sys_read,       sys_write,      sys_ioctl },
+  /* 5: /dev/lcd - On-chip LCD controller */
+  {  lcd_open,     lcd_close,   lcd_read,       lcd_write,      lcd_ioctl },
 #ifdef CONFIG_NET
   /* Pack to 8 with nxio if adding private devices and start at 9 */
   {  nxio_open,     no_close,   no_rdwr,        no_rdwr,        no_ioctl },
@@ -44,6 +47,7 @@ bool validdev(uint16_t dev)
 
 void device_init(void)
 {
+  lcddev_init();
 #ifdef CONFIG_SD
   devsd_init();
 #endif

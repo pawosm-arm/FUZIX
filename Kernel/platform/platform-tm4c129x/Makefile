@@ -1,5 +1,5 @@
 CSRCS = libc.c tm4c129x.c devtty.c devsdspi.c devices.c systick.c \
-        syscall.c ssi.c procman.c eth.c gpio.c interrupt.c clock.c
+        syscall.c ssi.c procman.c lcd.c eth.c gpio.c interrupt.c clock.c
 
 ASRCS = tricks.S arm_exception.S
 
