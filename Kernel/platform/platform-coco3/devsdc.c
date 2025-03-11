@@ -16,15 +16,26 @@
 #include <printf.h>
 
 
-#define SDC_REG_BASE 0xff40
-#define SDC_REG_CTL (SDC_REG_BASE+0x00 )
-#define SDC_REG_DATA (SDC_REG_BASE+0x02 )
-#define SDC_REG_FCTL (SDC_REG_BASE+0x03 )
-#define SDC_REG_CMD  (SDC_REG_BASE+0x08 )
-#define SDC_REG_STAT (SDC_REG_BASE+0x08 )
-#define SDC_REG_PARAM1 (SDC_REG_BASE+0x09 )
-#define SDC_REG_PARAM2 (SDC_REG_BASE+0x0a )
-#define SDC_REG_PARAM3 (SDC_REG_BASE+0x0b )
+#ifdef CONFIG_SDC_DRAGONDOS
+/* CoCoSDC/DragonDOS register layout */
+# define SDC_REG_BASE 0xff48
+# define SDC_CMD_BASE 0xff40
+# define SDC_LBA_MODE 0x0b
+#else
+/* CoCoSDC/RSDOS register layout */
+# define SDC_REG_BASE 0xff40
+# define SDC_CMD_BASE 0xff48
+# define SDC_LBA_MODE 0x43
+#endif
+
+#define SDC_REG_CTL    (SDC_REG_BASE+0)
+#define SDC_REG_DATA   (SDC_REG_BASE+2)
+#define SDC_REG_FCTL   (SDC_REG_BASE+3)
+#define SDC_REG_CMD    (SDC_CMD_BASE+0)
+#define SDC_REG_STAT   (SDC_CMD_BASE+0)
+#define SDC_REG_PARAM1 (SDC_CMD_BASE+1)
+#define SDC_REG_PARAM2 (SDC_CMD_BASE+2)
+#define SDC_REG_PARAM3 (SDC_CMD_BASE+3)
 
 #define SDC_BUSY  0x01
 #define SDC_READY 0x02
@@ -55,7 +66,7 @@ static int sdc_xfer(uint8_t dev, bool is_read, uint32_t lba, uint8_t * dptr)
 	sdc_transfer_function_t fptr;	/* holds which xfer routine we want */
 
 	/* turn on uber-secret SDC LBA mode */
-	sdc_reg_ctl = 0x43;
+	sdc_reg_ctl = SDC_LBA_MODE;
 
 	/* we get 256 bytes per lba in SDC so convert */
 	lba *= 2;
