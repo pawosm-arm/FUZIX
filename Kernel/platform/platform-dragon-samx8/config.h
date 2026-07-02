@@ -81,7 +81,7 @@
 
 #define SWAPBASE    0x0000      /* We swap the lot, including stashed uarea */
 #define SWAPTOP     0xf200      /* so it's a round number of 256 byte sectors */
-#define SWAP_SIZE   0x79        /* 56K in 512 byte blocks + udata */
+#define SWAP_SIZE   0x79        /* 60K in 512 byte blocks + udata */
 #define MAX_SWAPS   32
 
 /*** Video ***/
