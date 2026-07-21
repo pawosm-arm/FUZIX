@@ -60,4 +60,6 @@ void device_init(void)
 {
     // Register drive with tinydisk
     td_register(0, nz80_sd_xfer, td_ioctl_none, 1);
+    td_register(1, nz80_sd_xfer, td_ioctl_none, 1);
+
 }

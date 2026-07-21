@@ -24,7 +24,7 @@
 
 
 /* Tinydisk */
-#define CONFIG_TD_NUM 1
+#define CONFIG_TD_NUM 2
 
 
 /*
