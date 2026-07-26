@@ -36,8 +36,8 @@
 static struct termios termsave;
 static struct termios termcur;
 static int ttyfd = -1;
-static uint_fast8_t xmodem_buffer[128];
-static uint_fast8_t disp = 0;
+static uint8_t xmodem_buffer[128];
+static uint8_t disp = 0;
 FILE *receive_fp;
 
 static int baud[] = {
@@ -94,13 +94,13 @@ static void restore(int fd)
 }
 
 static int xmodem_receive(void) {
-    uint_fast8_t block_cnt;
-    uint_fast8_t block_exp = 1;
-    uint_fast8_t pos = 0;
-    uint_fast8_t inp;
-    uint_fast8_t outp;
-    uint_fast8_t checksum;
-    uint_fast8_t outt;
+    uint8_t block_cnt;
+    uint8_t block_exp = 1;
+    uint8_t pos = 0;
+    uint8_t inp;
+    uint8_t outp;
+    uint8_t checksum;
+    uint8_t outt;
 
     outt='W';
 
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     int opt;
     int flags;
     int fd;
-    uint_fast8_t overwrite = 0;
+    uint8_t overwrite = 0;
     speed_t speedval = 0;
 
     while((opt = getopt(argc, argv, "t:b:f")) != -1) {

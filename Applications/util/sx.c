@@ -37,8 +37,8 @@
 static struct termios termsave;
 static struct termios termcur;
 static int ttyfd = -1;
-static uint_fast8_t xmodem_buffer[128];
-static uint_fast8_t disp=0;
+static uint8_t xmodem_buffer[128];
+static uint8_t disp=0;
 FILE *send_fp;
 
 static int baud[] = {
@@ -94,11 +94,11 @@ static void restore(int fd)
     }
 }
 
-static void xmodem_send_block(uint_fast8_t block_cnt)
+static void xmodem_send_block(uint8_t block_cnt)
 {
-    uint_fast8_t i;
-    uint_fast8_t checksum;
-    uint_fast8_t data;
+    uint8_t i;
+    uint8_t checksum;
+    uint8_t data;
 
     /* Send header */
     if(disp) fputc('T',stderr);
@@ -123,7 +123,7 @@ static void xmodem_send_block(uint_fast8_t block_cnt)
 
 static int fill_buffer(void) {
     int bytecnt;
-    uint_fast8_t i;
+    uint8_t i;
 
     bytecnt = fread(&xmodem_buffer, sizeof(uint8_t), 128, send_fp);
     /* If bytecnt < 128, pad with CP/M EOFs */
@@ -135,12 +135,12 @@ static int fill_buffer(void) {
 }
 
 static int xmodem_send(void) {
-    uint_fast8_t block_cnt = 1;
-    uint_fast8_t pos = 0;
-    uint_fast8_t inp;
-    uint_fast8_t outp;
-    uint_fast8_t nak_cnt = 0;
-    uint_fast8_t last_ack = 0;
+    uint8_t block_cnt = 1;
+    uint8_t pos = 0;
+    uint8_t inp;
+    uint8_t outp;
+    uint8_t nak_cnt = 0;
+    uint8_t last_ack = 0;
     int bytecnt;
     ssize_t n;
 
