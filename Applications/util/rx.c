@@ -97,7 +97,7 @@ static int xmodem_receive(void) {
     uint8_t block_cnt;
     uint8_t block_exp = 1;
     uint8_t pos = 0;
-    uint_fast8_t inp;
+    uint8_t inp;
     uint8_t outp;
     uint8_t checksum;
     uint8_t outt;
