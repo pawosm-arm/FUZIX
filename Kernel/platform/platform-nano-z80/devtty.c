@@ -19,7 +19,10 @@
 #define vid_tty_act_buf 0x30
 #define vid_tty_vis_buf 0x31
 #define vid_tty_cls     0x09
+#define vid_tty_ink     0x16
+#define vid_tty_paper   0x17
 #define io_page_vid     0x04
+
 
 /* USB keyboard ports */
 #define keyb_data_avail 0x74
@@ -272,6 +275,24 @@ void read_uart_b(void)
     }
 }
 
+void nz80_tty_set_color(uint8_t tty, uint8_t request, uint8_t col)
+{
+    out(io_page_reg, io_page_vid);
+    out(vid_tty_act_buf, tty-1);
+    change_vt(tty - 1);
+
+    switch(request) {
+        case VTINK:
+            out(vid_tty_ink, col);
+            break;
+        case VTPAPER:
+            out(vid_tty_paper, col);
+            break;
+        default:
+            break;
+    }
+}
+
 int nz80_tty_ioctl(uint_fast8_t minor, uarg_t request, char *data)
 {
     uint8_t dev = minor;
@@ -280,11 +301,20 @@ int nz80_tty_ioctl(uint_fast8_t minor, uarg_t request, char *data)
     if(minor >= TTY_SERA)
         return tty_ioctl(minor, request, data);
 
-    // Otherwise VT - only support reporting size for now
-    if(request == VTSIZE)
-        return (30 << 8) | 80;
-
-    // Use built in for other requests for now 
+    // Otherwise VT
+    switch(request) {
+        case VTSIZE:
+            return (30 << 8) | 80;
+            break;
+        case VTINK:
+        case VTPAPER:
+            nz80_tty_set_color(udata.u_ptab->p_tty, request, ugetc(data));
+            return 0;
+            break;
+        default:
+            break;
+    }
+    // Use built in for other requests
     return vt_ioctl(minor, request, data);
 }
 
