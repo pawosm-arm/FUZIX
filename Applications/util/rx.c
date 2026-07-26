@@ -97,7 +97,7 @@ static int xmodem_receive(void) {
     uint8_t block_cnt;
     uint8_t block_exp = 1;
     uint8_t pos = 0;
-    uint8_t inp;
+    uint_fast8_t inp;
     uint8_t outp;
     uint8_t checksum;
     uint8_t outt;
@@ -107,6 +107,7 @@ static int xmodem_receive(void) {
     outt='W';
 
     outp = NAK;
+
     while(1) {
         write(ttyfd, &outp, 1);
         read(ttyfd, &inp, 1);
@@ -156,8 +157,8 @@ static int xmodem_receive(void) {
                     block_exp++;
                 }
             }
-        } else if(inp!=0 && !disp)  {
-            /* Unexpected character - assume user input and abort */
+        } else if(inp == 0x03 && !disp)  {
+            /* Unexpected ctrl+c - assume user input and abort */
             return -1;
         }
         /* Progress indicator if STDIN is not used */
@@ -268,7 +269,7 @@ int main(int argc, char *argv[])
 
     fputs("Waiting for sender to initiate X-modem transfer\n",stderr);
     if(ttyfd == STDIN_FILENO)
-        fputs("Press any key to cancel\n",stderr);
+        fputs("Press ctrl+c to cancel\n",stderr);
 
     tcgetattr(ttyfd, &termsave);
     if(speedval > 0) {

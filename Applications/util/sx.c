@@ -190,8 +190,8 @@ static int xmodem_send(void) {
                 last_ack = 1;
             } else
                 xmodem_send_block(block_cnt);
-        } else if(inp!=0 && !disp) {
-            /* Unexpected character - assume user input and abort */
+        } else if(inp == 0x03 && !disp) {
+            /* Unexpected ctrl+c - assume user input and abort */
             return -1;
         }
     }
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
 
     fputs("Waiting for receiver\n",stderr);
     if(ttyfd == STDIN_FILENO)
-        fputs("Press any key to cancel\n",stderr);
+        fputs("Press ctrl+c to cancel\n",stderr);
 
 
     tcgetattr(ttyfd, &termsave);
