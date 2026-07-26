@@ -65,11 +65,14 @@ inverse:
     .byte 0
 
 _vtattr_notify:
+    call vt_start
     ld a, (_vtattr)
     and 1
-    dec a
-    cpl
     ld (inverse), a
+    ld a, (_vtink)
+    out (TTY_INK), a
+    ld a, (_vtpaper)
+    out (TTY_PAPER), a
     ret
 
 _do_beep:

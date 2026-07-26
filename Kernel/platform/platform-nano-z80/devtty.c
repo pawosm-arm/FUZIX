@@ -89,6 +89,17 @@ struct s_queue ttyinq[NUM_DEV_TTY + 1] = {	/* ttyinq[0] is never used */
 	{tbuf6, tbuf6, tbuf6, TTYSIZ, 0, TTYSIZ / 2},
 };
 
+void devtty_init(void) {
+    ttysave[0].paper = 0;
+    ttysave[1].paper = 0;
+    ttysave[2].paper = 0;
+    ttysave[3].paper = 0;
+    ttysave[0].ink = 7;
+    ttysave[1].ink = 7;
+    ttysave[2].ink = 7;
+    ttysave[3].ink = 7;
+}
+
 /* Write to system console. This is the backend to all the kernel messages,
    kprintf(), panic() etc. */
 

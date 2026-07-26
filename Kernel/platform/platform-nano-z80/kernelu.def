@@ -88,7 +88,10 @@ TTY_SCR_D   .equ    0x05
 TTY_CL_EOL  .equ    0x08
 TTY_ENABLED .equ    0x0d
 TTY_AUTOSCR .equ    0x0e
+TTY_INK     .equ    0x16
+TTY_PAPER   .equ    0x17
 TTY_VIDMODE .equ    0x20
+
 
 ; PIC registers
 PIC_IRQ_EN  .equ    0x00 
