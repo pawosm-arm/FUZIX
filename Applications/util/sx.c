@@ -98,27 +98,37 @@ static void xmodem_send_block(uint8_t block_cnt)
 {
     uint8_t i;
     uint8_t checksum;
-    uint8_t data;
+    uint8_t packet[132];
+    size_t total_written = 0;
+    ssize_t last_written = 0;
 
-    /* Send header */
+    /* Set header */
     if(disp) fputc('T',stderr);
-    data = SOH;
-    write(ttyfd, &data, 1);
-    data = block_cnt;
-    write(ttyfd, &data, 1);
-    data = block_cnt ^ 0xFF;
-    write(ttyfd, &data, 1);
+    packet[0] = SOH;
+    packet[1] = block_cnt;
+    packet[2] = block_cnt ^ 0xFF;
 
     checksum = 0;
-    /* Send data */
+    /* Set data */
     for(i=0; i<128; i++) {
-        data = xmodem_buffer[i];
-        checksum += data;
-        write(ttyfd, &data, 1);
+        packet[3 + i] = xmodem_buffer[i];
+        checksum += packet[3 + i];
     }
 
-    /* Send checksum */
-    write(ttyfd, &checksum, 1);
+    /* Set checksum */
+    packet[131] = checksum;
+
+    /* Send packet */
+    while(total_written < 132) {
+        last_written += write(ttyfd, packet + total_written, 132 - total_written);
+        if(last_written > 0) {
+            total_written += last_written;
+            continue;
+        }
+        if(last_written < 0 && errno == EINTR)
+            continue;
+        return;
+    }
 }
 
 static int fill_buffer(void) {
@@ -212,7 +222,7 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
     const char *filename;
-    const char *ext_tty_filename;
+    const char *ext_tty_filename = NULL;
     int ret;
     int opt;
     int flags;
@@ -269,7 +279,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    fputs("Waiting for reveiver\n",stderr);
+    fputs("Waiting for receiver\n",stderr);
     if(ttyfd == STDIN_FILENO)
         fputs("Press any key to cancel\n",stderr);
 
