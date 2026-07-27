@@ -25,25 +25,10 @@ vt_wait:
     push af
 vt_wait_loop:
     in a, (TTY_BUSY)
-    cp 1
-    jr z, vt_wait_loop
+    or a
+    jr nz, vt_wait_loop
     pop af
     ret    
-
-    ; Expects character in A
-vt_charout:
-    push af
-    ; Check inverse
-    ld a, (inverse)
-    or a
-    jr z, vt_charout_noinv
-    pop af
-    or 0x80
-    jr vt_charout_out
-vt_charout_noinv:
-    pop af
-vt_charout_out:
-    out (TTY_OUT), a
 
     ; Expects X in D, Y in E
 vt_set_pos:
@@ -61,14 +46,12 @@ vt_set_pos:
 
 _vtattr_cap:
     .byte 1     ; Inverse video
-inverse:
-    .byte 0
 
 _vtattr_notify:
     call vt_start
     ld a, (_vtattr)
     and 1
-    ld (inverse), a
+    out (TTY_INVERSE), a
     ld a, (_vtink)
     out (TTY_INK), a
     ld a, (_vtpaper)
@@ -197,6 +180,6 @@ _plot_char:
     ; Y is in E, X in D and char in A
     
     call vt_set_pos
-    call vt_charout
- 
+    ;call vt_charout
+    out (TTY_OUT), a
     ret    
