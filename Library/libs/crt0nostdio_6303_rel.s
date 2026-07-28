@@ -19,13 +19,13 @@ head:
 	.byte	3		;	Needs 6803 and 6303 features
 	.byte   0		;	Load page
 	.byte	0		;	No hints
-	.word	__code_size
+	.word	__data
 	.word	__data_size
 	.word	__bss_size
 	.byte	<start		;	Offset to execute from
 	.byte	0		;	No size hint
 	.byte	0		;	No stack hint
-	.byte	0		;	No hint bits
+	.byte	__zp_size	;	ZP
 
 	.word   __sighandler	;	signal handler
 	.word	0		;	relocations
@@ -160,18 +160,19 @@ patch5:
 	pulx	; restore base
 	pula	; recover high byte of base copy (for second reloc run)
 	bsr	reloc
-	ldd	#__bss_start	; by now relocated
-	addd	#__bss_size
-	pshb
-	psha
-	jsr	_brk	; fix the brk base if it changed for relocations
-	pulx
 
 	clra
 	clrb
 	std	@zero
 	incb
 	stab	@one+1
+
+	ldd	#__bss_start	; by now relocated
+	addd	#__bss_size
+	pshb
+	psha
+	jsr	_brk	; fix the brk base if it changed for relocations
+	pulx
 
 	tsx
 	ldab	#4
