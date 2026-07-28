@@ -101,4 +101,5 @@ diskimage:
 	
 # Make a 720k floppy with minimal root filesystem
 	(cd $(FUZIX_ROOT)/Standalone/filesystem-src; ./build-mini-filesystem $(ENDIANFLAG) $(FUZIX_ROOT)/Images/$(TARGET)/root.raw 64 1440)
+	../../../Standalone/ucp $(FUZIX_ROOT)/Images/$(TARGET)/root.raw < fuzix-floppy-cpcsme.ucp
 	../../tools/raw2dskcpc $(FUZIX_ROOT)/Images/$(TARGET)/root.raw $(FUZIX_ROOT)/Images/$(TARGET)/root.dsk 80 2 0
