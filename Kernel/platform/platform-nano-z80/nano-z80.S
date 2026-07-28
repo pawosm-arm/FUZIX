@@ -120,6 +120,9 @@ init_hardware:
     ;And disable autoscroll
     ld a, 0x00
     out (TTY_AUTOSCR), a
+    ;Set video mode to text with color
+    ld a, 0x04
+    out (TTY_VIDMODE), a
 
     ; Configure keyboard arrow keys for VT52
     ld a,IO_SEL_USB
