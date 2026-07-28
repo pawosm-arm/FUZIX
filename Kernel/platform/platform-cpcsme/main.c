@@ -48,6 +48,13 @@ int plt_rtc_write(void){
 
 void plt_idle(void)
 {
+	tty_poll();
+#ifdef CONFIG_USIFAC_SERIAL
+	tty_poll_usifac();
+#endif
+#ifdef CONFIG_NET_WIZNET
+	w5x00_poll();
+#endif
  __asm
   halt
  __endasm;
@@ -59,13 +66,12 @@ void plt_interrupt(void)
 {
 	tty_pollirq();
 #ifdef CONFIG_USIFAC_SERIAL
-	tty_pollirq_usifac();
+	tty_poll_usifac();
 #endif
 #ifdef CONFIG_NET_WIZNET
 	w5x00_poll();
 #endif
 	timer_interrupt();
-	poll_input();
 	if (timer_wait)
 		wakeup(&timer_interrupt);
 #ifdef CONFIG_FDC765
