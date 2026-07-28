@@ -847,15 +847,17 @@ copyct:		;this is read from target bank
 ;	for general usage but is ok for reading)
 ;
 interrupt_high:
-			; af and bc are pushed in the low stubfs
+			; af and bc are pushed in the low stub
 	push de
 	push hl
 	ex af,af'
 	push af
+	ex af,af'
 	exx
 	push bc
 	push de
 	push hl
+	exx	
 	push ix
 	push iy
 	ld a,(#_MMR_for_this_bank)		; bank MMR is stored in each bank early
@@ -898,14 +900,14 @@ ld_ca_and_ret_1:
 	cp e
 	call nz, sigpath
 pops:
-	ex af,af'
-	exx
 	pop iy
 	pop ix
+	exx
 	pop hl
 	pop de
 	pop bc
 	exx
+	ex af,af'	
 	pop af
 	ex af,af'
 	pop hl
