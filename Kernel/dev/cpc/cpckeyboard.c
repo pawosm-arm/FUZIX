@@ -122,7 +122,7 @@ static void keydecode(void)
 }
 
 
-void tty_pollirq(void)
+void tty_poll(void)
 {
 	int8_t i;
 
@@ -160,16 +160,21 @@ void tty_pollirq(void)
 		}
 		keymap[i] = ~keybuf[i];
 	}
-	if (keysdown && keysdown < 3) {
-		if (newkey) {
-			keydecode();
-			kbd_timer = keyrepeat.first;
-		} else if (! --kbd_timer) {
-			keydecode();
-			kbd_timer = keyrepeat.continual;
-		}
+	if (newkey && keysdown && keysdown < 3) {
+		keydecode();
+		kbd_timer = keyrepeat.first;
 	}
+}
 
+void tty_pollirq (void){
+
+	tty_poll();
+    if (keysdown && keysdown < 3) {
+        if (!--kbd_timer) {
+            keydecode();
+            kbd_timer = keyrepeat.continual;
+        }
+    }
 }
 
 static uint8_t update_keyboard(void) __naked

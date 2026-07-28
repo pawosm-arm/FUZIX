@@ -215,7 +215,7 @@ void tty_setup(uint8_t minor, uint8_t flags)
 #endif
 }
 #ifdef CONFIG_USIFAC_SERIAL
-void tty_pollirq_usifac(void)
+void tty_poll_usifac(void)
 {		
 	while (usifctrl == 0xff)
 		tty_inproc(5, usifdata);
