@@ -619,7 +619,6 @@ ldir_to_user:
 ;	exx
 ;	ret
 ldir_far:				;hl->source address, d->source bank, ix->destination address, e->destination bank, bc -> byte count
-	di
 	exx
 	push bc				;store bc'
 	exx
@@ -711,36 +710,37 @@ far_ldir_2:
     ; Decide copyct and initial inner counter (leave it in A for the upcoming ex af,af')
     ld a,d
     or a
-    jr z, .one_pass
+    jr z, one_pass
 
     ld a,e
     or a
-    jr z, .full_pages
+    jr z, full_pages
 
     ; blocks_hi > 0 and blocks_lo != 0  => copyct = blocks_hi + 1, initial = blocks_lo
     ld a,d
     inc a
     ld (copyct),a
     ld a,e
-    jr .done
+    jr done
 
-.full_pages:
+full_pages:
     ; blocks_hi > 0 and blocks_lo == 0  => copyct = blocks_hi, initial = 0 (meaning 256)
     ld a,d
     ld (copyct),a
     xor a
-    jr .done
+    jr done
 
-.one_pass:
+one_pass:
     ; blocks_hi == 0 => single pass, initial = blocks_lo
     ld a,#1
     ld (copyct),a
     ld a,e
 
-.done:
+done:
     ; A = initial inner counter for the upcoming 'ex af,af''
 
 	ex af,af'	; Save A as we need A for data transfer
+	di			; We cannot be interrupted after starting to use stack for copy data
 	ld sp,hl	; Base of memory to copy
     ld de,#16	;
     add ix,de	; 
@@ -823,6 +823,10 @@ copy_over:
 	pop hl
 	pop de
 	exx
+	ld a, (_int_disabled)
+	or a
+	jr nz,ldir_far_ret
+	ei
 ldir_far_ret:
 	ld bc,#0x7f10
 	out (c),c                                    
@@ -831,10 +835,6 @@ ldir_far_ret:
 	exx
 	pop bc			;restore bc'
 	exx
-	ld a, (_int_disabled)
-	or a
-	ret nz
-	ei
 	ret
 spcache:	;this is read from target bank
 	.word 0
