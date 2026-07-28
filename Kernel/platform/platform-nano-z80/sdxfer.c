@@ -23,12 +23,21 @@ static void sd_set_addr(uint32_t address) {
 
 int nz80_sd_xfer(uint_fast8_t dev, bool is_read, uint32_t lba, uint8_t *dptr)
 {
+    irqflags_t irq;
+
     // Set LBA address
     sd_set_addr(lba + offset[dev]);
     sd_ptr = dptr;
+
+    /* Perform disk access with interrupts disabled as UART B interrupts
+     * may change the IO select register in the middle of disk access
+     * which would result in corruption.
+     */
+     
+    irq = di();
     if(is_read) sd_read_block();
     else sd_write_block();
-
+    irqrestore(irq);
 } 
 
 

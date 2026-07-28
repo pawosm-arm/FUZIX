@@ -38,7 +38,7 @@
 #define uart_b_tx_ready 0x05
 #define uart_b_rx_data  0x06
 #define uart_b_rx_avail 0x07
-
+#define uart_b_baud     0x08
 /*
  *	One buffer for each tty
  */
@@ -53,7 +53,7 @@ static uint8_t sleeping;
 
 static uint8_t active_vt=0;
 static uint8_t visible_vt=0;
-
+static uint8_t cleared_vt[3]={0};
 static struct vt_switch ttysave[4];
 /*
  *	TTY masks - define which bits can be changed for each port
@@ -67,7 +67,7 @@ tcflag_t termios_mask[NUM_DEV_TTY + 1] = {
     _CSYS,
     _CSYS,
     _CSYS,
-    _CSYS,
+    CBAUD|_CSYS,
 };
 
 
@@ -123,12 +123,12 @@ ttyready_t tty_writeready(uint_fast8_t minor)
 	if (minor < TTY_SERA)
 		return (in(vid_tty_busy) & 0x01) ? TTY_READY_SOON : TTY_READY_NOW;
     else if(minor == TTY_SERA) {
-        out(io_page_reg, io_page_uart);
-        return (in(uart_b_tx_ready) & 0x01) ? TTY_READY_NOW : 
+        return (in(uart_a_tx_ready) & 0x01) ? TTY_READY_NOW : 
                                               TTY_READY_SOON;  
     }
     else if(minor == TTY_SERA + 1) {
-        return (in(uart_a_tx_ready) & 0x01) ? TTY_READY_NOW : 
+        out(io_page_reg, io_page_uart);
+        return (in(uart_b_tx_ready) & 0x01) ? TTY_READY_NOW : 
                                               TTY_READY_SOON; 
     }
     return TTY_READY_NOW;
@@ -184,12 +184,23 @@ void tty_putc(uint_fast8_t minor, uint_fast8_t c)
  */
 void tty_setup(uint_fast8_t minor, uint_fast8_t flags)
 {
-    // Clear screen on video terminals, except for boot TTY
-    if((minor > 1) && (minor < TTY_SERA)) {
+    struct termios *t;
+    // Clear screen on video terminals on first open, except for boot TTY
+    if((minor > 1) && (minor < TTY_SERA) && !cleared_vt[minor-2]) {
         out(io_page_reg, io_page_vid);
         out(vid_tty_act_buf, minor - 1); // Select active buffer
         while(in(vid_tty_busy));         // Wait for tty to be free
         out(vid_tty_cls, 1);             // Hardware clear screen
+        cleared_vt[minor-2] = 1;
+    }
+    // Support baud rate setting on tty6
+    if(minor == TTY_SERA+1) {
+        t = &ttydata[minor].termios;
+        /* Only 4800 - 115200 is supported */
+        if((t->c_cflag & CBAUD) > 0x09) {
+            out(io_page_reg, io_page_uart);
+            out(uart_b_baud, (t->c_cflag & CBAUD) - 0x0a);
+        }
     }
     return;
 }
