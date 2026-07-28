@@ -95,7 +95,7 @@ void td_io_wblock(uint8_t *p) __naked
 #endif
             ld bc,#0x7f10
             out (c),c
-            ld c,#0x45  ;Purple
+            ld c,#0x4c  ;Bright Red
             out (c),c
             ld bc, (_td_io_data_reg)            ; setup port number
             ex af,af'                       ;'
