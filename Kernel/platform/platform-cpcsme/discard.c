@@ -8,6 +8,7 @@
 #include "plt_ch375.h"
 #include <vt.h>
 #include "devtty.h"
+#include "devfdc765.h"
 
 extern int8_t n_valid_maps;
 extern uint8_t valid_maps_array[MAX_MAPS];
@@ -128,5 +129,9 @@ void device_init(void)
 	sock_init();
 #endif
 devtty_init();
+#ifdef CONFIG_FDC765
+	/* This is done by the firmware always*/
+	/*fd765_do_init();*/
+#endif
 
 }
