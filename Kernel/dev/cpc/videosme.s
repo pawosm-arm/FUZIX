@@ -49,7 +49,7 @@ cpc_plot_char:
         ex af,af'
         ld a,(_vtattr)
         and #3          ;we only use the two lower bits, underline and inverted
-        or a            ;reset carry flag
+        bit 1,a         ;Z=0 if underline
         rra             ;f' stores c=1 if inverted z=0 if underline
         ex af,af'
         ld a,#7
