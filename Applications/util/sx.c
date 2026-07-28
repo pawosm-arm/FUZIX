@@ -37,8 +37,8 @@
 static struct termios termsave;
 static struct termios termcur;
 static int ttyfd = -1;
-static uint_fast8_t xmodem_buffer[128];
-static uint_fast8_t disp=0;
+static uint8_t xmodem_buffer[128];
+static uint8_t disp=0;
 FILE *send_fp;
 
 static int baud[] = {
@@ -94,36 +94,46 @@ static void restore(int fd)
     }
 }
 
-static void xmodem_send_block(uint_fast8_t block_cnt)
+static void xmodem_send_block(uint8_t block_cnt)
 {
-    uint_fast8_t i;
-    uint_fast8_t checksum;
-    uint_fast8_t data;
+    uint8_t i;
+    uint8_t checksum;
+    uint8_t packet[132];
+    size_t total_written = 0;
+    ssize_t last_written = 0;
 
-    /* Send header */
+    /* Set header */
     if(disp) fputc('T',stderr);
-    data = SOH;
-    write(ttyfd, &data, 1);
-    data = block_cnt;
-    write(ttyfd, &data, 1);
-    data = block_cnt ^ 0xFF;
-    write(ttyfd, &data, 1);
+    packet[0] = SOH;
+    packet[1] = block_cnt;
+    packet[2] = block_cnt ^ 0xFF;
 
     checksum = 0;
-    /* Send data */
+    /* Set data */
     for(i=0; i<128; i++) {
-        data = xmodem_buffer[i];
-        checksum += data;
-        write(ttyfd, &data, 1);
+        packet[3 + i] = xmodem_buffer[i];
+        checksum += packet[3 + i];
     }
 
-    /* Send checksum */
-    write(ttyfd, &checksum, 1);
+    /* Set checksum */
+    packet[131] = checksum;
+
+    /* Send packet */
+    while(total_written < 132) {
+        last_written += write(ttyfd, packet + total_written, 132 - total_written);
+        if(last_written > 0) {
+            total_written += last_written;
+            continue;
+        }
+        if(last_written < 0 && errno == EINTR)
+            continue;
+        return;
+    }
 }
 
 static int fill_buffer(void) {
     int bytecnt;
-    uint_fast8_t i;
+    uint8_t i;
 
     bytecnt = fread(&xmodem_buffer, sizeof(uint8_t), 128, send_fp);
     /* If bytecnt < 128, pad with CP/M EOFs */
@@ -135,12 +145,12 @@ static int fill_buffer(void) {
 }
 
 static int xmodem_send(void) {
-    uint_fast8_t block_cnt = 1;
-    uint_fast8_t pos = 0;
-    uint_fast8_t inp;
-    uint_fast8_t outp;
-    uint_fast8_t nak_cnt = 0;
-    uint_fast8_t last_ack = 0;
+    uint8_t block_cnt = 1;
+    uint8_t pos = 0;
+    uint8_t inp;
+    uint8_t outp;
+    uint8_t nak_cnt = 0;
+    uint8_t last_ack = 0;
     int bytecnt;
     ssize_t n;
 
@@ -180,8 +190,8 @@ static int xmodem_send(void) {
                 last_ack = 1;
             } else
                 xmodem_send_block(block_cnt);
-        } else if(inp!=0 && !disp) {
-            /* Unexpected character - assume user input and abort */
+        } else if(inp == 0x03 && !disp) {
+            /* Unexpected ctrl+c - assume user input and abort */
             return -1;
         }
     }
@@ -212,7 +222,7 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
     const char *filename;
-    const char *ext_tty_filename;
+    const char *ext_tty_filename = NULL;
     int ret;
     int opt;
     int flags;
@@ -269,9 +279,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    fputs("Waiting for reveiver\n",stderr);
+    fputs("Waiting for receiver\n",stderr);
     if(ttyfd == STDIN_FILENO)
-        fputs("Press any key to cancel\n",stderr);
+        fputs("Press ctrl+c to cancel\n",stderr);
 
 
     tcgetattr(ttyfd, &termsave);

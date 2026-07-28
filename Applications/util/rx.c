@@ -36,8 +36,8 @@
 static struct termios termsave;
 static struct termios termcur;
 static int ttyfd = -1;
-static uint_fast8_t xmodem_buffer[128];
-static uint_fast8_t disp = 0;
+static uint8_t xmodem_buffer[131];
+static uint8_t disp = 0;
 FILE *receive_fp;
 
 static int baud[] = {
@@ -94,17 +94,20 @@ static void restore(int fd)
 }
 
 static int xmodem_receive(void) {
-    uint_fast8_t block_cnt;
-    uint_fast8_t block_exp = 1;
-    uint_fast8_t pos = 0;
-    uint_fast8_t inp;
-    uint_fast8_t outp;
-    uint_fast8_t checksum;
-    uint_fast8_t outt;
+    uint8_t block_cnt;
+    uint8_t block_exp = 1;
+    uint8_t pos = 0;
+    uint8_t inp;
+    uint8_t outp;
+    uint8_t checksum;
+    uint8_t outt;
+    size_t total_read;
+    ssize_t last_read;
 
     outt='W';
 
     outp = NAK;
+
     while(1) {
         write(ttyfd, &outp, 1);
         read(ttyfd, &inp, 1);
@@ -126,26 +129,36 @@ static int xmodem_receive(void) {
             outt = 'T';
             checksum = 0;
             /* TODO: error handling */
-            read(ttyfd, &inp, 1);
-            block_cnt = inp;
-            read(ttyfd, &inp, 1);
+            total_read = 0;
+            while(total_read < 131) {
+                last_read = read(ttyfd, xmodem_buffer + total_read, 131 - total_read);
+                if(last_read > 0) {
+                    total_read += last_read;
+                    continue;
+                }
+                if(last_read < 0 && errno == EINTR)
+                    continue;
+                return -1;
+            }
+            block_cnt = xmodem_buffer[0];
+            inp = xmodem_buffer[1];
             if((block_cnt == (inp ^0xFF)) && (block_cnt == block_exp)) {
                 /* Get block, otherwise retry */
-                for(pos = 0; pos < 128; pos++) {
-                    read(ttyfd, &inp, 1);
-                    xmodem_buffer[pos]=inp;
-                    checksum += inp;
-                }
+                /* Calculate checksum */
+                for(pos=0; pos<128; pos++)
+                    checksum += xmodem_buffer[2+pos];
+
                 /* Verify checksum */
-                read(ttyfd, &inp, 1);
+                inp = xmodem_buffer[130];
+
                 if(checksum == inp) {
                     outp = ACK;
-                    fwrite(&xmodem_buffer, 1, 128, receive_fp);
+                    fwrite(xmodem_buffer + 2, 1, 128, receive_fp);
                     block_exp++;
                 }
             }
-        } else if(inp!=0 && !disp)  {
-            /* Unexpected character - assume user input and abort */
+        } else if(inp == 0x03 && !disp)  {
+            /* Unexpected ctrl+c - assume user input and abort */
             return -1;
         }
         /* Progress indicator if STDIN is not used */
@@ -157,7 +170,7 @@ static int xmodem_receive(void) {
 static int parsespeed(char *str, speed_t *s) {
     register int i;
     register int b = atoi(str);
-    for(i =0; i<sizeof(baud) / sizeof(baud[0]); i++) {
+    for(i=0; i<sizeof(baud) / sizeof(baud[0]); i++) {
         if(baud[i] == b) {
             *s = speed[i];
             return 1;
@@ -185,7 +198,7 @@ int main(int argc, char *argv[])
     int opt;
     int flags;
     int fd;
-    uint_fast8_t overwrite = 0;
+    uint8_t overwrite = 0;
     speed_t speedval = 0;
 
     while((opt = getopt(argc, argv, "t:b:f")) != -1) {
@@ -256,7 +269,7 @@ int main(int argc, char *argv[])
 
     fputs("Waiting for sender to initiate X-modem transfer\n",stderr);
     if(ttyfd == STDIN_FILENO)
-        fputs("Press any key to cancel\n",stderr);
+        fputs("Press ctrl+c to cancel\n",stderr);
 
     tcgetattr(ttyfd, &termsave);
     if(speedval > 0) {
