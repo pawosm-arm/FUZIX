@@ -8,7 +8,17 @@
 #include <limits.h>
 #include <string.h>
 
-int  bflag, cflag, dflag, oflag, xflag, hflag, vflag;
+#define RADIX_HEX   16
+#define RADIX_DEC   10
+#define RADIX_OCT   8
+#define RADIX_ASC   1
+#define RADIX_NONE  0
+
+//int  bflag, cflag, dflag, oflag, xflag, hflag, vflag;
+int  vflag;
+int  addr_radix = RADIX_OCT;
+int  data_radix = RADIX_OCT;
+int  word_length = 2;
 int  hd;
 int  linenr, width, state, ever;
 int  prevwds[8];
@@ -121,12 +131,15 @@ void dumpfile(void)
 	state = 0;
 	ever = 1;
 	linenr = 1;
-	if (oflag) wdump(words, k, 8);
-	if (dflag) wdump(words, k, 10);
-	if (xflag) wdump(words, k, 16);
-	if (cflag) bdump((char *)words, k, (int)'c');
-	if (bflag) bdump((char *)words, k, (int)'b');
-	if (hd)    bdump((char *)words, k, (int)'h');
+	//if (oflag) wdump(words, k, 8);
+	//if (dflag) wdump(words, k, 10);
+	//if (xflag) wdump(words, k, 16);
+	if(word_length == 2) wdump(words, k, data_radix);
+    else if(word_length == 1) bdump((char *)words, k, data_radix);
+
+    //if (cflag) bdump((char *)words, k, (int)'c');
+	//if (bflag) bdump((char *)words, k, (int)'b');
+	//if (hd)    bdump((char *)words, k, (int)'h');
 	for (k = 0; k < 8; k++) prevwds[k] = words[k];
 	for (k = 0; k < 8; k++) words[k] = 0;
     }
@@ -156,11 +169,11 @@ void bdump(char bytes[16], int k, int c)
 
 void byte(int val, int c)
 {
-    if (c == 'b') {
+    if (c == RADIX_OCT) {
 	printf(" ");
 	outnum(val, 7);
 	return;
-    } else if (c == 'h') {
+    } else if (c == RADIX_HEX) {
 	printf(" %02x", val);
 	return;
     }
@@ -220,21 +233,21 @@ void outword(int val, int radix)
 {
     /* Output 'val' in 'radix' in a field of total size 'width'. */
 
-    int i = 4;
+    //int i = 4;
 
-    if (radix == 16) i = width - 4;
-    if (radix == 10) i = width - 5;
-    if (radix == 8)  i = width - 6;
+    //if (radix == 16) i = width - 4;
+    //if (radix == 10) i = width - 5;
+    //if (radix == 8)  i = width - 6;
 
-    if (i == 1)
-	printf(" ");
-    else if (i == 2)
-	printf("  ");
-    else if (i == 3)
-	printf("   ");
-    else if (i == 4)
-	printf("    ");
-
+    //if (i == 1)
+	//printf(" ");
+    //else if (i == 2)
+	//printf("  ");
+    //else if (i == 3)
+	//printf("   ");
+    //else if (i == 4)
+	//printf("    ");
+    printf(" ");
     outnum(val, radix);
 }
 
@@ -247,11 +260,11 @@ void outnum(int num, int radix)
     unsigned val;
 
     val = (unsigned) num;
-    if (radix == 8)
+    if (radix == RADIX_OCT)
 	printf ("%06o", val);
-    else if (radix == 10)
+    else if (radix == RADIX_DEC)
 	printf ("%05u", val);
-    else if (radix == 16)
+    else if (radix == RADIX_HEX)
 	printf ("%04x", val);
     else if (radix == 7) {
   	/* special case */
@@ -262,10 +275,18 @@ void outnum(int num, int radix)
 
 void addrout(long l)
 {
-    if (hflag == 0) {
-	printf("%07lo", l);
-    } else {
-	printf("%07lx", l);
+    switch(addr_radix) {
+        case RADIX_OCT:
+            printf("%07lo", l);
+            break;
+        case RADIX_DEC:
+            printf("%07ld", l);
+            break;
+        case RADIX_HEX:
+            printf("%07lx", l);
+            break;
+        default:
+            break;
     }
 }
 
@@ -284,8 +305,11 @@ int main(int argc, char *argv[])
 
     /* single-byte hex dump */
     if (!strcmp(argv[0], "hd")) {
-        hd = 1;
-        hflag = 1;
+        data_radix = RADIX_HEX;
+        addr_radix = RADIX_HEX;
+        word_length = 1;
+        //hd = 1;
+        //hflag = 1;
     }
 
     /* Process flags */
@@ -312,45 +336,53 @@ int main(int argc, char *argv[])
     //} else {
 	//oflag = 1;
     //}
-
+    
     flags = 0;
-    while((opt = getopt(argc, argv, "bcdhovx")) != -1) {
+    /* Default values */
+    data_radix = RADIX_OCT;
+    addr_radix = RADIX_OCT;
+    word_length = 2;
+     
+    while((opt = getopt(argc, argv, "bcdhovxq")) != -1) {
         fprintf(stderr, "Opt: %c, optind: %d\n", opt, optind);
         switch(opt) {
             case 'b':
-                bflag++;
-                flags = 1;
+                word_length = 1;
+                //bflag++;
+                //flags = 1;
                 break;
             case 'c':
-                cflag++;
-                flags = 1;
+                data_radix = RADIX_ASC;
+                word_length = 1;
                 break;
             case 'd':
-                dflag++;
-                flags = 1;
+                data_radix = RADIX_DEC;
                 break;
             case 'h':
-                hflag++;
-                flags = 1;
+                data_radix = RADIX_HEX;
+                word_length = 1;
                 break;
             case 'o':
-                oflag++;
-                flags = 1;
+                /* Default values */
                 break;
             case 'v':
                 vflag++;
-                flags = 1;
                 break;
             case 'x':
-                xflag++;
-                flags = 1;
+                data_radix = RADIX_HEX;
+                break;
+            case 'q':
+                data_radix = RADIX_HEX;
+                addr_radix = RADIX_HEX;
+                word_length = 1;
                 break;
             default:
                 usage();
                 break;
         }
     }
-
+    
+    /*
     if ((bflag | cflag | dflag | oflag | xflag) == 0) oflag = 1;
     if (hd) oflag = 0;
     k = (flags ? 2 : 1);
@@ -362,7 +394,7 @@ int main(int argc, char *argv[])
 	width = 6;
     } else {
 	width = 5;
-    }
+    }*/
    
     fprintf(stderr, "Optind file: %d\n", optind); 
     /* Process file name, if any. */
@@ -383,7 +415,7 @@ int main(int argc, char *argv[])
     /* Process offset, if any. */
     if (optind < argc) {
 	/* Offset present. */
-	off = offset(argc, argv, k);
+	off = offset(argc, argv, optind);
 	lseek(0, off, SEEK_SET);
     }
 
