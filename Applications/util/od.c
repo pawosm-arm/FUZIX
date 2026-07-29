@@ -141,6 +141,7 @@ void dumpfile(void)
 	    ever = 1;
 	    linenr = 1;
     
+        /* Finish up if specified number of bytes have been read */
         if((total_bytes) && (bytes_read >= total_bytes)) {
             run = 0;
             k -= (bytes_read - total_bytes);
@@ -156,6 +157,7 @@ void dumpfile(void)
         }
         printf("\n");
 
+        /* Cast to char to handle different widths */
         dst = (char *)prevwds;
         src = (char *)words;
 	    for (k = 0; k < width; k++) dst[k] = src[k];
@@ -163,6 +165,9 @@ void dumpfile(void)
     }
 }
 
+/* Pad with spaces to ensure that the ascii output lines up on the last
+ * line 
+ */
 void pad(int k) {
     int i,j;
     int pad_len;
@@ -433,6 +438,9 @@ int main(int argc, char *argv[])
                 break;
             case 'w':
                 width = atoi(optarg);
+                /* Only support powers of two to avoid issues
+                 * with always reading 512 bytes from disk 
+                 */
                 if(width != 1 && width !=2 && width !=4 && 
                    width != 8 && width !=16) {
                     fprintf(stderr, 
