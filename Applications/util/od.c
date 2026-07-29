@@ -279,6 +279,7 @@ void usage(void)
 int main(int argc, char *argv[])
 {
     int k, flags;
+    int opt;
     char *p;
 
     /* single-byte hex dump */
@@ -289,27 +290,65 @@ int main(int argc, char *argv[])
 
     /* Process flags */
     setbuf(stdout, buffer);
-    flags = 0;
-    p = argv[1];
-    if (argc > 1 && *p == '-') {
+    //flags = 0;
+    //p = argv[1];
+    //if (argc > 1 && *p == '-') {
 	/* Flags present. */
-	flags++;
-	p++;
-	while (*p) {
-	    switch (*p) {
-		case 'b': bflag++; break;
-		case 'c': cflag++; break;
-		case 'd': dflag++; break;
-		case 'h': hflag++; break;
-		case 'o': oflag++; break;
-		case 'v': vflag++; break;	
-		case 'x': xflag++; break;
-		default:  usage();
-	    }
-	    p++;
-	}
-    } else {
-	oflag = 1;
+	//flags++;
+	//p++;
+	//while (*p) {
+	//    switch (*p) {
+	//	case 'b': bflag++; break;
+	//	case 'c': cflag++; break;
+	//	case 'd': dflag++; break;
+	//	case 'h': hflag++; break;
+	//	case 'o': oflag++; break;
+	//	case 'v': vflag++; break;	
+	//	case 'x': xflag++; break;
+	//	default:  usage();
+	//    }
+	//    p++;
+	//}
+    //} else {
+	//oflag = 1;
+    //}
+
+    flags = 0;
+    while((opt = getopt(argc, argv, "bcdhovx")) != -1) {
+        fprintf(stderr, "Opt: %c, optind: %d\n", opt, optind);
+        switch(opt) {
+            case 'b':
+                bflag++;
+                flags = 1;
+                break;
+            case 'c':
+                cflag++;
+                flags = 1;
+                break;
+            case 'd':
+                dflag++;
+                flags = 1;
+                break;
+            case 'h':
+                hflag++;
+                flags = 1;
+                break;
+            case 'o':
+                oflag++;
+                flags = 1;
+                break;
+            case 'v':
+                vflag++;
+                flags = 1;
+                break;
+            case 'x':
+                xflag++;
+                flags = 1;
+                break;
+            default:
+                usage();
+                break;
+        }
     }
 
     if ((bflag | cflag | dflag | oflag | xflag) == 0) oflag = 1;
@@ -324,21 +363,25 @@ int main(int argc, char *argv[])
     } else {
 	width = 5;
     }
-
+   
+    fprintf(stderr, "Optind file: %d\n", optind); 
     /* Process file name, if any. */
-    p = argv[k];
-    if (k < argc && *p != '+') {
+    if(optind < argc)
+        p = argv[optind];
+
+    if (optind < argc && *p != '+') {
 	/* Explicit file name given. */
-	close(0);
-	if (open(argv[k], O_RDONLY) != 0) {
+	fprintf(stderr, "Opening filename %s\n", argv[optind]);
+    close(0);
+	if (open(argv[optind], O_RDONLY) != 0) {
 	    fprintf(stderr, "od: cannot open %s\n", argv[k]);
 	    exit(1);
 	}
-	k++;
+	optind++;
     }
 
     /* Process offset, if any. */
-    if (k < argc) {
+    if (optind < argc) {
 	/* Offset present. */
 	off = offset(argc, argv, k);
 	lseek(0, off, SEEK_SET);
