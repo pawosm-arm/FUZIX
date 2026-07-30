@@ -85,7 +85,7 @@ SRC_C += cfmakeraw.c cfspeed.c revoke.c
 # scanf
 SRC_C += fscanf.c scanf.c sscanf.c vfscanf.c vscanf.c vsscanf.c
 SRC_C += regexp.c
-SRC_C += strcpy.c strlen.c abs.c atof.c atoi.c atol.c labs.c
+SRC_C += strcpy.c strlen.c abs.c atoi.c atol.c labs.c
 SRC_C += strcat.c strchr.c strcmp.c strcspn.c strncat.c strncmp.c
 SRC_C += strncpy.c strpbrk.c strrchr.c strspn.c strstr.c strtok.c strtok_r.c
 SRC_C += memchr.c memcmp.c memmove.c
