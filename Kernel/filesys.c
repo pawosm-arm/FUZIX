@@ -697,7 +697,7 @@ blkno_t blk_alloc(uint16_t devno)
         if (buf == NULL)
             goto corrupt;
         blktok(&dev->s_nfree, buf, 0,
-            sizeof(int) + FILESYS_TABSIZE * sizeof(blkno_t));
+            sizeof(dev->s_nfree) + FILESYS_TABSIZE * sizeof(blkno_t));
         /* This assumes no padding: this is an UZI era assumption */
         brelse(buf);
     }
