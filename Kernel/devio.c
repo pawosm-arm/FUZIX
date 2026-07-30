@@ -278,15 +278,25 @@ bufptr freebuf(void)
 {
 	regptr bufptr bp;
 	regptr bufptr oldest;
-	register int16_t oldtime;
+	register uint16_t oldtime;
+	uint16_t age;
 
 	/* Try to find a non-busy buffer and write out the data if it is dirty */
+	/* The age has to be computed modulo 65536, which means truncating it
+	   back to uint16_t and comparing unsigned. Where int is 16 bits the
+	   two uint16_t operands promote to unsigned int and the subtraction
+	   wraps by itself, but where int is 32 bits they promote to signed
+	   and a buffer stamped before bufclock last wrapped yields a large
+	   negative age, which fails ">= oldtime" from the first iteration
+	   onwards. Just after a wrap that is every buffer, so freebuf()
+	   returns NULL with the whole pool free. */
 	oldest = NULL;
 	oldtime = 0;
 	for (bp = bufpool; bp < bufpool_end; ++bp) {
-		if (bufclock - bp->bf_time >= oldtime && !bisbusy(bp)) {
+		age = bufclock - bp->bf_time;
+		if (age >= oldtime && !bisbusy(bp)) {
 			oldest = bp;
-			oldtime = bufclock - bp->bf_time;
+			oldtime = age;
 		}
 	}
 	/* FIXME: Once we support sleeping on disk I/O this goes away and
