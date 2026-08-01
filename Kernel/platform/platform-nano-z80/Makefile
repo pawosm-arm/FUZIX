@@ -11,19 +11,19 @@ ASRCS += tricks.S commonmem.S
 DISCARD_DSRCS = ../../dev/tinydisk_discard.c
 #DISCARD_DSRCS += ../../dev/ds1302_discard.c
 DSRCS = ../../dev/tinydisk.c ../../dev/mbr.c
-#NSRCS = ../../dev/net/net_native.c
+NSRCS = ../../dev/net/net_native.c
 
 #DASRCS = ../../dev/rbcfd9266_hw.S ../../dev/ds1302_rbc.S ../../dev/tinyide_ppide_rbc.S
 
 COBJS = $(CSRCS:.c=.o)
 AOBJS = $(ASRCS:.S=.o)
-#NOBJS = $(patsubst ../../dev/net/%.c,%.o, $(NSRCS))
+NOBJS = $(patsubst ../../dev/net/%.c,%.o, $(NSRCS))
 DISCOBJS = $(DISCSRCS:.c=.o)
 DISCARD_DOBJS = $(patsubst ../../dev/%.c,%.o, $(DISCARD_DSRCS))
 DOBJS = $(patsubst ../../dev/%.c,%.o, $(DSRCS))
 #DAOBJS = $(patsubst ../../dev/%.S,%.o, $(DASRCS))
 
-OBJS  = $(COBJS) $(AOBJS) $(DISCOBJS) $(DOBJS) $(DISCARD_DOBJS)
+OBJS  = $(COBJS) $(AOBJS) $(NOBJS) $(DISCOBJS) $(DOBJS) $(DISCARD_DOBJS)
 
 JUNK =  *.lst *.asm *.Sym *.rst *.lnk *.s *.\^ *.\# *.\% *.\@
 
@@ -57,20 +57,20 @@ clean:
 #	Attach the kernel to the boot block
 #
 image:
-	$(CROSS_LD) -b -C 0x0088 -X 0xC800 -S 0xF000 -f CLDBbXSs -o fuzix.bin \
+	$(CROSS_LD) -b -C 0x0088 -X 0xD400 -S 0xF000 -f CLDBbXSs -o fuzix.bin \
 	crt0.o commonmem.o nano-z80.o vt.o tricks.o devtty.o sdxfer.o main.o \
 	discard.o \
 	../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
-	../../cpu-z80u/usermem_std-z80u.o ../../usermem.o \
+	../../usermem.o ../../cpu-z80u/usermem_std-z80u.o \
 	../../timer.o ../../devsys.o ../../kdata.o devices.o ../../devio.o \
 	../../filesys.o ../../blk512.o ../../process.o \
 	../../inode.o ../../syscall_exec.o ../../syscall_exec16.o \
 	../../syscall_fs.o ../../syscall_fs2.o ../../syscall_fs3.o \
-	../../syscall_proc.o ../../syscall_other.o \
+	../../syscall_proc.o ../../syscall_other.o ../../syscall_net.o \
 	../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
-	../../tty.o ../../mm.o ../../mm/memalloc_none.o \
-	../../mm/bank16k.o ../../vt.o \
+	../../network.o ../../tty.o ../../mm.o ../../mm/memalloc_none.o \
+	../../mm/bankfixed.o ../../vt.o ../../dev/net/net_native.o \
 	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
 	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
 	../../tools/pack85 <../../fuzix.map fuzix.bin ../../fuzix.bin

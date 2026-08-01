@@ -50,10 +50,10 @@ void map_init(void)
 void pagemap_init(void)
 {
 	uint8_t i;
-    for(i = 4; i<255; i++)
+    for(i = 4; i<MAX_MAPS; i++)
         pagemap_add(i);
     // Add common area
-    pagemap_add(3);
+    //pagemap_add(3);
 }
 
 void device_init(void)

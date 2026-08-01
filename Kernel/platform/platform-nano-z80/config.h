@@ -8,11 +8,12 @@
 #undef CONFIG_MULTI
 
 /* Select a banked memory set up */
-#define CONFIG_BANK16
+#define CONFIG_BANK_FIXED
 /* This is the number of banks of user memory available (maximum) */
-#define MAX_MAPS	252		/* 256 x 16K pages - 4 for kernel? */
+#define MAX_MAPS	120		/* 256 x 16K pages - 4 for kernel? */
 /* How many banks do we have in our address space */
-#define CONFIG_BANKS	4	/* 4 x 16K */
+#define CONFIG_BANKS	2	/* 1 x 32K */
+#define MAP_SIZE 0x8000
 
 /* Video terminal support */
 #define CONFIG_VT
@@ -32,15 +33,14 @@
  */
 #define PROGBASE    0x0000  /* Base of user  */
 #define PROGLOAD    0x0100  /* Load and run here */
-#define PROGTOP     0xF000  /* Top of program, base of U_DATA stash */
-#define KERNTOP     0xC000  /* Top of kernel, first 3 banks */
-#define PROC_SIZE   64 	    /* Memory needed per process including stash */
+#define PROGTOP     0x7E00  /* Top of program, base of U_DATA stash */
+#define PROC_SIZE   32 	    /* Memory needed per process including stash */
 
 #define PTABSIZE    32
 
 /* Networking - disabled for now */
-/*#define CONFIG_NET
-#define CONFIG_NET_NATIVE*/
+#define CONFIG_NET
+#define CONFIG_NET_NATIVE
 
 /*
  *	Definitions for swapping - disabled for now

@@ -12,12 +12,20 @@ start:
 	ld de, __common
 	ld bc, __common_size
 	ldir
+    ld de, __commondata
+    ld bc, __commondata_size
+    ldir
 
 	; then the discard
 	; Discard can just be linked in but is next to the buffers
 	ld de, __discard
-	ld bc, __discard_size;-1
-	ldir
+	ld bc, __discard_size-1
+    add hl, bc
+    ex de, hl
+    add hl, bc
+    ex de,hl
+    lddr    
+	ldd
     
     ; then zero the data area
 	ld hl, __bss
