@@ -114,6 +114,10 @@ init_hardware:
     ld hl, 4032
     ld(_procmem), hl
 
+    ; Enable fixed region from 0xf000 in MMU
+    ld a,1
+    out (0x68), a
+
     ; Enable hardware TTY
     ld a, IO_SEL_TTY
     out (IO_SEL_REG), a
@@ -227,7 +231,11 @@ map_kernel_restore:
 	out (0x60), a
     inc a
     out (0x62), a
-	;inc a
+	inc a
+    out (0x64), a
+    inc a
+    out (0x66), a
+    ;inc a
     ;out (0x64), a
     pop af
 	ret
@@ -268,18 +276,17 @@ map_proc_a:			; used by bankfork
     ;push af
    
     ld (mapreg), a	; bank
-	; Calculate physical page
-    ;ld  b,a
+	; Calculate physical page (x4)
     add a,a
-    ;add a,b
-    add a,2
+    add a,a
     ; Set page register
     out (0x60), a
     inc a
     out (0x62), a
-    ;inc a
-    ;out (0x64), a
-    ;pop bc
+    inc a
+    out (0x64), a
+    inc a
+    out (0x66), a
 	pop af
     ret
 

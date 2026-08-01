@@ -10,10 +10,10 @@
 /* Select a banked memory set up */
 #define CONFIG_BANK_FIXED
 /* This is the number of banks of user memory available (maximum) */
-#define MAX_MAPS	120		/* 256 x 16K pages - 4 for kernel? */
+#define MAX_MAPS	60		/* 64 x 64K pages - 4 for kernel? */
 /* How many banks do we have in our address space */
-#define CONFIG_BANKS	2	/* 1 x 32K */
-#define MAP_SIZE 0x8000
+#define CONFIG_BANKS	1	/* 1 x 60K */
+#define MAP_SIZE 0xF000
 
 /* Video terminal support */
 #define CONFIG_VT
@@ -33,8 +33,8 @@
  */
 #define PROGBASE    0x0000  /* Base of user  */
 #define PROGLOAD    0x0100  /* Load and run here */
-#define PROGTOP     0x7E00  /* Top of program, base of U_DATA stash */
-#define PROC_SIZE   32 	    /* Memory needed per process including stash */
+#define PROGTOP     0xEE00  /* Top of program, base of U_DATA stash */
+#define PROC_SIZE   60 	    /* Memory needed per process including stash */
 
 #define PTABSIZE    32
 
