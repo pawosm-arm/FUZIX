@@ -22,6 +22,7 @@ include_directories(
 	.
 	../..
 	../../dev
+	../../dev/net
 	../../include
 	../../cpu-armm0
 )
@@ -41,6 +42,8 @@ add_executable(fuzix
 	core1.c
 	devgpio.c
 	usbdescriptors.c
+	wiznet.c
+	wiznet_spi.c
 	../../dev/blkdev.c
 	../../dev/mbr.c
 	../../dev/devsd_discard.c
@@ -74,6 +77,7 @@ add_executable(fuzix
 	../../usermem.c
 	../../version.c
 	../../dev/net/net_native.c
+	../../dev/net/net_w5x00.c
 	../../syscall_net.c
 	../../network.c
 )

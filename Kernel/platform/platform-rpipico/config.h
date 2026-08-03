@@ -34,7 +34,12 @@
 /* Enable to make ^A drop back into the monitor */
 #undef CONFIG_MONITOR
 /* Enable to support network stack */
+/* Enabled W5x00 Networking */
 #undef CONFIG_NET
+/* #define CONFIG_NET          */
+/* #define CONFIG_NET_WIZNET   */
+/* #define CONFIG_NET_W5500    */
+
 #undef CONFIG_NET_NATIVE
 /* Profil syscall support (not yet complete) */
 #undef CONFIG_PROFIL
