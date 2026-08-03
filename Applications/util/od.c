@@ -34,7 +34,7 @@ long offset(int argc, char *argv[], int k);
 void dumpfile(void);
 void wdump(short *words, int k, int radix);
 void bdump(char bytes[16], int k, int c);
-void adump(unsigned char bytes[16], int k); 
+void adump(unsigned char bytes[16], int k);
 void pad(int k);
 void byte(int val, int c);
 int  getwords(short **words);
@@ -122,7 +122,7 @@ void dumpfile(void)
     while ((k = getwords(&words)) && run) {	/* 'k' is # bytes read */
 	    bytes_read += k;
         if (!vflag) {		/* ensure 'lazy' evaluation */
-	        if (k == width && ever == 1 && 
+	        if (k == width && ever == 1 &&
                 same((char *)words, (char *)prevwds)) {
 		        if (state == 0) {
 		            printf("*\n");
@@ -140,7 +140,7 @@ void dumpfile(void)
 	    state = 0;
 	    ever = 1;
 	    linenr = 1;
-    
+
         /* Finish up if specified number of bytes have been read */
         if((total_bytes) && (bytes_read >= total_bytes)) {
             run = 0;
@@ -153,7 +153,7 @@ void dumpfile(void)
 
         if(print_ascii) {
             if(!run) pad(width - k);
-            adump((char *)words, k);
+            adump((unsigned char *)words, k);
         }
         printf("\n");
 
@@ -166,7 +166,7 @@ void dumpfile(void)
 }
 
 /* Pad with spaces to ensure that the ascii output lines up on the last
- * line 
+ * line
  */
 void pad(int k) {
     int i,j;
@@ -174,7 +174,7 @@ void pad(int k) {
 
     if(data_radix == RADIX_HEX) pad_len = 2*word_length + 1;
     else if(data_radix == RADIX_OCT) pad_len = 3*word_length + 1;
-    else if(data_radix == RADIX_DEC) pad_len = 3*word_length + 
+    else if(data_radix == RADIX_DEC) pad_len = 3*word_length +
                                                (2 - word_length);
 
     for(i=0; i<k; i++) {
@@ -182,7 +182,7 @@ void pad(int k) {
     }
 }
 
-void adump(char bytes[16], int k) {
+void adump(unsigned char bytes[16], int k) {
     int i;
     printf(" >");
     for(i=0; i<k; i++) {
@@ -329,15 +329,15 @@ void usage(void)
     fprintf(stderr, "Usage: od [OPTION]... [FILE]...\n");
     fprintf(stderr, "  or: od [-bcdhovx] [file] [ [+] offset [.] [b] ]\n");
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, 
-            "-A RADIX  Output format for file offset. RADIX is one of\n"); 
+    fprintf(stderr,
+            "-A RADIX  Output format for file offset. RADIX is one of\n");
     fprintf(stderr, "          [doxn] for Decimal, Octal, Hex or None\n");
     fprintf(stderr, "-j BYTES  Skip BYTES input bytes first\n");
     fprintf(stderr, "-N BYTES  Limit dump to BYTES input bytes\n");
     fprintf(stderr, "-t TYPE   Select output format\n");
     fprintf(stderr, "-w BYTES  output BYTES bytes per output line, can be 1,2,4,8 or 16.\n");
     fprintf(stderr, "-v        do not use * to mark line supression\n\n");
-    
+
     fprintf(stderr, "TYPE is made up of one of these specifications:\n");
     fprintf(stderr, "c         Printable character or backslash escape\n");
     fprintf(stderr, "o[SIZE]   Octal, SIZE bytes per integer\n");
@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
 
     /* Process flags */
     setbuf(stdout, buffer);
-    
+
     while((opt = getopt(argc, argv, "A:t:j:N:w:bcdhovxq")) != -1) {
         switch(opt) {
             case 'A':
@@ -423,12 +423,12 @@ int main(int argc, char *argv[])
                             "Error - only 1 or 2 byte words supported\n");
                     }
                 }
-                
+
                 if(optarg[k]) {
                     if(optarg[k] == 'z') print_ascii = 1;
                     else usage();
                 }
-            
+
                 break;
             case 'j':
     	        off = offset(1, &optarg, 0);
@@ -439,11 +439,11 @@ int main(int argc, char *argv[])
             case 'w':
                 width = atoi(optarg);
                 /* Only support powers of two to avoid issues
-                 * with always reading 512 bytes from disk 
+                 * with always reading 512 bytes from disk
                  */
-                if(width != 1 && width !=2 && width !=4 && 
+                if(width != 1 && width !=2 && width !=4 &&
                    width != 8 && width !=16) {
-                    fprintf(stderr, 
+                    fprintf(stderr,
                        "Error - only width 1,2,4,8 and 16 are supported\n");
                     exit(1);
                 }
@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
                 break;
         }
     }
-    
+
     /* Process file name, if any. */
     if(optind < argc)
         p = argv[optind];
