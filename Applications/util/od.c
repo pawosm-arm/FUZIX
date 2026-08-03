@@ -152,7 +152,7 @@ void dumpfile(void)
         else if(word_length == 1) bdump((char *)words, k, data_radix);
 
         if(print_ascii) {
-            if(!run) pad(width - k);
+            if(!run || k < width) pad(width - k);
             adump((unsigned char *)words, k);
         }
         printf("\n");
