@@ -1,0 +1,103 @@
+; Flexible 16K banks on SAMx8
+;
+; Derived from MOOH platform code
+;
+; Copyright 2015-2018 Tormod Volden
+; Copyright 2025 Ciaran Anscomb
+
+	.module mem_samx8
+
+	; exported
+	.globl reloc
+	.globl size_ram
+	.globl map_kernel
+	.globl map_proc
+	.globl map_proc_a
+	.globl map_proc_always
+	.globl map_save
+	.globl map_restore
+	.globl mmu_remap_x
+
+	; imported
+	.globl _ramsize
+	.globl _procmem
+	.globl _membanks
+	.globl start
+
+	include "kernel.def"
+	include "../../cpu-6809/kernel09.def"
+
+	.area .discard
+
+; Sets ramsize, procmem
+size_ram:
+	; we know what we should have
+	lda #27
+	sta _membanks
+	ldd #512
+	std _ramsize		; in KB
+	ldd #512-64-16		; 512 - kernel (64), video & COMMON (16)
+	std _procmem
+	rts
+
+	.area .common
+
+; must preserve register a but not x
+map_kernel:
+	clr map_copy
+	sta 0xffd5		; task 1 (kernel)
+	rts
+
+map_restore:
+	lda map_store
+	beq map_kernel
+	; fall through
+
+; might be called with interrupts enabled from drivers
+map_proc_always:
+	pshs cc,a,b
+	orcc #0x10
+	ldd U_DATA__U_PAGE
+	std $ff30
+	ldd U_DATA__U_PAGE2
+	std $ff32
+	lda #1
+	sta map_copy
+	sta 0xffd4		; task 0 (user)
+	puls cc,a,b,pc
+
+; called by I/O drivers (also for swapping)
+map_proc:
+	cmpx #0
+	beq map_kernel
+	pshs cc
+	orcc #0x10
+	bsr map_proc_a
+	puls cc,pc
+
+; called directly by switchin
+map_proc_a:
+	bsr mmu_remap_x
+	lda #1
+	sta map_copy
+	sta 0xffd4		; task 0 (user)
+	rts
+
+mmu_remap_x:
+	ldd ,x
+	std $ff30
+	ldd 2,x
+	std $ff32
+	rts
+
+map_save:
+	lda map_copy
+	sta map_store
+	rts
+
+	.area .commondata
+
+map_store:
+	.dw 0
+map_copy:
+	.dw 0
