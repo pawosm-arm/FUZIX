@@ -23,10 +23,8 @@
 #define VT_RIGHT    79
 #define VT_BOTTOM   29
 
-
 /* Tinydisk */
 #define CONFIG_TD_NUM 2
-
 
 /*
  *	Define the program loading area (needs to match kernel.def)
@@ -36,39 +34,20 @@
 #define PROGTOP     0xEE00  /* Top of program, base of U_DATA stash */
 #define PROC_SIZE   60 	    /* Memory needed per process including stash */
 
+/* Define number of processes */
 #define PTABSIZE    32
 
-/* Networking - disabled for now */
+/* Networking */
 #define CONFIG_NET
 #define CONFIG_NET_NATIVE
 
-/*
- *	Definitions for swapping - disabled for now
- */
-
-/* #define SWAPDEV     (swap_dev)*/	/* A variable for dynamic, or a device major/minor */
-//extern uint16_t swap_dev;
+/* No swap */
 #undef SWAPDEV
-//#define SWAP_SIZE   0x78 	/* Program +udata in blocks */
-//#define SWAPBASE    0x0000	/* We swap the lot in one, include the */
-//#define SWAPTOP	    0xF000	/* vectors so its a round number of sectors */
-
-//#define MAX_SWAPS	16	/* Maximum number of swapped out processes. */
-
-/*
- *	When the kernel swaps something it needs to map the right page into
- *	memory using map_for_swap and then turn the user address into a
- *	physical address. For a simple banked setup there is no conversion
- *	needed so identity map it.
- */
-#define swap_map(x) ((uint8_t *)((((x) & 0x3FFF)) + 0x4000))
 
 #define BOOTDEVICENAMES "hd#"
 
 /* We will resize the buffers available after boot. This is the normal setting */
 #define CONFIG_DYNAMIC_BUFPOOL
-/* Swap will be set up when a suitably labelled partition is seen */
-//#define CONFIG_DYNAMIC_SWAP
 
 /* Larger transfers (including process execution) should go directly not via
    the buffer cache. For all small (eg bit) systems this is the right setting

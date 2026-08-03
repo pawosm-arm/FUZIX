@@ -12,16 +12,11 @@
 	.export map_kernel_restore
     .export map_proc
 	.export map_proc_a
-    ;.export map_proc_di
 	.export map_proc_always
 	.export map_proc_always_di
 	.export map_save_kernel
 	.export map_restore
-	;.export map_kernel_restore
     .export map_for_swap
-	;.export mpgsel_cache
-    ;.export top_bank
-    ;.export _copy_common 
     .export plt_interrupt_all
 	.export _kernel_flag
 	.export _int_disabled
@@ -116,7 +111,7 @@ init_hardware:
 
     ; Enable fixed region from 0xf000 in MMU
     ld a,1
-    out (0x68), a
+    out (MFIXED_TOP), a
 
     ; Enable hardware TTY
     ld a, IO_SEL_TTY
@@ -201,8 +196,6 @@ _program_vectors:
     ld hl, null_handler   ;   to Our Trap Handler
     ld (0x0001), hl
 
-    ;jr map_kernel
-
 ;
 ;	Mapping set up for the SBCv2
 ;
@@ -222,10 +215,6 @@ map_kernel_di:
 map_kernel:
 map_kernel_restore:
 	push af
-    ;ld a, 'k'
-    ;call outchar
-	; ROMWBW TPA is last but one bank (last bank is high space)
-	; so for now we hardcode this. We should ask ROMWBW at boot
 	ld a,0x00
 	ld (mapreg),a
 	out (0x60), a
@@ -235,11 +224,10 @@ map_kernel_restore:
     out (0x64), a
     inc a
     out (0x66), a
-    ;inc a
-    ;out (0x64), a
     pop af
 	ret
-	; map_proc is called with HL either NULL or pointing to the
+	
+    ; map_proc is called with HL either NULL or pointing to the
 	; page mapping. Unlike the other calls it's allowed to trash AF
 map_proc:
 	ld a, h
@@ -255,28 +243,11 @@ map_proc_hl:
 	; identical routine.
 map_for_swap:
 map_proc_a:			; used by bankfork
-	;dec a		; We bias by 1 because 0 is a valid user
-
-	;push af
-    ;ld a, 'm'
-    ;call outchar
-    ;pop af
-;    push af
-;    add a,0x30
-;    call outchar
-;    pop af
-
     or a
     jr z, map_kernel ; page 0 is kernel
     push af
-    ;push bc
-    ;add a,0x30
-    ;call outchar
-    ;pop af
-    ;push af
-   
     ld (mapreg), a	; bank
-	; Calculate physical page (x4)
+	; Calculate physical page (a * 4)
     add a,a
     add a,a
     ; Set page register
