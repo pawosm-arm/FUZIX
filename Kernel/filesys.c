@@ -973,7 +973,7 @@ int f_trunc_blocks(register inoptr ino, uint16_t nblock)
 
     /* First deallocate the double indirect blocks */
     freeblk(dev, ino->c_node.i_addr[19], 2, map2);
-    if (map2)
+    if (map2 == 0)
         ino->c_node.i_addr[19] = 0;
 
     /* Also deallocate the indirect blocks */
