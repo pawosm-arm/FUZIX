@@ -56,7 +56,7 @@
 #define CONFIG_LARGE_IO_DIRECT(x)	1
 
 #define CONFIG_RTC
-#define CONFIG_RTC_INTERVAL	1
+#define CONFIG_RTC_INTERVAL	100
 
 /*
  * How fast does the clock tick (if present), or how many times a second do
