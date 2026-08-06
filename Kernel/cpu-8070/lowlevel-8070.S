@@ -153,13 +153,13 @@ unix_syscall_entry:
 	st	a,U_DATA__U_INSYS,p3	; we may want to use udata-> tricks ?
 	ld	p1,=kstack_top
 	jsr	map_kernel_di		; no-op in pure banked
-	and	s,=0xfe
+	or	s,=0x01			; enable interrupts
 	jsr	_unix_syscall
-	or	s,=0x01
+	and	s,=0xFE			; disable interrupts
 	ld	a,=0
 	ld	p3,=_udata
 	st	a,U_DATA__U_INSYS,p3
-	jsr	map_proc_always	; no-op in pure banked
+	jsr	map_proc_always
 	ld	ea,U_DATA__U_SYSCALL_SP,p3
 	ld	p1,ea
 
@@ -199,6 +199,7 @@ do_signal:
 	ld	ea,0,p3
 	sub	ea,=1			; because return adds 1
 	push	ea
+	or	s,=1			; interrupts back on
 	ret
 unwind:
 	pop	ea			; Discard argument
@@ -369,9 +370,10 @@ interrupt_handler:
 	ld	p3,=PROGLOAD+16
 	ld	ea,0,p3
 	sub	ea,=1			; because return adds 1
+	or	s,=1			; interrupts back on
 	push	ea
 	ret
-	or	s,=1			; not clear we need to do this
+	and	s,=0xFE			; not clear we need to do this
 irqunwind:
 	pop	ea			; remove signal number
 no_signals:
