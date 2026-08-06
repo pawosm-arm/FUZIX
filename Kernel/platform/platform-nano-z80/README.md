@@ -9,8 +9,5 @@ USB keyboard, interrupt driven
 Timer interrupt (100 Hz) + seconds from a psuedo RTC  
 SD card storage using tinydisk with custom low level code   
 
-## TODO
-Automatic copying of custom userspace files to disk image  
-
 ## Install
 See the [nano-z80 github page](https://github.com/venomix666/nano-z80) for details on how to setup both the FPGA board and SD-card.

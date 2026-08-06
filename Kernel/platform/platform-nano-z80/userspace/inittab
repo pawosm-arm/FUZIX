@@ -12,6 +12,7 @@ rc::bootwait:/etc/rc
 03:3:respawn:getty /dev/tty3
 04:3:respawn:getty /dev/tty4
 05:3:respawn:getty /dev/tty5
+06:3:off:getty /dev/tty6
 # Reboot
 bt:5:wait:/etc/rc.reboot
 # Shutdown
