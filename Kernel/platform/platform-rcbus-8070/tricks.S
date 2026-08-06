@@ -346,5 +346,4 @@ copyloop:
 	xch	a,e		; get top byte
 	bp	copyloop	; sign +ve  (ie below 0x8000)
 	pop	p2
-	ret
-
+	jmp	map_kernel_di	; as the ptab might not be above C000
