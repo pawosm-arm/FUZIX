@@ -166,7 +166,7 @@ void tty_setup(uint8_t minor, uint8_t flags)
 	uint8_t baud;
 	uint8_t ctrl = 3;		/* DTR|RTS */
 	struct tty *t = ttydata + minor;
-	
+
 	if (minor == 1)
 		return;
 
@@ -193,7 +193,7 @@ void tty_setup(uint8_t minor, uint8_t flags)
 		trs_flow |= (1 << minor);
 	else
 		trs_flow &- ~(1 << minor);
-	if (minor == 3) {
+	if (minor == 2) {
 		tr1865_ctrl_save = ctrl;
 		tr1865_ctrl = ctrl;
 	} else {
