@@ -32,7 +32,50 @@ tty3, tty4 reserved
 tty5 is 6551 ACIA (tested working @ 9600 baud)
 tty6, tty7 for DriveWire (untested)
 
-TODO (test/debug):
+
+RUNNING ON REAL HARDWARE
+========================
+
+You'll need a Dragon 64 with SAMx8 fitted, and a CoCoSDC.
+
+# Build the 'sdc' subtarget with CoCoSDC support
+$ make TARGET=dragon-samx8 SUBTARGET=sdc diskimage
+
+Copy "Images/dragon-samx8/fuzix-sdc.img" to your SD card, possibly as
+"FUZIX.VHD".
+
+On your Dragon, mount the VHD file (assuming Pere Serrat's DOSplus extender):
+
+SDRIVE1"FUZIX.VHD"
+
+Then type BOOT.  Type 'hda1' at the boot prompt.
+
+
+RUNNING UNDER EMULATION
+=======================
+
+We build a bootstrap floppy image which contains a bootloader and the kernel.
+Once the kernel starts, it has support to mount the real Fuzix image over
+DriveWire.
+
+# Build the 'emu' subtarget with DriveWire support
+$ make TARGET=dragon-samx8 SUBTARGET=emu diskimage
+
+# Serve the HD image over DriveWire.  You can use a more user-friendly
+# DriveWire server if you like.
+$ socat TCP4-LISTEN:65504,nodelay,fork,bind=127.0.0.1 SYSTEM:"lwwire drive=0\\,Images/dragon-samx8/filesys.img 2>/dev/null" &
+
+# Run XRoar as a Dragon 64 with SAMx8 fitted, with a "Becker port" enabled
+# DragonDOS cartridge.
+$ xroar -m dragon64 -machine-opt sam=samx8 -cart dragondos -cart-becker Images/dragon-samx8/fuzix-ddos.DSK
+
+XRoar should automatically type "BOOT" to boot off the mounted floppy.  Type
+'dw' at the boot prompt.  Remember when you finish that you have a socat job
+running in the background.
+
+
+TODO (test/debug)
+=================
 
  * swap
  * probably loads of other things
