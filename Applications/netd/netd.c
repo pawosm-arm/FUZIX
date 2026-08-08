@@ -710,17 +710,17 @@ int dokernel( void )
 	return 0;
 }
 
-/* 
+/*
    The next two functions wrap low-level device sending and receiving.
    This allows uip to connect to itself by short-circuiting frames
    we send that are destined for us.
 */
 void send_or_loop( void )
 {
-	/* 
+	/*
 	   This filters on layer 2 destination address. (mac address)
 	   for devices (like SLIP) that interface on layer 3 (ip),
-	   we'll have to filter for IP address, rather 
+	   we'll have to filter for IP address, rather
 	*/
 	static uint8_t broad[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
@@ -987,11 +987,13 @@ void cleanup(int sig)
 	exit(0);
 }
 
-int main( int argc, char *argv[] )
+int main( int argc, const char *argv[])
 {
 	int ret;
 	uip_ipaddr_t ipaddr;
 	uip_eth_addr ethaddr;       /* mac address buffer */
+
+	arguments(argc, argv);
 
 	signal(SIGHUP, cleanup);
 	signal(SIGINT, cleanup);

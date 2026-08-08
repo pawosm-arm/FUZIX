@@ -2,7 +2,7 @@
  * 	SLIP interface. Really we need select() support for this or to ruute
  *	slip via the kernel. TODO
  */
-  
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -112,7 +112,7 @@ static int slip_poll( void )
                 continue;
             }
             /* End of frame */
-            if (c == SLIP_END) { 
+            if (c == SLIP_END) {
                 int len = iptr - ibuf;
                 if (len == 0)
                     continue;
@@ -187,3 +187,11 @@ int device_init(void)
 
 uint8_t has_arp = 0;
 uint16_t mtu = 296;
+
+void arguments(int argc, const char *argv[])
+{
+  if (argc != 1) {
+    fprintf(stderr, "%s: unexpected arguments.\n");
+    exit(1);
+  }
+}
