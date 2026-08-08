@@ -1,7 +1,7 @@
 /*
   Fweeplet -- a Z-machine interpreter for versions 1 to 5 and 8
   This program is license under GNU GPL v3 or later version.
-  
+
   Cut down from 'fweep'
 
   V6 was mostly used for the graphical games, and V7 is a bit of a rarity
@@ -139,7 +139,7 @@ uint8_t alpha[78] =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ^0123456789.,!?_#'\"/\\-:()";
 #endif
 
-char *story_name;
+const char *story_name;
 int story = -1;
 byte auxname[11];
 boolean original = 1;
@@ -450,7 +450,7 @@ static void zwrite(uint16_t addr, uint8_t value)
 	if (addr < 64)
 		memory[addr] = value;
 }
-	
+
 /* Big endian */
 static uint16_t zword(uint32_t addr)
 {
@@ -510,7 +510,7 @@ void paging_init(void)
 			exit(1);
 		}
 	}
-	
+
 	membreak = static_start >> ZBUF_SHIFT;
 
 	lseek(story, 0, SEEK_SET);
@@ -539,7 +539,7 @@ void paging_restart(void)
 }
 
 #else
-		
+
 /*
  *	Memory management: Really only here for debug work
  */
@@ -746,24 +746,24 @@ void zch_print(int z)
 	} else if (z == 0) {
 		char_print(32);
 		zch_shift = zch_shiftlock;
-#if (VERSION == 1)		
+#if (VERSION == 1)
 	} else if (z == 1 && VERSION == 1) {
 		char_print(13);
 		zch_shift = zch_shiftlock;
-#endif		
+#endif
 	} else if (z == 1) {
 		zch_shift = 5;
-#if (VERSION > 2)		
+#if (VERSION > 2)
 	} else if ((z == 4 || z == 5) && VERSION > 2
 		   && (zch_shift == 1 || zch_shift == 2)) {
 		zch_shift = zch_shiftlock = zch_shift & (z - 3);
 #endif
-#if (VERSION < 3)		
+#if (VERSION < 3)
 	} else if (z == 4 && VERSION < 3) {
 		zch_shift = zch_shiftlock = (zch_shift + 1) % 3;
 	} else if (z == 5 && VERSION < 3) {
 		zch_shift = zch_shiftlock = (zch_shift + 2) % 3;
-#endif		
+#endif
 	} else if ((z == 2 && VERSION < 3) || z == 4) {
 		zch_shift = (zch_shift + 1) % 3;
 	} else if ((z == 3 && VERSION < 3) || z == 5) {
@@ -774,11 +774,11 @@ void zch_print(int z)
 		zch_shift = 7;
 	} else if (z == 6 && zch_shift == 2) {
 		zch_shift = 3;
-#if (VERSION != 1)		
+#if (VERSION != 1)
 	} else if (z == 7 && zch_shift == 2 && VERSION != 1) {
 		char_print(13);
 		zch_shift = zch_shiftlock;
-#endif		
+#endif
 	} else {
 		if (alphabet_table)
 			char_print(read8low
@@ -1340,7 +1340,7 @@ void game_save(uint8_t storage)
 	f = xopen(filename, O_WRONLY|O_CREAT|O_TRUNC, 0600);
 	if (f == -1)
 		goto bad;
-		
+
 	if (VERSION < 4)
 		branch(1);
 	else
@@ -1350,7 +1350,7 @@ void game_save(uint8_t storage)
 	   Deal with it! */
 	frameptr->pc = program_counter;
 	frameptr[1].start = stackptr;
-	
+
 	xwrite(f, frames, frameptr - frames + 1, sizeof(StackFrame));
 	xwrite(f, stack, stackptr, 2);
 
@@ -1414,7 +1414,7 @@ void game_restore(void)
 		goto bad;
 	frameptr = frames + n - 1;
 	stackptr = xread(f, stack, STACKSIZE, 2);
-	
+
 	if (xreadb(f) != 0xAA)
 		goto bad;
 
@@ -1433,7 +1433,7 @@ void game_restore(void)
 			while (c-- > 0)
 				write8(o++, xreadb(story));
 		}
-		else 
+		else
 			write8(o++, xreadb(story) ^ d);
 	}
 	if (xclose(f) == -1)
@@ -1443,7 +1443,7 @@ void game_restore(void)
 		write8(o++, xreadb(story));
 	program_counter = frameptr->pc;
 	return;
-	
+
 bad:
 	writes("Read error\n");
 	game_restart();
@@ -1768,10 +1768,10 @@ void execute_instruction(void)
 		break;
 	case 0xBA:		// Quit
 		text_flush();
-#ifdef DEBUG	
+#ifdef DEBUG
 		fprintf(stderr, "stackmax %d framemax %d\n", stackmax,
 			framemax);
-#endif			
+#endif
 		exit(0);
 		break;
 	case 0xBB:		// Line break
@@ -2171,7 +2171,7 @@ void execute_instruction(void)
 		exit(1);
 #else
 		panic("illegal");
-#endif				
+#endif
 		break;
 	}
 }
@@ -2268,8 +2268,21 @@ static void usage(void)
 	panic("fweep [-t] [-p] [-q] storyfile\n");
 }
 
-int main(int argc, char **argv)
+#ifndef TEST
+static char sbuf[32] = "/usr/lib/games/";
+#else
+static char sbuf[32] = "./";
+#endif
+static char stail[] = { '.', 'z', '0' + VERSION, 0 };
+
+int main(int argc, const char *argv[])
 {
+	const char *arg0 = strrchr(*argv, '/');
+	if (arg0 == NULL)
+		arg0 = *argv;
+	else
+		arg0++;
+
 	srand(getpid() ^ time(NULL));
 
 	/* cc65 isn't smart enough to do this at compile time */
@@ -2290,7 +2303,12 @@ int main(int argc, char **argv)
 				usage();
 		}
 	}
-	story_name = *argv++;
+	if (*argv == NULL) {
+		strncat(sbuf, arg0, 8);
+		story_name = sbuf;
+		strcat(sbuf, stail);
+	} else
+		story_name = *argv++;
 	if (!story_name || *argv)
 		usage();
 	game_begin();
