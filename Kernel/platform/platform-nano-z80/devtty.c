@@ -37,10 +37,10 @@
 /* 3V3 UART header ports */
 #define io_page_reg     0x7f
 #define io_page_uart    0x05
-#define uart_b_tx_data  0x04
-#define uart_b_tx_ready 0x05
-#define uart_b_rx_data  0x06
-#define uart_b_rx_avail 0x07
+#define uart_b_tx_data  0x7a
+#define uart_b_tx_ready 0x7b
+#define uart_b_rx_data  0x7c
+#define uart_b_rx_avail 0x7d
 #define uart_b_baud     0x08
 /*
  *	One buffer for each tty
@@ -280,7 +280,6 @@ void read_uart_a(void)
  */
 void read_uart_b(void) 
 {
-    out(io_page_reg, io_page_uart);
     while(in(uart_b_rx_avail)) {
         tty_inproc(TTY_SERA+1, in(uart_b_rx_data));
     }
