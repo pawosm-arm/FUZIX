@@ -346,27 +346,12 @@ _sd_read_block:
 
     ; Copy data to correct address
     ld hl, (_sd_ptr)
-    ld d, 0
+    ld b, 0
+    ld c, SD_DATA
 
-sd_read_loop:
-    ld a, d
-    out (SD_PAGE), a
-   
-    ld c, 0x80
-    ld b, 0x80
+    inir
+    inir
 
-sd_read_loop_inner:
-    in a, (c)
-    ld (hl),a
-    inc hl
-    inc c
-    djnz sd_read_loop_inner
-
-    inc d 
-    ld a,4
-    cp d
-    jr nz, sd_read_loop
-   
     call map_kernel
  
     pop hl
@@ -374,7 +359,6 @@ sd_read_loop_inner:
     pop bc
     pop af
     ret
-
 
 _sd_write_block:
     push af
@@ -388,25 +372,12 @@ _sd_write_block:
 
     ; Copy data from buffer to FPGA SD-buffer
     ld hl, (_sd_ptr)
-    ld d, 0
-sd_write_loop:
-    ld a, d
-    out (SD_PAGE), a
-    
-    ld c, 0x80
-    ld b, 0x80
-sd_write_loop_inner:
-    ld a, (hl)
-    out (c), a
-    inc hl
-    inc c
-    djnz sd_write_loop_inner
+    ld b, 0
+    ld c, SD_DATA
 
-    inc d
-    ld a, 4
-    cp d
-    jr nz, sd_write_loop
-    
+    otir
+    otir
+   
     ; Perform write
     ld a, 1
     out (SD_WR_STR), a
@@ -421,7 +392,6 @@ sd_write_loop_inner:
     pop af
  
     ret
-
 
 sd_init:
     ld a, IO_SEL_SD
