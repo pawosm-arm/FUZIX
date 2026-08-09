@@ -11,7 +11,7 @@
 
 
 // Place drives 64 Mb apart for now, starting with an offset of 128 Mb
-static uint32_t offset[2] = {0x00100000, 0x00110000};
+static uint32_t offset[2] = {0x00100000, 0x00120000};
 
 static void sd_set_addr(uint32_t address) {
     sd_sector0 = address & 0xff;
@@ -29,15 +29,9 @@ int nz80_sd_xfer(uint_fast8_t dev, bool is_read, uint32_t lba, uint8_t *dptr)
     sd_set_addr(lba + offset[dev]);
     sd_ptr = dptr;
 
-    /* Perform disk access with interrupts disabled as UART B interrupts
-     * may change the IO select register in the middle of disk access
-     * which would result in corruption.
-     */
-     
-    irq = di();
+    // Performed disk access
     if(is_read) sd_read_block();
     else sd_write_block();
-    irqrestore(irq);
 } 
 
 
