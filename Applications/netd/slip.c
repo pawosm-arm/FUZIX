@@ -18,6 +18,8 @@ static int fd;  /* fd of the tty */
 static char ibuf[297];
 static char *iptr = ibuf;
 
+const char *tty_filename = NULL;
+
 #define SLIP_END		0xC0
 #define SLIP_ESC		0xDB
 #define ESC_END			0xDC
@@ -163,10 +165,9 @@ static struct termios t;
 /* initialize network device */
 int device_init(void)
 {
-    /* FIXME: don't hard code */
-    fd=open( "/dev/tty4", O_RDWR|O_NOCTTY);
+    fd=open( tty_filename, O_RDWR|O_NOCTTY);
     if( fd < 0  || tcgetattr(fd, &t) < 0) {
-        perror("/dev/tty4");
+        perror(tty_filename);
 	return -1;
     }
     t.c_iflag  = IGNBRK;
@@ -179,7 +180,7 @@ int device_init(void)
     t.c_cc[VTIME] = 3;	/* 0.3 seconds */
 
     if (tcsetattr(fd, 0, &t) < 0) {
-        perror("/dev/tty4");
+        perror(tty_filename);
         return -1;
     }
     return 0;
@@ -190,8 +191,9 @@ uint16_t mtu = 296;
 
 void arguments(int argc, const char *argv[])
 {
-  if (argc != 1) {
-    fprintf(stderr, "%s: unexpected arguments.\n");
+  if (argc != 2) {
+    fprintf(stderr, "Usage: netd-slip device\n");
     exit(1);
   }
+  tty_filename = argv[1];
 }
