@@ -11,7 +11,7 @@
 
 
 // Place drives 64 Mb apart for now, starting with an offset of 128 Mb
-static uint32_t offset[2] = {0x00100000, 0x00110000};
+static uint32_t offset[2] = {0x00100000, 0x00120000};
 
 static void sd_set_addr(uint32_t address) {
     sd_sector0 = address & 0xff;
