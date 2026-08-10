@@ -182,7 +182,7 @@ patch5:
 	jsr	_main
 	pshb
 	psha
-	jmp	_exit
+	jsr	_exit
 
 	.bss
 _environ:
