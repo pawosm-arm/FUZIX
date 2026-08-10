@@ -1,32 +1,28 @@
-		.module crt0
+		.export _environ
+		.export head
 
-		.globl ___stdio_init_vars
-		.globl _main
-		.globl _exit
-		.globl _environ
-		.globl ___argv
+		.code
+head:
+		.word 0x80A8
+		.byte 0x04			; 6809
+		.byte 0x00			; 6309 not needed
+		.byte 0				; page to load at
+		.byte 0				; no hints
+		.word __data			; gives us header + all text segments
+		.word __data_size		; gives us data size info
+		.word __bss_size		; bss size info
+		.byte <start			; entry relative to start
+		.byte 0				; no chmem hint
+		.byte 0				; no stack hint
+		.byte 0				; ZP not used on 6809
 
-		.area .header
+		.word 0				; Patched for reloc ptr
 
-start:
-		.dw 0x80A8
-		.db 0x04			; 6809
-		.db 0x00			; 6309 not needed
-		.db __sectionbase_.header__/256	; page to load at
-		.db 0				; no hints
-		.dw __sectionbase_.data__-__sectionbase_.header__ ; gives us header + all text segments
-		.dw __sectionlen_.data__	; gives us data size info
-		.dw __sectionlen_.bss__		; bss size info
-		.db 18				; entry relative to start
-		.db 0				; no chmem hint
-		.db 0				; no stack hint
-		.db 0				; ZP not used on 6809
-
-		.dw 0				; Patched for reloc ptr
+		; TODO; signals
 
 		; We can be at any page aligned address but our base
 		; is passed in Y
-
+start:
 		tfr y,x				; Base into both
 		ldd 16,x			; Relocation offset from
 						; our header
@@ -71,17 +67,14 @@ reloc254:	; 255 means move on 254 but do not relocate
 relocdone:
 		; Fix up the BSS base
 		; This will be relocated before it is run
-		ldx #__sectionbase_.bss__+__sectionlen_.bss__
+		ldd #__bss
+		addd #__bss_size
+		pshs d
 		ldd #30				; brk(x)
 		swi				; and syscall
 		;
 		;  This jmp was relocated by the relocation loop above
 		;
-		jmp start2
-
-		.area .text
-
-start2:
 		; we don't clear BSS since the kernel already did
 
 		; pass environ, argc and argv to main
@@ -90,11 +83,9 @@ start2:
 		stx _environ
 		ldx 2,s
 		stx ___argv
-		puls x			; argc
-		ldy #_exit		; return vector
-		pshs y
-		jmp _main		; go
+		jsr _main		; go
+		pshs d
+		jsr _exit
 
-		.area .data
-
-_environ:	.dw 0
+		.data
+_environ:	.word 0
