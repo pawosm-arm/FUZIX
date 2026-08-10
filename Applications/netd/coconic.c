@@ -124,6 +124,7 @@ int device_read( uint8_t *buf, int len )
 */
 int device_init( void )
 {
+  uint16_t id;
     /* change card's address */
     cardctl = 0x55;
     cardctl = 0xaa;
@@ -132,7 +133,7 @@ int device_init( void )
     cardctl = 0x60;
 
     /* check for card */
-    uint16_t id = getpp( 0x0000 );
+    id = getpp( 0x0000 );
     if( id != 0x630e ){
 	fprintf( stderr, "CoCoNIC card not found\n", id );
 	return -1;
