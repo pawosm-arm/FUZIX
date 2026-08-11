@@ -85,7 +85,7 @@ init_hardware:
 	lda #0x01
 	sta 1,x			; Back to CR1
 	clr ,x			; out of reset
-	rts
+	jmp set_vector
 
         .area .common
 
@@ -115,6 +115,18 @@ ___hard_irqrestore:		; B holds the data
 ;	change if we move to properly using the paging.
 ;
 _program_vectors:
+	lda	,x
+	sta	0xFE78		; map low page
+	jsr	set_vector
+	lda	#0x20
+	sta	0xFE78
+	rts
+
+set_vector:
+	lda	#0x7E
+	sta	0
+	ldd	#null_handler
+	sta	1
 	rts
 
 ;
