@@ -14,17 +14,16 @@ head:
 		.byte <start			; entry relative to start
 		.byte 0				; no chmem hint
 		.byte 0				; no stack hint
-		.byte 0				; ZP not used on 6809
+		.byte 0				; ZP not supported
 
+		.word 0				; Signals (unused)
 		.word 0				; Patched for reloc ptr
-
-		; TODO; signals
 
 		; We can be at any page aligned address but our base
 		; is passed in Y
 start:
 		tfr y,x				; Base into both
-		ldd 16,x			; Relocation offset from
+		ldd 18,x			; Relocation offset from
 						; our header
 		leay d,y			; To relocation base
 
@@ -69,9 +68,11 @@ relocdone:
 		; This will be relocated before it is run
 		ldd #__bss
 		addd #__bss_size
-		pshs d
+		std ,--s
+		std ,--s
 		ldd #30				; brk(x)
 		swi				; and syscall
+		leas 4,s
 		;
 		;  This jmp was relocated by the relocation loop above
 		;
@@ -80,12 +81,12 @@ relocdone:
 		; pass environ, argc and argv to main
 		; pointers and data stuffed above stack by execve()
 		leax 4,s
-		stx _environ
+		stx _environ,pc
 		ldx 2,s
-		stx ___argv
-		jsr _main		; go
+		stx ___argv,pc
+		lbsr _main		; go
 		pshs d
-		jsr _exit
+		lbsr _exit
 
 		.data
 _environ:	.word 0

@@ -13,13 +13,13 @@ head:
 	.byte 0x00			; 6309 not needed
 	.byte 1				; page to load at
 	.byte 0				; no hints
-	.word  __data-0x0100		; gives us header + all text segments
-	.word  __data_size		; gives us data size info
-	.word  __bss_size		; bss size info
+	.word __data-0x0100		; gives us header + all text segments
+	.word __data_size		; gives us data size info
+	.word __bss_size		; bss size info
 	.byte <start			; entry relative to start
 	.byte 0				; no chmem hint
 	.byte 0				; no stack hint
-	.byte 0				; ZP not used on 6809
+	.byte __zp_size			; ZP size
 
 	; TODO signal handler, relocations
 

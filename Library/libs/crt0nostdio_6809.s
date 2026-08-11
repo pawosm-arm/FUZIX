@@ -19,7 +19,7 @@ head:
 	.byte <start			; entry relative to start
 	.byte 0				; no chmem hint
 	.byte 0				; no stack hint
-	.byte 0				; ZP not used on 6809
+	.byte _zp_size			; ZP space
 
 	; TODO signal handler, relocations
 
