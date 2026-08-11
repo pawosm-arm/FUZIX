@@ -73,7 +73,7 @@
 unix_syscall_entry:
 	leax 14,s	; 12 stacked by the swi + return address of caller
 	ldy #U_DATA__U_ARGN
-	ldd 4,s		; first argument in swi stacked X
+	ldd ,x++	; first argument in swi stacked X
 	std ,y++
 	ldd ,x++	; second argument from caller's stack
 	std ,y++
