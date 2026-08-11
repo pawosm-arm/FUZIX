@@ -1,13 +1,14 @@
 ** ENGINEERING WORK IN PROGRESS **
 
 Z80 is now mostly migrated to new compiler (all user space most kernels), 
-6800, 8070, 8080, 8085, are migrated and should be reasonably stable again.
+6303, 6800, 8070, 8080, 8085, are migrated and should be reasonably stable
+again.
 
 6502 is migrated but there are a few compiler bugs left to nail it seems.
-6303 and 6803 are currently being migrated to the new compiler so are broken
-for the moment.
 
-To follow: migrating 6809, 68HC11.
+Starting 6809 migration - so 6809 is all currently broken
+
+To follow: migrating 68HC11.
 
 68000, NS32K, ESP8266, ARM use gcc and will continue to do so at least for
 the near term. NS32K we may be forced to change compiler eventually.
