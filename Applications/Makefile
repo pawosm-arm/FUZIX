@@ -1,6 +1,6 @@
 #
 APPS = util cmd sh games cave cpm v7games games cursesgames \
-       ld09 netd MWC flashrom ue cpmfs plato \
+       netd MWC flashrom ue cpmfs plato \
        emulators cpnet dw assembler CC cpp ar \
        2048 db
 
@@ -34,9 +34,6 @@ games:
 
 cursesgames:
 	+(cd cursesgames; $(MAKE) -f Makefile.$(USERCPU))
-
-ld09:
-	+(cd ld09; $(MAKE) -f Makefile.$(USERCPU))
 
 netd:
 	+(cd netd; $(MAKE) -f Makefile.$(USERCPU))
