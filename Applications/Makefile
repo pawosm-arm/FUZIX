@@ -90,7 +90,6 @@ clean:
 	(cd games; $(MAKE) -f Makefile.$(USERCPU) clean)
 	(cd games/2048; $(MAKE) -f Makefile.$(USERCPU) clean)
 	(cd cursesgames; $(MAKE) -f Makefile.$(USERCPU) clean)
-	(cd ld09; $(MAKE) -f Makefile.$(USERCPU) clean)
 	(cd netd; $(MAKE) -f Makefile.$(USERCPU) clean)
 	(cd MWC/cmd; $(MAKE) -f Makefile.$(USERCPU) clean)
 	(cd flashrom; $(MAKE) -f Makefile.$(USERCPU) clean)
