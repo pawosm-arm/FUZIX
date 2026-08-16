@@ -866,7 +866,6 @@ void enter_routine(uint32_t address, boolean stored, int argc)
 	int c = read8(address);
 	int i;
 
-	fflush(stdout);
 	if (frameptr == &frames[FRAMESIZE - 1])
 		panic("out of frames.\n");
 
