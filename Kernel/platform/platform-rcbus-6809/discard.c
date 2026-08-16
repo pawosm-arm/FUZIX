@@ -17,7 +17,7 @@ void pagemap_init(void)
 	pagemap_add(0x23);
 }
 
-uint8_t plt_param(char *p)
+uint_fast8_t plt_param(char *p)
 {
 	return 0;
 }
