@@ -42,8 +42,10 @@ $(DAOBJS): %$(BINEXT): ../../dev/%.s
 clean:
 	rm -f *.o *~
 
+# Code at 0x0100 then segments follow until we hit the commondata (F200) and then
+# the common code follows that
 image:
-	$(CROSS_LD) -b -C 0x100 -S 0xF200 -Z 0x00 -o ../../fuzix.bin -m=fuzix.tmpmap \
+	$(CROSS_LD) -b -C 0x100 -8 0xF200 -Z 0x00 -f CLDBbXsS -o ../../fuzix.bin -m fuzix.tmpmap \
 	crt0.o commonmem.o mem-rcbus.o \
 	rcbus-6809.o ../../mm/bank16k.o ../../dev/ds1302.o ds1302_6809.o \
 	../../devinput.o devinput.o ../../mm/memalloc_none.o \
