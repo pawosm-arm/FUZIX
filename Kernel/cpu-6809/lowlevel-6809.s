@@ -1,99 +1,134 @@
+# 0 "cpu-6809/lowlevel-6809.S"
+# 0 "<built-in>"
+# 0 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3
+# 0 "<command-line>" 2
+# 1 "cpu-6809/lowlevel-6809.S"
 ;
-;	Common elements of low level interrupt and other handling. We
+; Common elements of low level interrupt and other handling. We
 ; collect this here to minimise the amount of platform specific gloop
 ; involved in a port
 ;
-;	Based upon code (C) 2013 William R Sowerbutts
+; Based upon code (C) 2013 William R Sowerbutts
 ;
 
-	.module lowlevel
+ .export _swab
 
-	; compiler support
-	.globl	_euclid
-	.globl	_udivhi3
-	.globl	_umodhi3
-	.globl  _mulhi3
-	.globl	_ashlhi3
-	.globl	_ashrhi3
-	.globl	_lshrhi3
-	.globl	___ashlsi3
-	.globl  ___ashrsi3
-	.globl	_swab
-
-	; debugging aids
-	.globl outcharhex
-	.globl outd,outx,outy
-	.globl outnewline
-	.globl outstring
-	.globl outstringhex
-	.globl outnibble
-
-	; platform provided functions
-	.globl map_kernel
-	.globl map_proc_always
-        .globl map_save
-        .globl map_restore
-	.globl outchar
-	.globl _need_resched
-	.globl _plt_interrupt
+ ; debugging aids
+ .export outcharhex
+ .export outd
+ .export outx
+ .export outy
+ .export outnewline
+ .export outstring
+ .export outstringhex
+ .export outnibble
 
         ; exported symbols
-        .globl unix_syscall_entry
-	.globl null_handler
-	.globl _system_tick_counter
-	.globl unix_syscall_entry
-	.globl dispatch_process_signal
-        .globl _doexec
-        .globl trap_illegal
-	.globl nmi_handler
-	.globl interrupt_handler
-	.globl _sys_cpu
-	.globl _sys_cpu_feat
-	.globl _sys_stubs
-	.globl _set_cpu_type
+        .export unix_syscall_entry
+ .export null_handler
+ .export unix_syscall_entry
+ .export dispatch_process_signal
+        .export _doexec
+        .export trap_illegal
+ .export nmi_handler
+ .export interrupt_handler
+ .export _sys_cpu
+ .export _sys_cpu_feat
+ .export _sys_stubs
+ .export _set_cpu_type
 
-        ; imported symbols
-        .globl _plt_monitor
-        .globl _unix_syscall
-        .globl outstring
-        .globl kstack_top
-	.globl istack_switched_sp
-	.globl istack_top
-	.globl _ssig
+# 1 "cpu-6809/../build/kernel.def" 1
+; FUZIX mnemonics for memory addresses etc
 
-        include "../build/kernel.def"
-        include "kernel09.def"
+U_DATA equ 0xFB00 ; (this is struct u_data from kernel.h)
+U_DATA__TOTALSIZE equ 0x200 ; 256+256 (we don't save istack)
 
-        .area .common
+U_DATA_STASH equ 0xBE00 ; BE00-BFFF
+
+IDEDATA equ 0xFE10
+
+PROGBASE equ 0x0100 ; programs and data start here
+
+NBUFS equ 5
+
+; This assumes a 1.8432MHz E clock to get 10Hz system timer.
+CLKVAL equ ((184320 / 8) - 1)
+# 36 "cpu-6809/lowlevel-6809.S" 2
+# 1 "cpu-6809/kernel09.def" 1
+; Keep these in sync with struct u_data!!
+U_DATA__U_PTAB equ 0 ; struct p_tab*
+U_DATA__U_PAGE equ 2 ; uint16_t
+U_DATA__U_PAGE2 equ 4 ; uint16_t
+U_DATA__U_INSYS equ 6 ; bool
+U_DATA__U_CALLNO equ 7 ; uint8_t
+U_DATA__U_SYSCALL_SP equ 8 ; void *
+U_DATA__U_RETVAL equ 10 ; int16_t
+U_DATA__U_ERROR equ 12 ; int16_t
+U_DATA__U_SP equ 14 ; void *
+U_DATA__U_ININTERRUPT equ 16 ; bool
+U_DATA__U_CURSIG equ 17 ; int8_t
+U_DATA__U_ARGN equ 18 ; uint16_t
+U_DATA__U_ARGN1 equ 20 ; uint16_t
+U_DATA__U_ARGN2 equ 22 ; uint16_t
+U_DATA__U_ARGN3 equ 24 ; uint16_t
+U_DATA__U_ISP equ 26 ; void * (initial stack pointer when _exec()ing)
+U_DATA__U_TOP equ 28 ; uint16_t
+U_DATA__U_BREAK equ 30 ; uint16_t
+U_DATA__U_CODEBASE equ 32 ; uint16_t
+U_DATA__U_SIGVEC equ 34 ; table of function pointers (void *)
+
+; Keep these in sync with struct p_tab!!
+P_TAB__P_STATUS_OFFSET equ 0
+P_TAB__P_FLAGS_OFFSET equ 1
+P_TAB__P_TTY_OFFSET equ 2
+P_TAB__P_PID_OFFSET equ 3
+P_TAB__P_PAGE_OFFSET equ 15
+
+P_RUNNING equ 1 ; value from include/kernel.h
+P_READY equ 2 ; value from include/kernel.h
+
+PFL_BATCH equ 4 ; value from include/kernel.h
+
+OS_BANK equ 0 ; value from include/kernel.h
+
+EAGAIN equ 11 ; value from include/kernel.h
+
+
+; Keep in sync with struct blkbuf
+BUFSIZE equ 520
+# 37 "cpu-6809/lowlevel-6809.S" 2
+
+        .common
 
 ; entry point for Fuzix system calls
 ;
 ; Called by swi, which has already saved our CPU state for us
 ;
 unix_syscall_entry:
-	leax 14,s	; 12 stacked by the swi + return address of caller
-	ldy #U_DATA__U_ARGN
-	ldd ,x++	; first argument in swi stacked X
-	std ,y++
-	ldd ,x++	; second argument from caller's stack
-	std ,y++
-	ldd ,x++ 	; third
-	std ,y++
-	ldd ,x++ 	; fourth
-	std ,y++
-	ldd 1,s		; stacked D register -> syscall number in B
-	stb U_DATA__U_CALLNO
+ leax 14,s ; 12 stacked by the swi + return address of caller
+ ldy #U_DATA__U_ARGN
+ ldd ,x++ ; first argument in swi stacked X
+ std ,y++
+ ldd ,x++ ; second argument from caller's stack
+ std ,y++
+ ldd ,x++ ; third
+ std ,y++
+ ldd ,x++ ; fourth
+ std ,y++
+ ldd 1,s ; stacked D register -> syscall number in B
+ stb _udata + U_DATA__U_CALLNO
         ; save process stack pointer (in user page)
-        sts U_DATA__U_SYSCALL_SP
+        sts _udata + U_DATA__U_SYSCALL_SP
         ; switch to kernel stack (makes our stack valid again)
         lds #kstack_top
 
-	; we are in syscall state
-	lda #1
-	sta U_DATA__U_INSYS
+ ; we are in syscall state
+ lda #1
+ sta _udata + U_DATA__U_INSYS
 
         ; map in kernel keeping common
-	jsr map_kernel
+ jsr map_kernel
 
         ; re-enable interrupts
         andcc #0xef
@@ -102,265 +137,265 @@ unix_syscall_entry:
         jsr _unix_syscall
 
         orcc #0x10
-	; let the interrupt logic know we are not in kernel mode any more
-	clr U_DATA__U_INSYS
+ ; let the interrupt logic know we are not in kernel mode any more
+ clr _udata + U_DATA__U_INSYS
 
         ; map process memory back in based on common (common may have
         ; changed on a task switch)
         jsr map_proc_always
 
         ; switch back to user stack
-        lds U_DATA__U_SYSCALL_SP
+        lds _udata + U_DATA__U_SYSCALL_SP
 
-	; stack is now valid but user stack
+ ; stack is now valid but user stack
         ; check for signals, call the handlers
         jsr dispatch_process_signal
 
         ; check if error condition to be signalled on return
-        ldd U_DATA__U_ERROR
-	beq not_error
-	ldx #-1	
+        ldd _udata + U_DATA__U_ERROR
+ beq not_error
+ ldx #-1
         ; error code in d, result in x
         bra unix_return
 
 not_error:
         ; no error to signal! return syscall return value instead of error code
-        ldx U_DATA__U_RETVAL
+        ldx _udata + U_DATA__U_RETVAL
 unix_return:
-	; we never make a syscall from in kernel space
-	stx 4,s		; replace stacked values before rti
-	std 1,s
-	rti
+ ; we never make a syscall from in kernel space
+ stx 4,s ; replace stacked values before rti
+ std 1,s
+ rti
 ;
-;	We must rts on the right bank !
+; We must rts on the right bank !
 ;
 dispatch_process_signal:
         ; check if any signal outstanding
-        ldb U_DATA__U_CURSIG
+        ldb _udata + U_DATA__U_CURSIG
         beq dosigrts
 
-	; The signal handler is entitled to make syscalls which will
-	; in turn trash these two
-	ldx U_DATA__U_RETVAL
-	ldy U_DATA__U_ERROR
-	pshs x,y
+ ; The signal handler is entitled to make syscalls which will
+ ; in turn trash these two
+ ldx _udata + U_DATA__U_RETVAL
+ ldy _udata + U_DATA__U_ERROR
+ pshs x,y
         ; put number in X as the argument for the signal handler
-	; so extend it to 16bit
-	clra
-	tfr d,x
+ ; so extend it to 16bit
+ clra
+ tfr d,x
 
-	lslb		;	2 bytes per entry
+ lslb ; 2 bytes per entry
         ; load the address of signal handler function
-	ldy #U_DATA__U_SIGVEC
-	leay b,y
-	ldu ,y		; now u = udata.u_sigvec[cursig]
+ ldy #_udata + U_DATA__U_SIGVEC
+ leay b,y
+ ldu ,y ; now u = udata.u_sigvec[cursig]
 
         ; udata.u_cursig = 0;
-	clr U_DATA__U_CURSIG
+ clr _udata + U_DATA__U_CURSIG
 
         ; restore signal handler to the default.
         ; udata.u_sigvec[cursig] = SIG_DFL;
         ; SIG_DFL = 0
-	clr ,y+
-	clr ,y
+ clr ,y+
+ clr ,y
 
         andcc #0xef
-	jsr ,u
+ jsr ,u
 
 signal_return:
         orcc #0x10
-	puls x,y
-	stx U_DATA__U_RETVAL
-	sty U_DATA__U_ERROR
+ puls x,y
+ stx U_DATA__U_RETVAL
+ sty U_DATA__U_ERROR
 dosigrts:
         rts
 
 _doexec:
-	; x is the jump address
+ ; x is the jump address
         orcc #0x10
-	; this is a funny extra path out of syscall so we must also cover
-	; the exit from kernel here
+ ; this is a funny extra path out of syscall so we must also cover
+ ; the exit from kernel here
 
-	; map task into address space
-	; preserves x
+ ; map task into address space
+ ; preserves x
         jsr map_proc_always
 
-	; base address
-	ldy U_DATA__U_CODEBASE
+ ; base address
+ ldy _udata + U_DATA__U_CODEBASE
         ; u_data.u_insys = false
-        clr U_DATA__U_INSYS
-	; At this point the stack goes invalid
-        lds U_DATA__U_ISP
-	andcc #0xef			; IRQs on
+        clr _udata + U_DATA__U_INSYS
+ ; At this point the stack goes invalid
+        lds _udata + U_DATA__U_ISP
+ andcc #0xef ; IRQs on
         jmp ,x
 
 ;
-;	Very simple IRQ handler, we get interrupts and we may have to
-;	poll ttys from it. The more logic we could move to common here the
-;	better.
+; Very simple IRQ handler, we get interrupts and we may have to
+; poll ttys from it. The more logic we could move to common here the
+; better.
 ;
 
 
 ;
-;	Called when interrupts have been re-enabled within the timer
-;	interrupt. We hand it to the platform re-interrupt handler. If
-;	none is expected then it can panic, or if the platform is clever
-;	it can do the needed work.
+; Called when interrupts have been re-enabled within the timer
+; interrupt. We hand it to the platform re-interrupt handler. If
+; none is expected then it can panic, or if the platform is clever
+; it can do the needed work.
 ;
 reinterrupt:
-	jsr _plt_reinterrupt
-	; Signals and other magic will happen when the first level of
-	; interrupt handling returns
-	rti
+ jsr _plt_reinterrupt
+ ; Signals and other magic will happen when the first level of
+ ; interrupt handling returns
+ rti
 
 interrupt_handler:
-	; If the platform interrupt code re-enabled interrupts then
-	; we are on the interrupt stack already and platform author
-	; is assumed to know what they are doing 8)
-	tst U_DATA__U_ININTERRUPT
-	bne reinterrupt
+ ; If the platform interrupt code re-enabled interrupts then
+ ; we are on the interrupt stack already and platform author
+ ; is assumed to know what they are doing 8)
+ tst _udata + U_DATA__U_ININTERRUPT
+ bne reinterrupt
 
-	; Do not use the stack before the switch...
-	; FIXME: add profil support here (need to keep profil ptrs
-	; unbanked if so ?)
+ ; Do not use the stack before the switch...
+ ; FIXME: add profil support here (need to keep profil ptrs
+ ; unbanked if so ?)
 
-	lda #1
-        sta U_DATA__U_ININTERRUPT
+ lda #1
+        sta _udata + U_DATA__U_ININTERRUPT
 
         ; switch stacks
         sts istack_switched_sp
         lds #istack_top
 
-	jsr map_save
+ jsr map_save
 
-	ldb U_DATA__U_INSYS	; In a system call ?
-	bne in_kernel
+ ldb _udata + U_DATA__U_INSYS ; In a system call ?
+ bne in_kernel
 
         ; we're not in kernel mode, check for signals and fault
-	lda #0x7e
-	cmpa 0		; JMP at 0?
-	beq nofault	; yes?  not a fault
-	sta 0		; fault - put JMP back
-	jsr map_kernel
-	ldb #11		; SIGSEGV
-	jsr trap_signal	; signal the user with a fault
+ lda #0x7e
+ cmpa 0 ; JMP at 0?
+ beq nofault ; yes? not a fault
+ sta 0 ; fault - put JMP back
+ jsr map_kernel
+ ldb #11 ; SIGSEGV
+ jsr trap_signal ; signal the user with a fault
 
 nofault:
 in_kernel:
         jsr map_kernel
 
-	;
-	; If the kernel decides to task switch it will set
-	; _need_resched, and will only do so if the caller was in
-	; user space so has a free kernel stack
+ ;
+ ; If the kernel decides to task switch it will set
+ ; _need_resched, and will only do so if the caller was in
+ ; user space so has a free kernel stack
 
         jsr _plt_interrupt
 
-        ldx istack_switched_sp	; stack back
-        clr U_DATA__U_ININTERRUPT
-        lda U_DATA__U_INSYS
-        bne interrupt_return_x
-	lda _need_resched
-	beq no_switch
+        ldx istack_switched_sp ; stack back
+        clr _udata + U_DATA__U_ININTERRUPT
+        lda _udata + U_DATA__U_INSYS
+        bne intret_x
+ lda _need_resched
+ beq no_switch
 
-	clr _need_resched
-	stx U_DATA__U_SYSCALL_SP	; save again somewhere safe for
-					; preemption
-	; Pre emption occurs on the task stack. Conceptually its a
-	; not quite a syscall
-	lds #kstack_top
-	jsr _chksigs		; check signal state
-	;
-	ldx U_DATA__U_PTAB
-	; Move to ready state
-	lda P_TAB__P_STATUS_OFFSET,x
-	cmpa #P_RUNNING
-	bne not_running
-	lda #P_READY
-	sta P_TAB__P_STATUS_OFFSET,x
+ clr _need_resched
+ stx _udata + U_DATA__U_SYSCALL_SP ; save again somewhere safe for
+     ; preemption
+ ; Pre emption occurs on the task stack. Conceptually its a
+ ; not quite a syscall
+ lds #kstack_top
+ jsr _chksigs ; check signal state
+ ;
+ ldx _udata + U_DATA__U_PTAB
+ ; Move to ready state
+ lda P_TAB__P_STATUS_OFFSET,x
+ cmpa #P_RUNNING
+ bne not_running
+ lda #P_READY
+ sta P_TAB__P_STATUS_OFFSET,x
 not_running:
-	; Sleep on the kernel stack, IRQs will get re-enabled if need
-	; be
-	jsr _plt_switchout
-	;
-	; We will resume here after the pre-emption. Get back onto
-	; the user stack and map ourself in
-	jsr map_proc_always
-	lds U_DATA__U_SYSCALL_SP
-	bra intdone
+ ; Sleep on the kernel stack, IRQs will get re-enabled if need
+ ; be
+ jsr _plt_switchout
+ ;
+ ; We will resume here after the pre-emption. Get back onto
+ ; the user stack and map ourself in
+ jsr map_proc_always
+ lds _udata + U_DATA__U_SYSCALL_SP
+ bra intdone
 
-	    ; Not task switching - the easy and usual path
-no_switch:   
-	; On a return from an interrupt restore the old mapping as it
-	; will vary during kernel activity and we need to put it put
-	; it back as it was before the interrupt
-	; pre-emption is handled differently...
-	jsr map_restore
-	lds istack_switched_sp
+     ; Not task switching - the easy and usual path
+no_switch:
+ ; On a return from an interrupt restore the old mapping as it
+ ; will vary during kernel activity and we need to put it put
+ ; it back as it was before the interrupt
+ ; pre-emption is handled differently...
+ jsr map_restore
+ lds istack_switched_sp
 
-intdone: 
+intdone:
         ; we're not in kernel mode, check for signals
-	; runs off the user stack
-	pshs y
+ ; runs off the user stack
+ pshs y
         jsr dispatch_process_signal
-	puls y
+ puls y
 
-interrupt_return:
+intret:
         rti
-	;	From kernel
-	;	Restore the user mapping then
-	;	switch to the user stack ptr
-interrupt_return_x:
-	jsr map_restore
-	tfr x,s
-	bra interrupt_return
+ ; From kernel
+ ; Restore the user mapping then
+ ; switch to the user stack ptr
+intret_x:
+ jsr map_restore
+ tfr x,s
+ bra intret
 
-;  Enter with B being the signal to send ourself
+; Enter with B being the signal to send ourself
 trap_signal:
-	ldx U_DATA__U_PTAB	;  ssig(pid, B)
-	jmp _ssig
+ ldx _udata + U_DATA__U_PTAB ; ssig(pid, B)
+ jmp _ssig
 
-;  Called from process context (hopefully)
+; Called from process context (hopefully)
 null_handler:
-	; kernel jump to NULL is bad
-	lda U_DATA__U_INSYS
-	bne trap_illegal
-	; user is merely not good
-	; check order of push arguments !!
-	ldx #7			; SIGBUS
-	pshs d,x		; D only to fill stack (no caller)
-	ldx U_DATA__U_PTAB
-	ldb #39			; Function 39 = kill
-	swi			; kill (getpid(), SIGBUS)
-	leas 4,s
-	ldx #0
-	clrb			; Function 0 = exit
-	swi			; exit (0)
+ ; kernel jump to NULL is bad
+ lda _udata + U_DATA__U_INSYS
+ bne trap_illegal
+ ; user is merely not good
+ ; check order of push arguments !!
+ ldx #7 ; SIGBUS
+ pshs d,x ; D only to fill stack (no caller)
+ ldx _udata + U_DATA__U_PTAB
+ ldb #39 ; Function 39 = kill
+ swi ; kill (getpid(), SIGBUS)
+ leas 4,s
+ ldx #0
+ clrb ; Function 0 = exit
+ swi ; exit (0)
 
 illegalmsg: .ascii "[trap_illegal]"
-        .db 13,10,0
+        .byte 13,10,0
 
 trap_illegal:
-	ldx #illegalmsg
-	jsr outstring
-	jsr _plt_monitor
+ ldx #illegalmsg
+ jsr outstring
+ jsr _plt_monitor
 
-dpsmsg:	.ascii "[dispsig]"
-        .db 13,10,0
+dpsmsg: .ascii "[dispsig]"
+        .byte 13,10,0
 
 
 nmimsg: .ascii "[NMI]"
-        .db 13,10,0
+        .byte 13,10,0
 
 nmi_handler:
-	lds #istack_top		; We aren't coming back so this is ok
-	jsr map_kernel
+ lds #istack_top ; We aren't coming back so this is ok
+ jsr map_kernel
         ldx #nmimsg
-	jsr outstring
+ jsr outstring
         jsr _plt_monitor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;	CPU type management
+; CPU type management
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; We don't use the stubs as we have a proper architected syscalling
@@ -368,302 +403,97 @@ nmi_handler:
 ; but uninteresting noise
 _sys_stubs:
 
-	.area .commondata
+ .commondata
 
 _sys_cpu:
-	.byte 4
+ .byte 4
 _sys_cpu_feat:
-	.byte 0
+ .byte 0
 
-	.area .common
+ .common
 ;
-;	Check for a 6309 (as per The 6309 Book)
+; Check for a 6309 (as per The 6309 Book)
 ;
 _set_cpu_type:
-	pshs d
-	.dw 0x1043
-	cmpb 1,s
-	puls d
-	beq is8
-	lda #1
-	sta _sys_cpu_feat
+ pshs d
+ .word 0x1043
+ cmpb 1,s
+ puls d
+ beq is8
+ lda #1
+ sta _sys_cpu_feat
 is8:
-	rts
+ rts
 
 
 ; outstring: Print the string at X until 0 byte is found
 ; destroys: A, X
 outstring:
-	lda ,x+
-	beq outstrdone
+ lda ,x+
+ beq outstrdone
         jsr outchar
         bra outstring
 outstrdone:
-	rts
+ rts
 
 ; print the string at (X) in hex (continues until 0 byte seen)
 outstringhex:
-	lda ,x+
-	beq outstrdone
+ lda ,x+
+ beq outstrdone
         jsr outcharhex
-	lda #32
-	jsr outchar
+ lda #32
+ jsr outchar
         bra outstringhex
 
 ; output a newline
 outnewline:
-        lda #0x0d  ; output newline
+        lda #0x0d ; output newline
         jsr outchar
         lda #0x0a
         jsr outchar
         rts
 
-outx:  ; prints X
-	pshs d
-	tfr x,d
-	bsr outd
-	puls d,pc
+outx: ; prints X
+ pshs d
+ tfr x,d
+ bsr outd
+ puls d,pc
 
-outy:  ; prints Y
-	pshs d
-	tfr y,d
-	bsr outd
-	puls d,pc
+outy: ; prints Y
+ pshs d
+ tfr y,d
+ bsr outd
+ puls d,pc
 
-outd:  ; prints D in hex.
-	pshs b
-	bsr outcharhex
-	puls a
-	; FALL THROUGH
+outd: ; prints D in hex.
+ pshs b
+ bsr outcharhex
+ puls a
+ ; FALL THROUGH
 
 ; print the byte in A as a two-character hex value
 outcharhex:
-	pshs a
+ pshs a
         lsra
         lsra
         lsra
         lsra
         bsr outnibble
-	puls a
-	; FALL THROUGH
+ puls a
+ ; FALL THROUGH
 
 ; print the nibble in the low four bits of A
 outnibble:
         anda #0x0f ; mask off low four bits
         cmpa #9
-        ble num    ; less than 10?
+        ble num ; less than 10?
         adda #0x07 ; start at 'A' (10+7+0x30=0x41='A')
-num:    adda #0x30 ; start at '0' (0x30='0')
+num: adda #0x30 ; start at '0' (0x30='0')
         jsr outchar
         rts
 
 
-div0:
-	ldx	#div0msg
-	jsr	outstring
-	jsr	_plt_monitor
-div0msg	.ascii	'Divby0'
-	.db	13,10,0
-;
-;	Maths helpers - could be called from anywhere in C code
-;	From the GCC support code (except for swab)
-;
-_umodhi3:
-	ldd	2,s
-	beq	div0
-	pshs	x
-	jsr	_euclid
-	leas	2,s
-	tfr	d,x
-	rts
-
-_udivhi3:
-	ldd	2,s
-	beq	div0
-	pshs	x
-	jsr	_euclid
-	puls	x,pc
-
-	left=5
-	right=1			; word
-	count=0			; byte
-	CARRY=1			; alias
-_euclid:
-	leas	-3,s		; 2 local variables
-	clr	count,s		; prescale divisor
-	inc	count,s
-	tsta
-presc:
-	bmi	presc_done
-	inc	count,s
-	aslb
-	rola
-	bra	presc
-presc_done:
-	std	right,s
-	ldd	left,s
-	clr	left,s		; quotient = 0
-	clr	left+1,s
-mod1:
-	subd	right,s		; check subtract
-	bcc	mod2
-	addd	right,s
-	andcc	#~CARRY
-	bra	mod3
-mod2:
-	orcc	#CARRY
-mod3:
-	rol	left+1,s	; roll in carry
-	rol	left,s
-	lsr	right,s
-	ror	right+1,s
-	dec	count,s
-	bne	mod1
-	leas	3,s
-	rts
-
-_mulhi3:
-	pshs	x
-	lda   5,s   ; left msb * right lsb * 256
-	ldb   ,s
-	mul
-	tfr   b,a
-	clrb
-	tfr   d,x
-	ldb   1,s   ; left lsb * right msb * 256
-	lda   4,s
-	mul
-	tfr   b,a
-	clrb
-	leax  d,x
-	ldb   1,s   ; left lsb * right lsb
-	lda   5,s
-	mul
-	leax  d,x
-	puls	d,pc  ; kill D to remove initial push
-
-_swab:
-	exg x,d		; into accumulator
-	exg a,b		; swap bytes over
-	exg d,x		; back into result
-	rts
-
-_ashlhi3:
-	pshs	x
-_ashlhi3_1:
-	leax	-1,x
-	cmpx	#-1
-	beq	_ashlhi3_2
-	aslb
-	rola
-	bra	_ashlhi3_1
-_ashlhi3_2:
-	puls	x,pc
-
-
-
-___ashrsi3:
-	pshs	u
-	; FIXME temporary hack until we fix gcc-6809 or our use of it
-	; the argument passing doesn't match so we'll mangle it
-	ldu 4,s
-	stu ,x
-	ldu 6,s
-	stu 2,x
-	ldb 9,s
-	;; FIXME: insert 16 optimization here
-	;; remember to propagate top bit for signage
-try_8@	cmpb	#8
-	blo 	try_rest@
-	subb	#8
-	ldu	1,x		; shift what we can down by 1 byte
-	stu	2,x
-	lda	,x
-	sta	1,x
-	clr	,x		; default top byte to positive
-	tst	1,x		; test old msb for sign
-	bpl     try_8@		; go try another 8 shifts
-	dec	,x		; dec to make top byte negative
-	bra	try_8@		; go try another 8 shifts
-try_rest@
-	tstb		
-	beq	done@
-do_rest@
-	; Shift by 1
-	asr	,x
-	ror	1,x
-	ror	2,x
-	ror	3,x
-	decb
-	bne	do_rest@
-done@
-	puls	u,pc
-
-	
-___ashlsi3:
-	pshs	u
-
-	; FIXME temporary hack until we fix gcc-6809 or our use of it
-	; the argument passing doesn't match so we'll mangle it
-	ldu 4,s
-	stu ,x
-	ldu 6,s
-	stu 2,x
-	ldb 9,s
-
-	cmpb	#16
-	blt	try8
-	subb	#16
-	; Shift by 16
-	ldu	2,x
-	stu	,x
-	ldu	#0
-	stu	2,x
-try8:
-	cmpb	#8
-	blt	try_rest
-	subb	#8
-	; Shift by 8
-	ldu	1,x
-	stu	,x
-	lda	3,x
-	sta	2,x
-	clr	3,x
-
-try_rest:
-	tstb
-	beq	done
-do_rest:
-	; Shift by 1
-	asl	3,x
-	rol	2,x
-	rol	1,x
-	rol	,x
-	decb
-	bne	do_rest
-done:
-	puls	u,pc
-
-_lshrhi3:
-	pshs	x
-_lshrhi3_1:
-	leax	-1,x
-	cmpx	#-1
-	beq	_lshrhi3_2
-	lsra
-	rorb
-	bra	_lshrhi3_1
-_lshrhi3_2:
-	puls	x,pc
-
-_ashrhi3:
-	pshs	x
-1$:
-	leax	-1,x
-	cmpx	#-1
-	beq	2$
-	asra
-	rorb
-	bra	1$
-2$:
-	puls	x,pc
+; Compiler helpers
+_swab: ldd 2,s
+ exg a,b
+ rts
