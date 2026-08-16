@@ -1,9 +1,3 @@
-# 0 "commonmem.S"
-# 0 "<built-in>"
-# 0 "<command-line>"
-# 1 "/usr/include/stdc-predef.h" 1 3
-# 0 "<command-line>" 2
-# 1 "commonmem.S"
 ;
         ; exported symbols
         .export _ub
@@ -14,15 +8,15 @@
 
         .commondata
 
-_ub: ; first 512 bytes: starts with struct u_block, with the kernel stack working down from above
+_ub:    ; first 512 bytes: starts with struct u_block, with the kernel stack working down from above
 _udata:
 kstack_base:
- .ds 512
+	.ds 512
 kstack_top:
 
         ; next 256 bytes: 254 byte interrupt stack, then 2 byte saved stack pointer
 istack_base:
- .ds 254
+	.ds 254
 istack_top:
 istack_switched_sp:
- .word 0
+	.word 0

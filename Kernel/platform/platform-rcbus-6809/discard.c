@@ -3,7 +3,6 @@
 #include <kdata.h>
 #include <printf.h>
 #include <devtty.h>
-#include <blkdev.h>
 
 /*
  * We have flexible 16K paging

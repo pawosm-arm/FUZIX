@@ -47,10 +47,12 @@
 /* Reclaim the discard space for buffers */
 #define CONFIG_DYNAMIC_BUFPOOL
 
-#define MAX_BLKDEV  	2	/* 2 IDE drives */
-#define CONFIG_IDE              /* enable if IDE interface present */
-#define CONFIG_SD
-#define SD_DRIVE_COUNT	1
+#define CONFIG_TD_NUM 	2	/* 2 IDE drives */
+#define CONFIG_TD_IDE              /* enable if IDE interface present */
+#define CONFIG_TINYIDE_8BIT
+#define IDE_IS_8BIT(x)	1
+#define CONFIG_TD_SD
+#define TD_SD_NUM	1
 
 #define TICKSPERSEC	10   /* Ticks per second */
 

@@ -2,9 +2,9 @@ CSRCS = devices.c main.c libc.c devtty.c devinput.c
 
 CDSRCS = discard.c
 
-DSRCS = ../../dev/blkdev.c ../../dev/devide.c ../../dev/ds1302.c ../../dev/devsd.c
+DSRCS = ../../dev/tinydisk.c ../../dev/tinyide.c ../../dev/ds1302.c ../../dev/tinysd.c
 DASRCS = ../../dev/ds1302_6809.s
-DDSRCS = ../../dev/devide_discard.c ../../dev/mbr.c ../../dev/ds1302_discard.c ../../dev/devsd_discard.c
+DDSRCS = ../../dev/tinydisk_discard.c ../../dev/tinyide_discard.c ../../dev/ds1302_discard.c ../../dev/tinysd_discard.c
 
 ASRCS = crt0.s rcbus-6809.s ide.s sdcard.s
 ASRCS += tricks.s commonmem.s mem-rcbus.s 
@@ -43,25 +43,25 @@ clean:
 	rm -f *.o *~
 
 image:
-	$(CROSS_LD) -o ../../fuzix.bin -Map=../../fuzix.map --script=fuzix.link --oformat=decb \
+	$(CROSS_LD) -b -C 0x100 -S 0xF200 -Z 0x00 -o ../../fuzix.bin -m=fuzix.tmpmap \
 	crt0.o commonmem.o mem-rcbus.o \
-	rcbus-6809.o ../../bank16k.o ds1302.o ds1302_6809.o \
-	../../devinput.o devinput.o ../../memalloc_none.o \
+	rcbus-6809.o ../../mm/bank16k.o ../../dev/ds1302.o ds1302_6809.o \
+	../../devinput.o devinput.o ../../mm/memalloc_none.o \
 	../../start.o ../../version.o ../../cpu-6809/lowlevel-6809.o \
 	tricks.o main.o ../../timer.o ../../kdata.o devices.o ../../blk512.o \
 	../../devio.o ../../filesys.o ../../process.o ../../inode.o ../../syscall_fs.o \
 	../../syscall_proc.o ../../syscall_other.o ../../mm.o ../../swap.o \
 	../../tty.o ../../devsys.o ../../usermem.o ../../syscall_fs2.o ../../syscall_fs3.o \
 	../../syscall_exec16.o ../../syscall_exec.o devtty.o libc.o \
-	devide.o blkdev.o ide.o devsd.o sdcard.o \
-	devide_discard.o mbr.o discard.o ds1302_discard.o devsd_discard.o
-	../../tools/pad256 ../../fuzix.bin
-	../../tools/lw-checkmap ../../fuzix.map
-	../../tools/decb-image <../../fuzix.bin fuzix.img
+	../../dev/tinydisk.o ../../dev/tinyide.o ide.o ../../dev/tinysd.o sdcard.o \
+	../../dev/tinydisk_discard.o ../../dev/tinyide_discard.o discard.o \
+	../../dev/ds1302_discard.o ../../dev/tinysd_discard.o \
+	/opt/fcc/lib/6809/lib6809.a
 	# Pack the common down lower
 	dd if=fuzix.img bs=61440 skip=1 >fuzix.high
 	dd if=fuzix.high of=fuzix.img bs=49152 seek=1
 	#rm fuzix.high
+	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
 
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
 
