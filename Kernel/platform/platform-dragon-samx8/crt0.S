@@ -1,18 +1,16 @@
 	; exported
-	.globl start
+	.export start
 
-	; imported symbols
-	.globl _fuzix_main
-	.globl init_early
-	.globl init_hardware
-	.globl kstack_top
-	.globl _system_id
+#include "kernel.def"
 
 	; startup code
-	.area .start
+	.code
+
+	; this will sit at address 0 and be overwritten with the
+	; jump-through-null trap later.
 	jmp start
 
-	.area .discard
+	.discard
 
 start:
 	; we enter from bootloader in task 1 (kernel)
@@ -51,14 +49,14 @@ cp3:	sta 0xff34		; task 1 area 0 = page 3
 
 	; zero udata
 	clra
-	ldx #__sectionbase_.udata__
+	ldx #_udata
 udata_wipe:
 	sta ,x+
-	cmpx #__sectionbase_.udata__+__sectionlen_.udata__
+	cmpx #_udata+U_DATA__TOTALSIZE
 	blo udata_wipe
 	; zero kernel bss
-	ldx #__sectionbase_.bss__
-	ldy #__sectionlen_.bss__
+	ldx #__bss
+	ldy #__bss_size
 bss_wipe:
 	sta ,x+
 	leay -1,y
@@ -68,7 +66,7 @@ bss_wipe:
 	jsr init_hardware
 	jmp main
 
-	.area .text
+	.code
 
 main:	jsr _fuzix_main
 	orcc #0x10		; we should never get here

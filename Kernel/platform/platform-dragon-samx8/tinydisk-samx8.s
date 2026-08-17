@@ -2,27 +2,16 @@
 ; Tinydisk helper functions
 ;
 
-	.module td_dragon
-
 	; exported
-	.globl blkdev_rawflg
-	.globl blkdev_unrawflg
+	.export blkdev_rawflg
+	.export blkdev_unrawflg
 
-	; imported
-
-	; exported debugging tools
-
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
-
-
-	.area .common
-
+	.common
 
 ;;; Helper for blkdev drivers to setup memory based on rawflag
 ;;; WARNING: the blk_op struct will not be available for rawflag=1/2 after calling this!
 blkdev_rawflg:
-	pshs d,x		; save regs
+	pshs b			; save regs
 	ldb _td_raw		; 0 = kernel 1 = user 2 = swap
 	decb			; compare to 1
 	bmi out			; less than or equal: 0, or 1 don't do map
@@ -30,10 +19,10 @@ blkdev_rawflg:
 	; is swap so map page into kernel memory at 0x0000
 	ldb _td_page		; get page no for swap
 	stb 0xff34		; task 1, kernel task regs.
-	puls d,x,pc
+	puls b,pc
 proc:	jsr map_proc_always
 	; get parameters from C, X points to cmd packet
-out:	puls d,x,pc
+out:	puls b,pc
 
 ;;; Helper for blkdev drivers to clean up memory after blkdev_rawflg
 blkdev_unrawflg:

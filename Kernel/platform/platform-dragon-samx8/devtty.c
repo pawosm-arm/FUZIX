@@ -268,9 +268,11 @@ static void keyproc(void)
 	for (i = 0; i < 8; i++) {
 		/* We do the scan in software on the Dragon */
 		*pia_col = rbit[i];
-		/* For some reason PIAs seem to require some settling time */
-		asm("nop");
-		asm("nop");
+		/* We used to insert a couple of NOPs here to account for some
+		 * strange write-then-read behaviour I observed with some of my
+		 * PIAs.  So far I haven't needed them in the new fcc-built
+		 * world, but I might not have tested on with the right chips
+		 */
 		keyin[i] = ~*pia_row;
 		key = keyin[i] ^ keymap[i];
 		if (key) {

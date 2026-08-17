@@ -3,44 +3,33 @@
 ; Derived from MOOH platform code
 ;
 ; Copyright 2015-2018 Tormod Volden
-; Copyright 2025 Ciaran Anscomb
-
-	.module mem_samx8
+; Copyright 2025-2026 Ciaran Anscomb
 
 	; exported
-	.globl reloc
-	.globl size_ram
-	.globl map_kernel
-	.globl map_proc
-	.globl map_proc_a
-	.globl map_proc_always
-	.globl map_save
-	.globl map_restore
-	.globl mmu_remap_x
+	.export size_ram
+	.export map_kernel
+	.export map_proc
+	.export map_proc_a
+	.export map_proc_always
+	.export map_save
+	.export map_restore
+	.export mmu_remap_x
 
-	; imported
-	.globl _ramsize
-	.globl _procmem
-	.globl _membanks
-	.globl start
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
-
-	.area .discard
+	.discard
 
 ; Sets ramsize, procmem
 size_ram:
 	; we know what we should have
-	lda #27
-	sta _membanks
 	ldd #512
 	std _ramsize		; in KB
 	ldd #512-64-16		; 512 - kernel (64), video & COMMON (16)
 	std _procmem
 	rts
 
-	.area .common
+	.common
 
 ; must preserve register a but not x
 map_kernel:
@@ -57,9 +46,9 @@ map_restore:
 map_proc_always:
 	pshs cc,a,b
 	orcc #0x10
-	ldd U_DATA__U_PAGE
+	ldd _udata+U_DATA__U_PAGE
 	std $ff30
-	ldd U_DATA__U_PAGE2
+	ldd _udata+U_DATA__U_PAGE2
 	std $ff32
 	lda #1
 	sta map_copy
@@ -95,9 +84,9 @@ map_save:
 	sta map_store
 	rts
 
-	.area .commondata
+	.commondata
 
 map_store:
-	.dw 0
+	.word 0
 map_copy:
-	.dw 0
+	.word 0

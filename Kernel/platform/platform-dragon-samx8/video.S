@@ -1,33 +1,25 @@
-	.module dragonvideo
-
 	; Methods provided
-	.globl _map_video
-	.globl _unmap_video
-	.globl _vid256x192
-	.globl _m6847_plot_char
-	.globl _m6847_scroll_up
-	.globl _m6847_scroll_down
-	.globl _m6847_clear_across
-	.globl _m6847_clear_lines
-	.globl _m6847_cursor_on
-	.globl _m6847_cursor_off
-	.globl _m6847_cursor_disable
-	.globl _m6847_vtattr_notify
+	.export _map_video
+	.export _unmap_video
+	.export _vid256x192
+	.export _m6847_plot_char
+	.export _m6847_scroll_up
+	.export _m6847_scroll_down
+	.export _m6847_clear_across
+	.export _m6847_clear_lines
+	.export _m6847_cursor_on
+	.export _m6847_cursor_off
+	.export _m6847_cursor_disable
+	.export _m6847_vtattr_notify
 
-	.globl _m6847_video_read
-	.globl _m6847_video_write
-	.globl _m6847_video_cmd
+	.export _m6847_video_read
+	.export _m6847_video_write
+	.export _m6847_video_cmd
 
-	;
-	; Imports
-	;
-	.globl _fontdata_8x8
-	.globl _vidattr
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
-
-	.area .video
+	.code
 
 ; These are not used yet.
 ; When we unmap the common page to work on the video below, whatever
@@ -75,18 +67,17 @@ _vid256x192:
 ;
 vidaddr:
 	ldy #VIDEO_BASE
-	exg a,b
 	leay d,y		; 256 x Y + X
 	rts
 ;
 ; plot_char(int8_t y, int8_t x, uint16_t c)
 ;
 _m6847_plot_char:
-	pshs y
-	lda 4,s
-	bsr vidaddr		; preserves X (holding the char)
-	tfr x,d
-	lslb	; multiply by 8
+	tfr b,a
+	ldb 2,s			; A := y, B := x
+	bsr vidaddr
+	ldd 3,s			; D := c
+	lslb			; multiply by 8
 	rola
 	lslb
 	rola
@@ -158,8 +149,7 @@ plotnext:
 	inca
 	cmpa #8
 	bne plot_loop
-	jsr _unmap_video
-	puls y,pc
+	jmp _unmap_video	; tail call
 ;
 ; Fast path for normal attributes
 ;
@@ -185,14 +175,13 @@ plot_fast:
 	comb
 	sta 64,y
 	stb 96,y
-	jsr _unmap_video
-	puls y,pc
+	jmp _unmap_video	; tail call
 
 ;
 ;	void scroll_up(void)
 ;
 _m6847_scroll_up:
-	pshs y,u
+	pshs u
 	ldy #VIDEO_BASE
 	leau 256,y
 	jsr _map_video
@@ -225,13 +214,13 @@ vscrolln:
 	cmpu #VIDEO_END
 	bne vscrolln
 	jsr _unmap_video
-	puls y,u,pc
+	puls u,pc
 
 ;
 ;	void scroll_down(void)
 ;
 _m6847_scroll_down:
-	pshs y,u
+	pshs u
 	ldu #VIDEO_END
 	leay -256,u
 	jsr _map_video
@@ -264,16 +253,16 @@ vscrolld:
 	cmpy #VIDEO_BASE
 	bne vscrolld
 	jsr _unmap_video
-	puls y,u,pc
+	puls u,pc
 
 ;
 ;	clear_across(int8_t y, int8_t x, uint16_t l)
 ;
 _m6847_clear_across:
-	pshs y
-	lda 4,s			; x into A, B already has y
+	tfr b,a
+	ldb 2,s			; A := y, b := x
 	jsr vidaddr		; Y now holds the address
-	tfr x,d			; Counter is in D
+	ldb 4,s			; Counter is in B
 	jsr _map_video
 	lda #0xff
 	leay 128,y		; saves time later keeping offsets 8-bit
@@ -288,17 +277,16 @@ clearnext:
 	sta 95,y
 	decb
 	bne clearnext
-	jsr _unmap_video
-	puls y,pc
+	jmp _unmap_video	; tail call
 
 ;
 ;	clear_lines(int8_t y, int8_t ct)
 ;
 _m6847_clear_lines:
-	pshs y
-	clra			; b holds Y pos already
+	tfr b,a			; A := y
+	clrb
 	jsr vidaddr		; y now holds ptr to line start
-	ldb 4,s
+	ldb 2,s
 	lslb
 	lslb
 	lslb
@@ -323,15 +311,14 @@ wipel:
 	stx ,y++
 	decb			; count of lines
 	bne wipel
-	jsr _unmap_video
-	puls y,pc
+	jmp _unmap_video	; tail call
 
+; void m6847_cursor_on(int8_t newy, int8_t newx);
 _m6847_cursor_on:
-	pshs y
-	lda 4,s
+	tfr b,a
+	ldb 2,s			; A := newy, b := newx
 	jsr vidaddr
 	leax ,y
-	puls y
 	stx cursor_save
 	; Fall through
 _m6847_cursor_off:
@@ -364,41 +351,42 @@ _m6847_video_write:
 	bra tfr_cmd
 _m6847_video_read:
 	coma			; set C
-	bra tfr_cmd		; go
+	; fall through to tfr_cmd
 
 ;;; This does the job of READ & WRITE
 ;;;   takes: C = direction 0=write, 1=read
 ;;;   takes: X = transfer buffer ptr + 2
 tfr_cmd:
-	pshs cc,y,u		; save regs
+	pshs cc,u		; save regs
+	ldx 5,s
 	orcc #0x10		; turn off interrupt - int might remap kernel
 	lda #0x1f
 	sta 0xff30		; unmap kernel above video memory
 	ldd #0x80c0		; this is writing
-	bcc c@			; if carry clear then keep D write
+	bcc L0			; if carry clear then keep D write
 	exg a,b			; else flip D: now is reading
-c@	sta b@+1		; !!! self modify inner loop
-	stb b@+3		; !!!
+L0:	sta L1+1		; !!! self modify inner loop
+	stb L1+3		; !!!
 	bsr vidptr		; U = screen addr
 	leay ,x			; Y = ptr to Height, width
 	leax 4,x		; X = pixel data
-	;; outter loop: iterate over pixel rows
-a@	lda 3,y			; count = width
+	;; outer loop: iterate over pixel rows
+L2:	lda 3,y			; count = width
 	pshs u			; save screen ptr
 	;; inner loop: iterate over columns
 	;; modify mod+1 and mod+3 to switch directions
-b@	ldb ,x+			; get a byte from src
+L1:	ldb ,x+			; get a byte from src
 	stb ,u+			; save byte to dest
 	deca			; bump counter
-	bne b@			; loop
+	bne L1			; loop
 	;; increment outer loop
 	puls u			; restore original screen ptr
 	leau 32,u		; add byte span of screen (goto next line)
 	dec 1,y			; bump row counter
-	bne a@			; loop
+	bne L2			; loop
 	lda #KBANKV
 	sta 0xff30		; remap kernel
-	puls cc,y,u,pc		; restore regs, return
+	puls cc,u,pc		; restore regs, return
 	
 
 ;
@@ -414,7 +402,9 @@ vidptr:
 	leau d,u
 	rts
 
+; void m6847_video_cmd(uint8_t *ptr);
 _m6847_video_cmd:
+	tfr d,x
 	pshs u
 	jsr _map_video
 	bsr vidptr		; u now points to the screen
@@ -440,10 +430,10 @@ endline:
 	jsr _unmap_video
 	puls u,pc
 
-	.area .videodata
+	.commondata
 cursor_save:
-	.dw 0
+	.word 0
 _vtrow:
-	.db 0
+	.byte 0
 cc_video:
-	.db 0
+	.byte 0
