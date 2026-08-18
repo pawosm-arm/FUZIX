@@ -43,7 +43,7 @@
 ;
 unix_syscall_entry:
 	leax 14,s	; 12 stacked by the swi + return address of caller
-	ldy #U_DATA__U_ARGN
+	ldy #_udata + U_DATA__U_ARGN
 	ldd ,x++	; first argument in swi stacked X
 	std ,y++
 	ldd ,x++	; second argument from caller's stack
@@ -141,12 +141,13 @@ dispatch_process_signal:
 signal_return:
         orcc #0x10
 	puls x,y
-	stx U_DATA__U_RETVAL
-	sty U_DATA__U_ERROR
+	stx _udata + U_DATA__U_RETVAL
+	sty _udata + U_DATA__U_ERROR
 dosigrts:
         rts
 
 _doexec:
+	ldx 2,s
 	; x is the jump address
         orcc #0x10
 	; this is a funny extra path out of syscall so we must also cover
