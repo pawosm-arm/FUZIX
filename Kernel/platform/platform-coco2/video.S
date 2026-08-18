@@ -2,40 +2,38 @@
 ;	Although the COCO2 fits the video simple model the generated code
 ;	isn't terribly pretty.
 ;
-		.module video
-
-
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
 ;
 ;	TODO: could hide the text video functions and init in discard ?
 ;
-	.area .text3
+	; FIXME: what segment do we need here
+	.code
 
-	.globl _plot_char
-	.globl _scroll_up
-	.globl _scroll_down
-	.globl _clear_across
-	.globl _clear_lines
-	.globl _cursor_on
-	.globl _cursor_off
-	.globl _cursor_disable
-	.globl _vtattr_notify
+	.export _plot_char
+	.export _scroll_up
+	.export _scroll_down
+	.export _clear_across
+	.export _clear_lines
+	.export _cursor_on
+	.export _cursor_off
+	.export _cursor_disable
+	.export _vtattr_notify
 
 ;
 ;	Video base for text
 ;
 txtaddr:
-	ldy #VIDEO_BASE
-	leay a,y		; X value
-	lslb
-	lslb
-	lslb			; x 8 so keep unsigned
-	leay b,y		; and add four times
-	leay b,y
-	leay b,y
-	leay b,y
+	ldx #VIDEO_BASE
+	leay b,x		; X value
+	lsla
+	lsla
+	lsla			; x 8 so keep unsigned
+	leay a,x		; and add four times
+	leay a,x
+	leay a,x
+	leay a,x
 	rts
 ;
 ;	Compute the video base address
@@ -45,10 +43,9 @@ txtaddr:
 ;	plot_char(int8_t y, int8_t x, uint16_t c)
 ;
 _plot_char:
-	pshs y
-	lda 4,s
+	ldd 2,s
 	bsr txtaddr
-	tfr x,d
+	lda 4,s
 	tst _lower
 	beq map_cases
 	; We want to map
@@ -88,13 +85,12 @@ maskinv:
 mask_only:
 	andb #$3F
 plotit:
-	stb ,y
-	puls y,pc
+	stb ,x
+	rts
 ;
 ;	void scroll_up(void)
 ;
 _scroll_up:
-	pshs y
 	ldy #VIDEO_BASE
 	ldx #VIDEO_BASE+0x20
 scrup_tl:
@@ -102,12 +98,11 @@ scrup_tl:
 	std ,y++
 	cmpx #VIDEO_BASE+512
 	bne scrup_tl
-	puls y,pc
+	rts
 ;
 ;	void scroll_down(void)
 ;
 _scroll_down:
-	pshs y
 	ldy #VIDEO_BASE+0x200
 	ldx #VIDEO_BASE+0X1E0
 scrdn_tl:
@@ -115,49 +110,42 @@ scrdn_tl:
 	std ,--y
 	cmpx #VIDEO_BASE
 	bne scrdn_tl
-	puls y,pc
-
+	rts
 ;
 ;	clear_across(int8_t y, int8_t x, uint16_t l)
 ;
 ;	Never used in text mode
 ;
 _clear_across:
-	pshs y
-	lda 4,s		; x into A, B already has y
+	ldd 2,s		; Y,X into A,B
 	jsr txtaddr
 	ldb _spaces
 clatl:
-	stb ,y+
-	dec 4,s
+	stb ,x+
+	dec 5,s
 	bne clatl
-	puls y,pc
+	rts
 ;
 ;	clear_lines(int8_t y, int8_t ct)
 ;
 _clear_lines:
-	pshs y
 	clra
 	jsr txtaddr
-	lsl 4,s
-	lsl 4,s
-	lsl 4,s
-	lsl 4,s			; x 16 cos dword
+	lsl 2,s
+	lsl 2,s
+	lsl 2,s
+	lsl 2,s			; x 16 cos dword
 	ldd _spaces
-	tfr y,x
 clt:
 	std ,x++
-	dec 4,s		; 32 bytes per line max 16 lines in text
+	dec 3,s		; 32 bytes per line max 16 lines in text
 	bne clt
-	puls y,pc
+	rts
 
 _cursor_on:
-	pshs y
-	lda  4,s
+	ldd  2,s
 	jsr txtaddr
-	sty cursor_save
-	tfr y,x
-	puls y
+	stx cursor_save
 coff_txt:
 	lda #0x40
 	eora ,x
@@ -171,8 +159,8 @@ _vtattr_notify:
 _cursor_disable:
 	rts
 
-	.area .data
+	.data
 cursor_save:
-	.dw	0
-_spaces
-	.dw	0x6060
+	.word	0
+_spaces:
+	.word	0x6060

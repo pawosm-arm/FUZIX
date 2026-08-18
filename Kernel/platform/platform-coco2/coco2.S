@@ -1,47 +1,36 @@
-	;
-	; COCO2 platform
-	;
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
-	.module coco2
+;
+; COCO2 platform
+;
 
 	; exported
-	.globl _mpi_present
-	.globl _mpi_set_slot
-	.globl _cart_hash
-	.globl map_kernel
-	.globl map_proc
-	.globl map_proc_a
-	.globl map_proc_always
-	.globl map_save
-	.globl map_restore
-        .globl init_early
-        .globl init_hardware
-        .globl _program_vectors
-	.globl _need_resched
-
-	.globl _ramsize
-	.globl _procmem
-
-	; imported
-	.globl unix_syscall_entry
-	.globl null_handler
-	.globl _vtoutput
+	.export map_kernel
+	.export map_proc
+	.export map_proc_a
+	.export map_proc_always
+	.export map_save
+	.export map_restore
+        .export init_early
+        .export init_hardware
+        .export _program_vectors
+	.export _need_resched
 
 	; exported debugging tools
-	.globl _plt_monitor
-	.globl _plt_reboot
-	.globl outchar
-	.globl ___hard_di
-	.globl ___hard_ei
-	.globl ___hard_irqrestore
-
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
+	.export _plt_monitor
+	.export _plt_reboot
+	.export outchar
+	.export ___hard_di
+	.export ___hard_ei
+	.export ___hard_irqrestore
 
 
-		.area .vectors
+	.abs
+	.org 0x0100
+vectors:
 	;
-	;	At 0x100 as required by the COCO ROM
+	;	Will end up at 0x100 as required by the COCO ROM
 	;
 	jmp badswi_handler			; 0x100
 	jmp badswi_handler			; 0x103
@@ -51,7 +40,7 @@
 	jmp interrupt_handler			; 0x10C
 	jmp firq_handler			; 0x10F
 
-	.area .discard
+	.discard
 
 init_early:
 	ldx #null_handler
@@ -88,7 +77,7 @@ init_hardware:
 	; NTSC or PAL/SECAM ?
 	ldx	#0
 	lda	$ff02
-waitvb0
+waitvb0:
 	lda	$ff03
 	bpl	waitvb0		; wait for vsync
 	lda	$ff02
@@ -99,12 +88,16 @@ waitvb2:
 	stx	_framedet
 	rts
 
-	.globl _framedet
+	.data
+
+	.export _framedet
 
 _framedet:
 	.word	0
 
-        .area .text3
+        .code
+
+; TODO: work out where to put this block
 ; Borrow a tiny bit of page1 to get this low so it can turn the ROM back on
 
 _plt_reboot:
@@ -114,7 +107,7 @@ _plt_reboot:
 	sta 0x0071		; in case IRQ left it looking valid
 	jmp [0xFFFE]
 
-	.area .common
+	.common
 _plt_monitor:
 	orcc #0x10
 	bra _plt_monitor
@@ -129,13 +122,13 @@ ___hard_ei:
 
 ___hard_irqrestore:		; B holds the data
 	tfr b,cc
-	rts
+ 	rts
 
 ;
 ; COMMON MEMORY PROCEDURES FOLLOW
 ;
 
-	.area .common
+	.common
 ;
 ;	Our vectors live in a fixed block and are not banked out. Likewise
 ;	No memory management for now
@@ -148,11 +141,6 @@ map_proc_always:
 map_proc_a:
 map_save:
 	rts
-
-	.area .common
-;
-;	FIXME:
-;
 firq_handler:
 badswi_handler:
 	rti
@@ -169,7 +157,7 @@ outchar:
 	sta 0xFF20
 	rts
 
-	.area .common
+	.common
 
 _need_resched:
-	.db 0
+	.byte 0

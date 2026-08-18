@@ -1,30 +1,23 @@
 		; exported
-		.globl start
+		.export start
 
-        	; imported symbols
-        	.globl _fuzix_main
-	        .globl init_early
-	        .globl init_hardware
-	        .globl kstack_top
-		.globl _system_id
-
-	        ; startup code
-	        .area .start
-
+		.code
 start:
 		orcc #0x10		; interrupts definitely off
 		; We need to run this with the low 32K ROM mapped
 		sta $FFDE		; FIXME: selectable - FFBF for 32K cart
 		ldb $80FD		; save from ROM space
 		sta $FFDF
-		jmp main
+		jsr main
+		orcc #0x10
+stop:		bra stop
 
-		.area .discard
+		.discard
 
 main:		
 		lds #kstack_top
-		ldx #__sectionbase_.bss__
-		ldy #__sectionlen_.bss__
+		ldx #__bss
+		ldy #__bss_size
 		clra
 bss_wipe:	sta ,x+
 		leay -1,y
@@ -45,6 +38,5 @@ identified:
 		jsr init_early
 		jsr init_hardware
 		jsr _fuzix_main
-		orcc #0x10
-stop:		bra stop
+		rts
 
