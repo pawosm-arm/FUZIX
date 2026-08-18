@@ -3,221 +3,168 @@
 ; SPDX-FileCopyrightText: Copyright 2025-2026 Ciaran Anscomb
 ; SPDX-License-Identifier: GPL-2.0-or-later
 
-; BOOT will load 16 sectors of data (LSNs 2--17) from $2600+.  The first
-; part of the payload can follow the loader code.  From then on, we read a
-; sector (256 bytes) at a time from LSN 18+ using the configured driver.
+; BOOT will load 16 sectors of data (LSNs 2--17) from 0x2600+.  The first
+; part of the payload can follow the loader code.  From then on, we read
+; a sector (256 bytes) at a time from LSN 18+ using the configured driver.
 ;
-; The payload is in CoCo DECB binary format.  In order to populate a whole
-; 64K map, we first ensure our loader is running outside the first four
-; pages (relocate to $8000-$bfff).  Then for each DECB chunk, we map the
-; appropriate page to $4000-$7fff and copy data into the mapped area.
+; The payload is a 64K raw binary starting starting at address 0.  In
+; order to populate a whole 64K map, we first ensure our loader is running
+; outside the first four pages (relocate to 0x8000-0xBFFF).  Then for each
+; 16K chunk, we map the appropriate page to 0x4000-0x7FFF and copy data
+; into the mapped area.
 ;
-; Assuming that RAM below $0200 is free in the target map, we use that
-; area for video while the loader runs.  When we read an EXEC chunk, we
-; copy a small bounce routine to this area that resets the page mapping
-; and jumps to the payload's EXEC address.
-
-; Select ONE driver:
+; We then use the area immediately below COMMON to hold a small trampoline
+; that finishes initialising the memory map and JMPs to address 0, where
+; we expect the kernel to do something useful.
 ;
-; Define DRV_DRAGONDOS=1 to load from a DragonDOS floppy controller.
+; Link with ONE data driver (fzload-raw or fzload-dzip).
 ;
-; Define DRV_COCOSDC=1 to load from CoCoSDC.
-
-; Define COCO=1 when building for the CoCo 3.  Page numbers are doubled
-; up, and the DOS command loads 18 sectors from track 34 (LSNs 612--629),
-; but otherwise it operates in exactly the same way.  In particular, once
-; data from the boot track is exhausted, it's expected that the rest of
-; the data will be in in the same place at the beginning of the disk as it
-; would be for DragonDOS (starting at LSN 20, as we already have two more
-; sectors of data).  Defining COCO also changes the register layout used
-; by the CoCoSDC driver.
+; Link with ONE block device driver (fzload-dragondos or fzload-cocosdc).
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
- ifndef COCO
 
 ; Dragon: BOOT will have loaded 16 sectors, continue from LSN 18.
 btrk_nsecs	equ 16
 next_lsn	equ 18
 
- else
+reloc_size	equ 256*btrk_nsecs
 
-; CoCo: DOS will have loaded 18 sectors, continue from LSN 20.
-btrk_nsecs	equ 18
-next_lsn	equ 20
+; Fuzix will use a 4K COMMON on the SAMx8, meaning it starts at 0xF000.
+common_start	equ 0xF000
 
- endif
+; Once memory is mapped properly, this is where we start Fuzix.
+fuzix_exec	equ 0x0000
 
 ; Screen addresses while loading
-con_top		equ $0000
-con_end		equ $0200
+con_top		equ 0x8000
+con_end		equ 0x8200
+
+	.export set_nmi_handler
+	.export error
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; First stage.  This is executed by BOOT (or DOS).
 
-	org $2600
-	fcc /OS/	; BOOT magic
+	.code
+
+	.ascii "OS"	; BOOT magic
 	
-	orcc #$50	; mask interrupts
-	lda #$ff
+	orcc #0x50	; mask interrupts
+	lda #0xFF
 	tfr a,dp
-	setdp $ff
-	clr $0071	; cold boot on reset
-	sta $ffdf	; 64K mode
+	;setdp 0xFF
+	clr 0x0071	; cold boot on reset
+	sta @0xFFDF	; 64K mode
 
- ifdef COCO
-	; video base address = 0
-	sta $ffc6
-	sta $ffc8
-	; task 1 memory map, and area 2 of task 0
-	ldd #$0001
-	std $ffa8
-	ldd #$0203
-	std $ffaa
-	ldd #$0809
-	std $ffa4
-	std $ffac
-	ldd #$0607
-	std $ffae
- else
-	; video base address = 0
-	clra
-	clrb
-	std $ff38
-	; task 1 memory map, and area 2 of task 0
-	ldb #$01
-	std $ff34
-	ldd #$0403
-	sta $ff32
-	std $ff36
- endif
+	; video base address = 0x10000
+	ldd #0x0800	; 0x10000 / 32
+	std @0xFF38
+	; ensure area 2 is the same in tasks 0 and 1 (page 4),
+	; as that's where we're going to run
+	lsra		; A = 4
+	sta @0xFF32
+	sta @0xFF36
 
-	; relocate rest of loader to $8000+ as page 4
-	ldx #reloc_start
-	ldu #$8000
-@l0	lda ,x+
+	ldd #reloc_size
+	subd #sector_buf
+	addd #__code
+	std buf_nbytes	; not relocated yet, absolute is fine
+
+	; relocate rest of loader to 0x8200+ as page 4
+	; note: reloc_size is actually a bit generous (as it includes this
+	; code here), but it doesn't hurt
+	ldx #__common
+	ldu #0x8200
+s1cl0:	lda ,x+
 	sta ,u+
-	cmpx #reloc_end
-	blo @l0
+	cmpu #0x8200+reloc_size
+	blo s1cl0
 	; jump to newly-relocated loader...
-	jmp $8000
+	jmp 0x8200
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-; Second stage.  Copied to $8000+ as page 4 by the first stage.  This now
+; Second stage.  Copied to 0x8200+ as page 4 by the first stage.  This now
 ; reads in the DECB data and positions it within pages 0--3, mapping to
-; $4000--$7fff as a work area.
+; 0x4000--0x7FFF as a work area.
 
-reloc_start
+	.common
 
-	lds #$c000
+	lds #0xC000
 
 	leax sector_buf,pcr
 	stx buf_ptr,pcr
 	ldx #next_lsn
-	lbsr devopen
+	bsr devopen
 
- ifdef COCO
-	lda #1
-	sta $ff91	; task 1
- else
-	sta $ffd5	; task 1
- endif
+	sta @0xFFD5	; task 1
 
-	lbsr con_cls
+	bsr con_cls
 	leax msg_loading,pcr
-	lbsr con_strout
+	bsr con_strout
 
-	; read in decb stream
-read_loop
-	bsr read_byte
-	beq data_chunk
-	cmpb #$ff	; EXEC chunk?
-	lbeq exec_chunk
-	; report error and halt
-	lbsr con_cls
-	leax msg_fmt_err,pcr
-	lbra error
-@l0	bra @l0	; error - infinite loop
+	; read in raw data stream
+read_loop:
+	clra
+	bsr read_16k
+	lda #1
+	bsr read_16k
+	lda #2
+	bsr read_16k
+	lda #3
+	bsr read_16k
+	bra exec_kernel
 
 ; Various messages
-msg_loading
-	fcb $0C,$0F,$01,$04,$09,$0E,$07,$20,$06,$15,$1A,$09,$18,$00	; fci /LOADING FUZIX/,0
-msg_fmt_err
-	fcb $0A,$06,$0F,$12,$0D,$01,$14,$20,$05,$12,$12,$0F,$12,$00	; fci 10,/FORMAT ERROR/,0
+
+	.literal
+
+msg_loading:
+	.byte 0x0C,0x0F,0x01,0x04
+	.byte 0x09,0x0E,0x07,0x20
+	.byte 0x06,0x15,0x1A,0x09
+	.byte 0x18,0x00			; fci /LOADING FUZIX/,0
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-; DATA chunk.
+	.commondata
 
-data_chunk
-	lda #$2e
-	lbsr con_chrout	; print a '.'
-	lbsr con_anim_crs
-	bsr read_word	; read chunk length
-	tfr d,y		; y = chunk length
-	bsr read_word	; read chunk destination address
-	clr ,-s
-	lsla
-	rol ,s
-	lsla
-	rol ,s
-	lsra
-	lsra
-	ora #$40
-	tfr d,x		; x = dst addr translated to work area
-@l10	lda ,s
- ifdef COCO
-	lsla
-	sta $ffaa
-	inca
-	sta $ffab	; work area = dst page
- else
-	sta $ff35	; work area = dst page
- endif
-@l20	bsr read_byte
-	stb ,x+
-	dec con_crs_timer,pcr
-	bne @l30
-	bsr con_anim_crs
-@l30	leay -1,y
-	beq @l40
-	cmpx #$8000
-	blo @l20
-	ldx #$4000	; continue at beginning of work area
-	inc ,s		; increment work page
-	bra @l10
-@l40	leas 1,s
-	bra read_loop
-
-con_crs_timer
-	fcb 0
+con_crs_timer:
+	.byte 0
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-; If no bytes left in buffer, read the next sector.  Returns next byte in
-; buffer in B.
+; If no bytes left in buffer, read the next few sectors.  Returns next
+; byte in buffer in B.
 
-read_word
+	.common
+
+	.export read_word
+	.export read_byte
+
+read_word:
 	bsr read_byte
 	tfr b,a
 	; fall through
-read_byte
+read_byte:
 	pshs x
 	ldx buf_nbytes,pcr
 	bne fetch_byte
-	; read next lsn
+	; read next 9 LSNs (half a track)
 	leax sector_buf,pcr
 	stx buf_ptr,pcr
-	lbsr devread
+	pshs a
+	lda #9
+rbl0:	bsr devread
+	deca
+	bne rbl0
 	; x = x - sector_buf (hoop-jumping pic version)
-	pshs d
 	tfr x,d
 	subd buf_ptr,pcr
 	tfr d,x
-	puls d
-fetch_byte
+	puls a
+fetch_byte:
 	leax -1,x
 	stx buf_nbytes,pcr
 	ldx buf_ptr,pcr
@@ -226,62 +173,81 @@ fetch_byte
 	tstb
 	puls x,pc
 
+	.commondata
+
 ; Buffer handling
-buf_ptr	fdb $0000	; initialised to sector_buf
-buf_nbytes
-	fdb track_nbytes
+buf_ptr:
+	.word 0x0000	; initialised to sector_buf
+buf_nbytes:
+	.word 0x0000	; initialised to reloc_size-sector_buf
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-; EXEC chunk.
+; EXEC
 ;
-; Sets up a routine in addresses < $0100 that:
+; - Closes the boot device
+; - Sets up areas 0, 1 & 3 in both tasks (we're running from 2)
+; - Copies a trampoline into the discard are just below COMMON
+; - JMPs to it
 ;
-; - resets $4000-$7fff (work area) to page 1
-; - resets $8000-$bfff (loader execution area) to page 2
-; - JMPs to the EXEC address in the chunk
+; The trampoline:
+;
+; - Sets up area 2 in both tasks (we're now running from 3)
+; - JMPs to 0
 
-exec_chunk	
-	bsr read_word	; skip 2 bytes
-	bsr read_word	; EXEC address
-	std $00fe
-	lbsr devclose
+	.common
+
+exec_kernel:
+	bsr devclose
 	clra
 	tfr a,dp
-	setdp $00
-	lda #$7e	; "JMP ext"
-	sta $00fd	; 00fd| JMP exec_addr
- ifdef COCO
-	ldd #$0203
-	std $ffaa	; work area -> page 1
-	ldd #$ccfd	; "LDD imm", "STD ext"
-	sta $00f7
-	stb $00fa
-	ldd #$0405
-	std $00f8	; 00f7| LDD #$0405
-	ldd #$ffac
-	std $00fb	; 00fa| STD $ffac
-	jmp $00f7
- else
-	ldd #$86b7	; "LDA imm", "STA ext"
-	sta $00f8
-	stb $00fa
-	ldd #$0102
-	sta $ff35	; work area -> page 1
-	stb $00f9	; 00f8| LDA #$02
-	ldd #$ff36
-	std $00fb	; 00fa| STD $ff36
-	jmp $00f8
- endif
-	setdp $ff
+	;setdp 0x00
+
+	ldb #1		; A still = 0
+	std 0xFF30	; init task 0 areas 0 & 1
+	std 0xFF34	; init task 1 areas 0 & 1
+	ldb #3
+	stb 0xFF33	; init task 0 area 3
+	stb 0xFF37	; init task 1 area 3
+
+	; we sneak our trampoline in right before the COMMON
+	; area at 0xF000, assuming it'll be unused
+ 	ldu #common_start-sizeof_trampoline
+	leay trampoline,pcr
+	ldx #sizeof_trampoline
+exec0:	lda ,y+
+	sta ,u+
+	leax -1,x
+	bne exec0
+	jmp common_start-sizeof_trampoline
+
+trampoline:
+	lda #2
+	sta 0xFF32	; init task 0 area 2
+	sta 0xFF36	; init task 1 area 2
+	jmp @fuzix_exec
+sizeof_trampoline	equ 10
+
+	;setdp 0xFF
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; Just enough console functionality to print messages and animate a
 ; spinning cursor.
 
+	.common
+
+	.export con_crs_tick
+	.export con_anim_crs
+	.export con_chrout
+
+; decrement timer and animate cursor
+con_crs_tick:
+	dec con_crs_timer,pcr
+	beq con_anim_crs
+	rts
 ; animate cursor
-con_anim_crs
+con_anim_crs:
 	pshs a,x
 	inc con_crs_idx,pcr
 	lda con_crs_idx,pcr
@@ -292,44 +258,44 @@ con_anim_crs
 	puls a,x,pc
 
 ; print error and halt
-error	bsr con_strout
-@l0	bra @l0
+error:	bsr con_strout
+cal0:	bra cal0
 
 ; print string
 ; entry: x = string
 ; exit: x = byte after nul-terminator
-con_strout
+con_strout:
 	pshs a
-@l10	lda ,x+
-	beq @l20
+csl10:	lda ,x+
+	beq csl20
 	bsr con_chrout
-	bra @l10
-@l20	puls a,pc
+	bra csl10
+csl20:	puls a,pc
 
 ; print character
 ; destroyed: a (possibly)
-con_chrout
+con_chrout:
 	pshs x
 	ldx con_pos,pcr
-	cmpa #$0a
-	beq @l10
+	cmpa #0x0A
+	beq ccl10
 	sta ,x+
-	bra @l20
+	bra ccl20
 	; newline
-@l10	bsr con_clr_eol_x
-@l20	cmpx #con_end
-	bhs @l30
+ccl10:	bsr con_clr_eol_x
+ccl20:	cmpx #con_end
+	bhs ccl30
 	stx con_pos,pcr
 	puls x,pc
 ; scroll up
 ; destroyed: a
-con_scrup
+con_scrup:
 	pshs x
-@l30	ldx #con_top
-@l40	lda 32,x
+ccl30:	ldx #con_top
+ccl40:	lda 32,x
 	sta ,x+
 	cmpx #con_end-32
-	blo @l40
+	blo ccl40
 	stx con_pos,pcr
 	bsr con_clr_eol_x
 	puls x,pc
@@ -337,75 +303,64 @@ con_scrup
 ; clear to end of line
 ; exit: X = byte after current line
 ; destroyed: a
-con_clr_eol
+con_clr_eol:
 	ldx con_pos,pcr
 	; fall through
 ; entry: X = con_pos
-con_clr_eol_x
+con_clr_eol_x:
 	pshs b
-@l0	lda #$20
+cel0:	lda #0x20
 	sta ,x+
 	tfr x,d
-	bitb #$1f
-	bne @l0
+	bitb #0x1F
+	bne cel0
 	puls b,pc
 
 ; clear screen
 ; destroyed: a
-con_cls
+con_cls:
 	pshs x
 	ldx #con_top
 	stx con_pos,pcr
-	lda #$20
-@l0	sta ,x+
+	lda #0x20
+clsl0:	sta ,x+
 	cmpx #con_end
-	blo @l0
+	blo clsl0
 	puls x,pc
 
+	.literal
+
 ; Animated cursor: / - \ !
-con_crs	fcb $2f,$2d,$1c,$21
+con_crs:
+	.byte 0x2F,0x2D,0x1C,0x21
+
+	.commondata
 
 ; Console variables
-con_pos	fdb $0000
-con_crs_idx
-	fcb 0
+con_pos:
+	.word 0x8000
+con_crs_idx:
+	.byte 0
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; Miscellaneous
 
-set_nmi_handler
+	.common
+
+set_nmi_handler:
 	pshs a
-	stx $010a
-	lda #$7e
-	sta $0109
+	stx 0x010A
+	lda #0x7E
+	sta 0x0109
 	puls a,pc
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-	; Include selected driver code
-
- ifdef DRV_COCOSDC
-	include "fzload09-cocosdc.s"
- else
- ifdef DRV_DRAGONDOS
-	include "fzload09-dragondos.s"
- else
-devopen
-devclose
-devread
-	assert 0,"No driver configured"
- endif
- endif
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; Although it wastes a bit of space, it's nice if the kernel ends up
 ; sector-aligned in the disk image.
-	align 256,0
+;	align 256,0
 
-sector_buf
+	.discard
 
-track_nbytes	equ $2600+256*btrk_nsecs-*
-
-reloc_end	equ *+track_nbytes
+sector_buf:

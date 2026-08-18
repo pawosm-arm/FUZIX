@@ -90,6 +90,7 @@ CDSRCS += ../platform-coco3/devsdc-discard.c
 ASSRCS += ../platform-coco3/sdc.S
 CROSS_CCOPTS += -DCONFIG_COCOSDC
 WANT_TINYDISK = yes
+FZLOAD09_DEVICE ?= cocosdc
 endif
 
 # IDE support (tinydisk)
@@ -119,6 +120,8 @@ CSRCS += ../platform-dragon-nx32/ttydw.c
 CSRCS += ../../dev/devdw.c
 CROSS_CCOPTS += -DCONFIG_DRIVEWIRE
 endif
+
+FZLOAD09_DEVICE ?= dragondos
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Build rules
@@ -205,63 +208,86 @@ KOBJS += ../../blk512.o ../../filesys.o ../../inode.o \
 CLEAN += fuzix.tmpmap
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+## fzload09 boot loader
+
+FZLOAD09_ASRCS = fzload09.s
+
+ifeq ($(FZLOAD09_FORMAT),dzip)
+FZLOAD09_ASRCS += fzload09-dzip.s
+else
+FZLOAD09_ASRCS += fzload09-raw.s
+endif
+
+ifeq ($(FZLOAD09_DEVICE),dragondos)
+FZLOAD09_ASRCS += fzload09-dragondos.s
+else ifeq ($(FZLOAD09_DEVICE),cocosdc)
+FZLOAD09_ASRCS += fzload09-cocosdc.s
+else
+$(error No FZLOAD09_DEVICE specified)
+endif
+
+FZLOAD09_AOBJS = $(FZLOAD09_ASRCS:.s=.o)
+
+fzload09.bin: $(FZLOAD09_AOBJS)
+	ld6809 -b -m $(@:.bin=.map) -C 0x2600 -f CDSLsX -o $@ $(FZLOAD09_AOBJS)
+
+$(FZLOAD09_AOBJS): %.o: %.s
+	fcc -m6809 -c -o $@ $<
+
+ifeq ($(FZLOAD09_FORMAT),dzip)
+fzload09.img: fzload09.bin ../../fuzix.bin
+	dd if=fzload09.bin of=$@ bs=256 skip=38 status=none
+	dd if=../../fuzix.bin bs=256 count=64 status=none | dzip -c >> $@
+	dd if=../../fuzix.bin bs=256 skip=64 count=64 status=none | dzip -c >> $@
+	dd if=../../fuzix.bin bs=256 skip=128 count=64 status=none | dzip -c >> $@
+	dd if=../../fuzix.bin bs=256 skip=192 count=64 status=none | dzip -c >> $@
+else
+fzload09.img: fzload09.bin ../../fuzix.bin
+	dd if=fzload09.bin of=$@ bs=256 skip=38 status=none
+	dd if=../../fuzix.bin bs=256 count=64 status=none >> $@
+	dd if=../../fuzix.bin bs=256 skip=64 count=64 status=none >> $@
+	dd if=../../fuzix.bin bs=256 skip=128 count=64 status=none >> $@
+	dd if=../../fuzix.bin bs=256 skip=192 count=64 status=none >> $@
+endif
+
+fzload09.dsk: fzload09.img
+	dd if=/dev/zero of=$@ bs=256 count=720 conv=sync status=none
+	dd if=$< of=$@ bs=256 seek=2 conv=sync,notrunc status=none
+
+CLEAN += fzload09.bin fzload09.img fzload09.dsk
+
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Disk images
 
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
-
-CLEAN_FZLOAD09 =
-
-fzload09-sdc.bin: fzload09.s
-	lwasm -r -DDRV_COCOSDC=1 -o$@ $<
-
-fzload09-sdc.img: fzload09-sdc.bin ../../fuzix.bin
-	cat fzload09-sdc.bin ../../fuzix.bin > $@
-
-fzload09-sdc.dsk: fzload09-sdc.img
-	dd if=/dev/zero of=$@ bs=256 count=720 conv=sync
-	dd if=$< of=$@ bs=256 seek=2 conv=sync,notrunc
-
-CLEAN += fzload09-sdc.bin fzload09-sdc.img fzload09-sdc.dsk
-
-fzload09-emu.bin: fzload09.s
-	lwasm -r -DDRV_DRAGONDOS=1 -o$@ $<
-
-fzload09-emu.img: fzload09-emu.bin
-	cat fzload09-emu.bin ../../fuzix.bin > $@
-
-fzload09-emu.dsk: fzload09-emu.img
-	dd if=/dev/zero of=$@ bs=256 count=720 conv=sync
-	dd if=$< of=$@ bs=256 seek=2 conv=sync,notrunc
-
-CLEAN += fzload09-emu.bin fzload09-emu.img fzload09-emu.dsk
 
 .PHONY: image
 image: ../../fuzix.bin
 
 .PHONY: diskimage-sdc
-diskimage-sdc: fzload09-sdc.dsk
+diskimage-sdc: fzload09.dsk
 	# Make a blank disk image
-	dd if=/dev/zero of=$(IMAGES)/fuzix-sdc.img bs=512 count=39360
+	dd if=/dev/zero of=$(IMAGES)/fuzix-sdc.img bs=512 count=39360 status=none
 	# Copy boot floppy image to the very beginning
-	dd if=fzload09-sdc.dsk of=$(IMAGES)/fuzix-sdc.img bs=256 conv=sync,notrunc
+	dd if=fzload09.dsk of=$(IMAGES)/fuzix-sdc.img bs=256 conv=sync,notrunc status=none
 	# Add partition table (overwrite first 512 bytes of boot floppy image)
-	dd if=$(FUZIX_ROOT)/Standalone/filesystem-src/parttab.20M of=$(IMAGES)/fuzix-sdc.img bs=512 count=1 conv=sync,notrunc
+	dd if=$(FUZIX_ROOT)/Standalone/filesystem-src/parttab.20M of=$(IMAGES)/fuzix-sdc.img bs=512 count=1 conv=sync,notrunc status=none
 	# Add the filesystem
-	dd if=$(IMAGES)/filesys8.img of=$(IMAGES)/fuzix-sdc.img bs=512 seek=2048 conv=notrunc
+	dd if=$(IMAGES)/filesys8.img of=$(IMAGES)/fuzix-sdc.img bs=512 seek=2048 conv=notrunc status=none
 
 .PHONY: diskimage-ide
 diskimage-ide:
 	# Make a blank disk image
-	dd if=/dev/zero of=$(IMAGES)/fuzix-ide.img bs=512 count=39360
+	dd if=/dev/zero of=$(IMAGES)/fuzix-ide.img bs=512 count=39360 status=none
 	# Add partition table (overwrite first 512 bytes of boot floppy image)
-	dd if=$(FUZIX_ROOT)/Standalone/filesystem-src/parttab.20M of=$(IMAGES)/fuzix-ide.img bs=512 count=1 conv=sync,notrunc
+	dd if=$(FUZIX_ROOT)/Standalone/filesystem-src/parttab.20M of=$(IMAGES)/fuzix-ide.img bs=512 count=1 conv=sync,notrunc status=none
 	# Add the filesystem
-	dd if=$(IMAGES)/filesys8.img of=$(IMAGES)/fuzix-ide.img bs=512 seek=2048 conv=notrunc
+	dd if=$(IMAGES)/filesys8.img of=$(IMAGES)/fuzix-ide.img bs=512 seek=2048 conv=notrunc status=none
 
 .PHONY: diskimage-ddos
-diskimage-ddos: fzload09-emu.dsk
+diskimage-ddos: fzload09.dsk
 	# Just copy it
-	dd if=$< of=$(IMAGES)/fuzix-ddos.DSK bs=256 conv=sync
+	dd if=$< of=$(IMAGES)/fuzix-ddos.DSK bs=256 conv=sync status=none
 
 .PHONY: diskimage
 diskimage: $(DISKIMAGES)

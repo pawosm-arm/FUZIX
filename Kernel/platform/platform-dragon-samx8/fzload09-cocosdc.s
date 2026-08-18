@@ -6,9 +6,6 @@
 ; domain (Creative Commons "CC0 1.0 Universal"), but do note that this
 ; dedication may not apply to accompanying files.
 
-; Define COCO=1 before including to use CoCo RSDOS register layout.  Else
-; will assume DragonDOS layout.
-
 ; Provides:
 
 ; devopen
@@ -24,63 +21,50 @@
 ;
 ;   Read next sector.
 
+	.export devopen
+	.export devclose
+	.export devread
+
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; CoCoSDC registers
 
-	ifndef COCO
-
 ; Register definitions for CoCoSDC in DragonDOS mode.
 
-CTRLATCH	equ $ff48	; controller latch (write)
-CMDREG		equ $ff40	; command register (write)
-STATREG		equ $ff40	; status register (read)
-PREG1		equ $ff41	; param register 1
-PREG2		equ $ff42	; param register 2
-PREG3		equ $ff43	; param register 3
+CTRLATCH	equ 0xFF48	; controller latch (write)
+CMDREG		equ 0xFF40	; command register (write)
+STATREG		equ 0xFF40	; status register (read)
+PREG1		equ 0xFF41	; param register 1
+PREG2		equ 0xFF42	; param register 2
+PREG3		equ 0xFF43	; param register 3
 DATREGA		equ PREG2	; first data register
 DATREGB		equ PREG3	; second data register
 
-CMDMODE		equ $0b
-
-	else
-
-; Register definitions for CoCoSDC in RSDOS mode.
-
-CTRLATCH	equ $ff40	; controller latch (write)
-CMDREG		equ $ff48	; command register (write)
-STATREG		equ $ff48	; status register (read)
-PREG1		equ $ff49	; param register 1
-PREG2		equ $ff4a	; param register 2
-PREG3		equ $ff4b	; param register 3
-DATREGA		equ PREG2	; first data register
-DATREGB		equ PREG3	; second data register
-
-CMDMODE		equ $43
-
-	endif
+CMDMODE		equ 0x0B
 
 ; Status register masks
-BUSY		equ $01
-READY		equ $02
-FAILED		equ $80
+BUSY		equ 0x01
+READY		equ 0x02
+FAILED		equ 0x80
 
 ; Command values
-CMDREAD		equ $80
-CMDWRITE	equ $a0
-CMDEX		equ $c0
-CMDEXD		equ $e0
+CMDREAD		equ 0x80
+CMDWRITE	equ 0xA0
+CMDEX		equ 0xC0
+CMDEXD		equ 0xE0
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-devopen
+	.common
+
+devopen:
 	stx cocosdc_lsn,pcr
 	; fall through
-devclose
+devclose:
 	clr CTRLATCH
 	rts
 
-devread
+devread:
 	pshs a,b,u
 	pshs x
 	ldd #(CMDMODE*256)|CMDREAD
@@ -97,14 +81,14 @@ devread
 	exg a,a			; delay
 	exg a,a
 	puls x
-@l10	lda STATREG		; wait for READY flag
+drl10:	lda STATREG		; wait for READY flag
 	bita #READY
-	beq @l10
-	lda #$80		; 128 2-byte fetches
-@l20	ldu PREG2
+	beq drl10
+	lda #0x80		; 128 2-byte fetches
+drl20:	ldu PREG2
 	stu ,x++
 	deca
-	bne @l20
+	bne drl20
 	bsr cocosdc_while_busy
 	clr CMDREG
 	puls a,b,u,pc
@@ -114,23 +98,25 @@ devread
 ; Helpers
 
 ; Wait while CoCoSDC is BUSY.  On timeout, report error.
-cocosdc_while_busy
+cocosdc_while_busy:
 	pshs x
-	ldx #$e000		; timeout delay
-@l10	leax -1,x
-	beq @l20
+	ldx #0xE000		; timeout delay
+cwbl10:	leax -1,x
+	beq cwbl20
 	lda STATREG
 	lsra
-	bcs @l10
+	bcs cwbl10
 	puls x,pc
-@l20	leas 2,s
+cwbl20:	leas 2,s
 	leax msg_busy,pcr
 	lbra error
 
-msg_busy
-	fcb 10
-	fcc /BUSY TIMEOUT/
-	fcb 0
+	.commondata
 
-cocosdc_lsn
-	fdb 0
+msg_busy:
+	.byte 10
+	.ascii "BUSY TIMEOUT"
+	.byte 0
+
+cocosdc_lsn:
+	.word 0
