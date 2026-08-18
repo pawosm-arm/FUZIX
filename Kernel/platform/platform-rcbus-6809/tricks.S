@@ -98,7 +98,7 @@ not_swapped:
         ; restore machine state -- note we may be returning from either
         ; _switchout or _dofork
         lds	_udata + U_DATA__U_SP
-        puls	x,y,u ; return code and saved U and Y
+        puls	d,y,u ; return code and saved U and Y
 
         ; enable interrupts, if the ISR isn't already running
 	lda	_udata + U_DATA__U_ININTERRUPT
@@ -131,12 +131,12 @@ _dofork:
 	; new process in X, get parent pid into y
 
 	stx	fork_proc_ptr
-	ldx	P_TAB__P_PID_OFFSET,x
+	ldd	P_TAB__P_PID_OFFSET,x
 
         ; Save the stack pointer and critical registers (Y and U used by C).
         ; When this process (the parent) is switched back in, it will be as if
         ; it returns with the value of the child's pid.
-        pshs	x,y,u ;  x has p->p_pid from above, the return value in the parent
+        pshs	d,y,u ;  d has p->p_pid from above, the return value in the parent
 
         ; save kernel stack pointer -- when it comes back in the parent we'll be in
         ; _switchin which will immediately return (appearing to be _dofork()
@@ -160,7 +160,7 @@ _dofork:
 
         ; now the copy operation is complete we can get rid of the stuff
         ; _switchin will be expecting from our copy of the stack.
-	puls	x
+	puls	d
 
 	ldx	#_udata
 	pshs	x
@@ -172,9 +172,9 @@ _dofork:
 	; any calls to map process will now map the childs memory
 
         ; in the child process, fork() returns zero.
-	ldx	#0
+	ldd	#0
         ; runticks = 0;
-	stx	_runticks
+	std	_runticks
 	;
 	; And we exit, with the kernel mapped, the child now being deemed
 	; to be the live uarea. The parent is frozen in time and space as
