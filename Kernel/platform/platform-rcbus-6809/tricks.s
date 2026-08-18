@@ -5,7 +5,7 @@
 # 0 "<command-line>" 2
 # 1 "tricks.S"
 ;
-; 6809 version: TODO switch to 4 x 16K banking properly
+; 6809 version: 4 x 16K
 ;
         .export _plt_switchout
         .export _switchin
@@ -99,8 +99,9 @@ _plt_switchout:
  pshs d,y,u
  sts _udata + U_DATA__U_SP ; this is where the SP is restored in _switchin
 
-        ; find another (or same) process to run, returned in X
+        ; find another (or same) process to run, returned in D
         jsr _getproc
+ pshs d
         jsr _switchin
         ; we should never get here
         jsr _plt_monitor
@@ -113,6 +114,7 @@ badswitchmsg:
 
 ; new process pointer is in X
 _switchin:
+ ldx 2,s ; get the task pointer
         orcc #0x10 ; irq off
 
  stx newpp
@@ -186,6 +188,7 @@ fork_proc_ptr: .word 0 ; (C type is struct p_tab *) -- address of child process 
 ; parent uarea. The kernel is the mapped object.
 ;
 _dofork:
+ ldx 2,s
         ; always disconnect the vehicle battery before performing maintenance
         orcc #0x10 ; should already be the case ... belt and braces.
 
@@ -226,8 +229,9 @@ _dofork:
  ldx #_udata
  pshs x
         ldx fork_proc_ptr
+ pshs x
         jsr _makeproc
- puls x
+ leas 4,s
 
  ; any calls to map process will now map the childs memory
 
