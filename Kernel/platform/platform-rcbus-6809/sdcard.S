@@ -87,9 +87,9 @@ writebit:
 	rolb			; Get the next bit to send into C
 	rola			; Insert data bit into A
 	lsla			; Clock clear (low bit now 0)
-	sta	<PRA		; Clock low
+	sta	@PRA		; Clock low
 	inca
-	sta	<PRA		; Clock high
+	sta	@PRA		; Clock high
 	dec	,s
 	bne	writebit
 	puls	a,dp,pc
@@ -103,48 +103,48 @@ _sd_spi_rx_byte:
 
 	;	Bang out FF as fast as we can and collect the
 	;	bits back
-	sta	<PRA		; Low
-	inc	<PRA		; High
-	lda	<PRA		; Sample
+	sta	@PRA		; Low
+	inc	@PRA		; High
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
-	dec	<PRA
-	inc	<PRA
-	lda	<PRA		; Sample
+	dec	@PRA
+	inc	@PRA
+	lda	@PRA		; Sample
 	rola
 	rolb
 	clra
-	dec	<PRA
+	dec	@PRA
 	puls	dp,pc
 
 	.data

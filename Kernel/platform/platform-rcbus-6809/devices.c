@@ -61,10 +61,10 @@ void device_init(void)
     pia->ctrla |= 4;
 
     ds1302_init();
-#ifdef CONFIG_IDE
-    devide_init();
+#ifdef CONFIG_TD_IDE
+    ide_probe();
 #endif
-#ifdef CONFIG_SD
-    devsd_init();
+#ifdef CONFIG_TD_SD
+//    sd_probe();
 #endif
 }

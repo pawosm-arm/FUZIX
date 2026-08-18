@@ -10,7 +10,7 @@ start:
 		orcc #0x10		; interrupts definitely off
 		lds #kstack_top		; note we'll wipe the stack later
 
-		ldx #$C000
+		ldx #$E000
 		ldy #$F000
 copy1:
 		ldd ,x++

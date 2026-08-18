@@ -18,7 +18,7 @@
 iomap:
 	lda	#0xFE
 	tfr	a,dp
-	ldx	6,s		; first argument is address of buffer
+	ldx	5,s		; first argument is address of buffer
 	ldb	#64		; length in words
 	lda	_td_raw
 	beq	kmap		; no separate buffer map
@@ -36,21 +36,21 @@ _devide_read_data:
 	pshs	dp
 	jsr	iomap
 readbyte:
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
-	lda	<IDEDATA
+	lda	@IDEDATA
 	sta	,x+
 	decb
 	bne	readbyte
@@ -62,21 +62,21 @@ _devide_write_data:
 	jsr	iomap
 writebyte:
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	lda	,x+
-	sta	<IDEDATA
+	sta	@IDEDATA
 	decb
 	bne	writebyte
 	jsr	map_kernel

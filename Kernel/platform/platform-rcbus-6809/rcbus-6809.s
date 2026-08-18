@@ -132,7 +132,26 @@ init_hardware:
     ; CR3 accessible
  lda #0x43 ; counter mode, count E clocks, prescale
     ; IRQ on
+ ldx #vectors
+ ldu #0xFFF0
+ ldd ,x++
+ std ,u++
+ ldd ,x++
+ std ,u++
+ ldd ,x++
+ std ,u++
+ ldd ,x++
+ std ,u++
+ ldd ,x++
+ std ,u++
+ ldd ,x++
+ std ,u++
+ ldd ,x++
+ std ,u++
+ ldd ,x
+ std ,u
  sta ,x
+
  lda #0x01
  sta 1,x ; Back to CR1
  clr ,x ; out of reset
