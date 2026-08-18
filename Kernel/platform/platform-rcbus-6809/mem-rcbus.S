@@ -142,16 +142,16 @@ ugetl:
 	puls	u,pc
 
 __uputc:
-	ldx	2,s
-	ldb	5,s
+	ldx	4,s
+	ldb	3,s
 	jsr	map_proc_always
 	stb	,x
 	jsr	map_kernel
 	ldd	#0
 	rts
 __uputw:
-	ldx	2,s
-	ldd	4,s
+	ldx	4,s
+	ldd	2,s
 	jsr	map_proc_always
 	std	,x
 	jsr	map_kernel
@@ -166,19 +166,19 @@ __uput:
 	ldu 6,s		; dst
 	ldy 8,s		; size
 uputl:
-	jsr map_kernel
 	lda ,x+
 	jsr map_proc_always
 	sta ,u+
+	jsr map_kernel
 	leay -1,y
 	bne uputl
-	jsr map_kernel
-	ldx #0
+	ldd #0
 	puls u,pc
 
 __uzero:
 	ldx	2,s
 	ldy	4,s
+	ldb	5,s		; so we can check if odd byte count
 	jsr	map_proc_always
 	clra
 	lsrb
