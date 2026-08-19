@@ -6,8 +6,6 @@
 ;	Based upon code (C) 2013 William R Sowerbutts
 ;
 
-	.export	_swab
-
 	; debugging aids
 	.export outcharhex
 	.export outd
@@ -43,15 +41,15 @@
 ;
 unix_syscall_entry:
 	leax 14,s	; 12 stacked by the swi + return address of caller
-	ldy #_udata + U_DATA__U_ARGN
+	ldu #_udata + U_DATA__U_ARGN
 	ldd ,x++	; first argument in swi stacked X
-	std ,y++
+	std ,u++
 	ldd ,x++	; second argument from caller's stack
-	std ,y++
+	std ,u++
 	ldd ,x++ 	; third
-	std ,y++
+	std ,u++
 	ldd ,x++ 	; fourth
-	std ,y++
+	std ,u++
 	ldd 1,s		; stacked D register -> syscall number in B
 	stb _udata + U_DATA__U_CALLNO
         ; save process stack pointer (in user page)
@@ -431,6 +429,49 @@ num:    adda #0x30 ; start at '0' (0x30='0')
 
 
 ; Compiler helpers
+
+	.export _swab
+
 _swab:	ldd	2,s
 	exg	a,b
+	rts
+
+	.export _memset
+
+_memset:
+	pshs	u
+	ldu	4,s		; pointer
+	ldx	6,s		; count
+	beq	nowork
+msl:	clr	,u+
+	leax	-1,x
+	bne	msl
+nowork:
+	ldd	4,s
+	puls	u,pc
+
+	.export _memcpy
+
+_memcpy:
+	pshs	u
+	ldu	4,s		; dest
+	ldx	6,s		; src
+	ldy	8,s		; count
+	beq	nowork
+mcl:	lda	,x+
+	sta	,u+
+	leay	-1,y
+	bne	mcl
+	ldd	4,s
+	puls	u,pc
+
+	.export _strlen
+
+_strlen:
+	ldd	#0xFFFF
+	ldx	2,s
+next:
+	addd	#1
+	tst	,x+
+	bne	next
 	rts
