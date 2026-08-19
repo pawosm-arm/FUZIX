@@ -2,38 +2,19 @@
 ;	TODO: udata needs to be in common space so swap needs to be smarter
 ;	about split udata
 ;
-        .module tricks
+        .export _plt_switchout
+        .export _switchin
+        .export _dofork
+	.export _ramtop
 
-	# imported
-        .globl _makeproc
-        .globl _chksigs
-        .globl _getproc
-        .globl _plt_monitor
-        .globl _inint
-        .globl map_kernel
-        .globl map_process
-        .globl map_process_a
-        .globl map_process_always
-        .globl copybank
-	.globl _nready
-	.globl _inswap
-	.globl _plt_idle
-	.globl _udata
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
-	# exported
-        .globl _plt_switchout
-        .globl _switchin
-        .globl _dofork
-	.globl _ramtop
-
-        include "kernel.def"
-        include "../../cpu-6809/kernel09.def"
-
-	.area .common
+	.common
 
 	; ramtop must be in common although not used here
 _ramtop:
-	.dw 0
+	.word 0
 
 ; Switchout switches out the current process, finds another that is READY,
 ; possibly the same process, and switches it in.  When a process is
@@ -46,28 +27,31 @@ _plt_switchout:
 	orcc #0x10		; irq off
 
         ; save machine state, including Y and U used by our C code
-        ldd #0 ; return code set here is ignored, but _switchin can 
+        clra
+	clrb ; return code set here is ignored, but _switchin can 
         ; return from either _switchout OR _dofork, so they must both write 
         ; U_DATA__U_SP with the following on the stack:
-	pshs d,y,u
+	pshs d,u
 	sts U_DATA__U_SP	; this is where the SP is restored in _switchin
 
         ; find another (or same) process to run, returned in X
         jsr _getproc
+	pshs d
         jsr _switchin
         ; we should never get here
         jsr _plt_monitor
 
 badswitchmsg:
 	.ascii "_switchin: FAIL"
-        .db 13
-	.db 10
-	.db 0
+        .byte 13
+	.byte 10
+	.byte 0
 
-newpp   .dw 0
+newpp:   .word 0
 
-; new process pointer is in X
+; new process pointer is in 2,s
 _switchin:
+	ldx 2,s
         orcc #0x10		; irq off
 
 	stx newpp
@@ -78,7 +62,7 @@ _switchin:
 	cmpa #0
 	bne not_swapped
 
-	lds #$0200		;	$1xx is vectors and swap stack
+	lds #0x0200		;	$1xx is vectors and swap stack
 
 	ldx U_DATA__U_PTAB
 	ldx P_TAB__P_PAGE_OFFSET+1,x
@@ -120,7 +104,7 @@ not_swapped:
         ; restore machine state -- note we may be returning from either
         ; _switchout or _dofork
         lds U_DATA__U_SP
-        puls x,y,u ; return code and saved U and Y
+        puls d,u ; return code and saved U
 
         ; enable interrupts, if the ISR isn't already running
 	lda U_DATA__U_ININTERRUPT
@@ -136,11 +120,12 @@ switchinfail:
 	; something went wrong and we didn't switch in what we asked for
         jmp _plt_monitor
 
-	.area .data
+	.data
 
-fork_proc_ptr: .dw 0 ; (C type is struct p_tab *) -- address of child process p_tab entry
+fork_proc_ptr:
+	.word 0 ; (C type is struct p_tab *) -- address of child process p_tab entry
 
-	.area .common
+	.common
 ;
 ;	Called from _fork. We are in a syscall, the uarea is live as the
 ;	parent uarea. The kernel is the mapped object.
@@ -149,15 +134,17 @@ fork_proc_ptr: .dw 0 ; (C type is struct p_tab *) -- address of child process p_
 ;	with interrupts enabled. 
 ;
 _dofork:
+	ldx	2,s
 	; new process in X so make sure x is 0 in the child image
 
 	stx fork_proc_ptr
-	ldx #0		; child returns 0
+	clra
+	clrb	; child returns 0
 
         ; Save the stack pointer and critical registers (Y and U used by C).
         ; When this process (the parent) is switched back in, it will be as if
         ; it returns with the value of the child's pid.
-        pshs x,y,u ;  x has p->p_pid from above, the return value in the parent
+        pshs d,u ;  d has p->p_pid from above, the return value in the parent
 
         ; save kernel stack pointer -- when it comes back in for the childt we'll be in
         ; _switchin which will immediately return (appearing to be _dofork()
@@ -175,37 +162,37 @@ _dofork:
 	andcc #0xEF
 	; Copy the parent properties into a temporary udata buffer
 	jsr _tmpbuf
-	tfr x,y
-	ldu #_udata
+	tfr d,u
+	ldx #_udata
 udsave:
-	ldd ,u++
-	std ,x++
-	cmpu #_udata+U_DATA__TOTALSIZE
+	ldd ,x++
+	std ,u++
+	cmpx #_udata+U_DATA__TOTALSIZE
 	bne udsave
 
-	; Buffer is in Y - make a new process using the buffer in Y
-	; not the live updata
-	pshs y
+	pshs u
+	; Buffer we stacked above
 	ldx fork_proc_ptr
+	pshs x
 	jsr _makeproc
+	leas 4,s
 
-	; Now set up for the swapout
-	pshs y		; callers can change args in C
+	pshs u
 	ldx fork_proc_ptr
+	pshs x	
 	jsr _swapout_new
 
-	leas 4,s	; clean up from both calls
-
-	tfr y,x
+	leas 4,s
+	tfr  u,d
 	jsr _tmpfree
+	leas 2,s
 
 	; The child is now on disk, the parent is still running. This is
 	; good, it reduces thrash
 	ldx fork_proc_ptr
 	ldd P_TAB__P_PID_OFFSET,x
 	; Clean up and return
-	puls x,y,u
-	tfr d,x
+	puls d,u
 	; TODO - for now return with ints off as we were called. This should
 	; eventually go away
 	orcc #$10

@@ -1,51 +1,33 @@
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
 	;
 	; COCO2 platform
 	;
 
-	.module coco2
-
 	; exported
-	.globl _mpi_present
-	.globl _mpi_set_slot
-	.globl _cart_hash
-	.globl map_kernel
-	.globl map_proc
-	.globl map_proc_a
-	.globl map_proc_always
-	.globl map_save
-	.globl map_restore
-        .globl init_early
-        .globl init_hardware
-        .globl _program_vectors
-	.globl _need_resched
+	.export map_kernel
+	.export map_proc
+	.export map_proc_a
+	.export map_proc_always
+	.export map_save
+	.export map_restore
+        .export init_early
+        .export init_hardware
+        .export _program_vectors
+	.export _need_resched
+	.export ___hard_di
+	.export ___hard_ei
+	.export ___hard_irqrestore
 
-	.globl _ramsize
-	.globl _procmem
-	.globl _bufpool
-	.globl _discard_size
-
-	; imported
-	.globl unix_syscall_entry
-;FIX	.globl fd_nmi_handler
-	.globl null_handler
-	.globl _vtoutput
-
-	.globl ___hard_di
-	.globl ___hard_ei
-	.globl ___hard_irqrestore
+	.export _bufpool
 
 	; exported debugging tools
-	.globl _plt_monitor
-	.globl _plt_reboot
-	.globl outchar
+	.export _plt_monitor
+	.export _plt_reboot
+	.export outchar
 
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
-
-
-
-	.area .discard
+	.discard
 
 vectors:
 	;
@@ -103,7 +85,7 @@ init_hardware:
 	; NTSC or PAL/SECAM ?
 	ldx	#0
 	lda	$ff02
-waitvb0
+waitvb0:
 	lda	$ff03
 	bpl	waitvb0		; wait for vsync
 	lda	$ff02
@@ -114,12 +96,12 @@ waitvb2:
 	stx	_framedet
 	rts
 
-	.globl _framedet
+	.export _framedet
 
 _framedet:
 	.word	0
 
-        .area .common
+        .common
 
 _plt_reboot:
 	orcc #0x10
@@ -148,7 +130,7 @@ ___hard_irqrestore:		; B holds the data
 ; COMMON MEMORY PROCEDURES FOLLOW
 ;
 
-	.area .common
+	.common
 ;
 ;	Our vectors live in a fixed block and are not banked out. Likewise
 ;	No memory management for now
@@ -185,7 +167,7 @@ map_save:
 	sta romsave
 	puls a,pc
 
-	.area .text
+	.code
 ;
 ;	Joystick helper
 ;
@@ -197,7 +179,7 @@ map_save:
 ;	left left/right, button
 ;	left up/down, button
 ;
-	.globl _jsread
+	.export _jsread
 
 _jsread:
 	; Buffer is in X on entry
@@ -240,11 +222,11 @@ jsdone:
 	std ,x++
 	rts
 
-	.area .data
+	.data
 jstmp:
 	.byte 0
 
-	.area .common
+	.common
 ;
 ;	FIXME:
 ;
@@ -264,21 +246,17 @@ outchar:
 	sta 0xFF20
 	rts
 
-	.area .common
+	.common
 
 _need_resched:
-	.db 0
+	.byte 0
 romin:
-	.db 0
+	.byte 0
 romsave:
-	.db 0
+	.byte 0
 
-	.area .bufpool
+	.buffers
 _bufpool:
 	.ds 520*5		; initial buffers
 
-	; Discard follows this so will be reclaimed
-
-	.area .discard
-_discard_size:
-	.db	__sectionlen_.discard__/BUFSIZE
+	; Discard will follow this

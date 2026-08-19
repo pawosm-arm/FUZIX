@@ -1,20 +1,12 @@
 		; exported
-		.globl start
-
-        	; imported symbols
-        	.globl _fuzix_main
-	        .globl init_early
-	        .globl init_hardware
-	        .globl kstack_top
-		.globl _system_id
+		.export start
 
 	        ; startup code
-	        .area .start
+	        .code
 
 ;
 ;	Entry - cartridge mapped at C000, system ROM at 8000, RAM at low 32K
 ;
-
 start:
 		orcc #0x10		; interrupts definitely off
 		lds #$0100		; not written by loader
@@ -23,12 +15,11 @@ start:
 		jsr load_image		; load the rest of the OS from disk
 		jmp main
 
-		.area .text
-
+		.code
 main:		
 		lds #kstack_top
-		ldx #__sectionbase_.bss__
-		ldy #__sectionlen_.bss__
+		ldx #__bss
+		ldy #__bss_size
 		clra
 bss_wipe:	sta ,x+
 		leay -1,y
@@ -53,6 +44,7 @@ identified:
 		orcc #0x10
 stop:		bra stop
 
-		.area .magic
-		.db $15,$C0,$DE,$4C,$0C,$02
+; FIXME: where to abs this
+		.data
+		.byte 0x15,0xC0,0xDE,0x4C,0x0C,0x02
 

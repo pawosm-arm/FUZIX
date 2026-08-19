@@ -1,37 +1,28 @@
-	.module dragonvideo
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
 	; Methods provided
-	.globl _vid256x192
-	.globl _vidtxt
-	.globl _plot_char
-	.globl _scroll_up
-	.globl _scroll_down
-	.globl _clear_across
-	.globl _clear_lines
-	.globl _cursor_on
-	.globl _cursor_off
-	.globl _cursor_disable
-	.globl _vtattr_notify
+	.export _vid256x192
+	.export _vidtxt
+	.export _plot_char
+	.export _scroll_up
+	.export _scroll_down
+	.export _clear_across
+	.export _clear_lines
+	.export _cursor_on
+	.export _cursor_off
+	.export _cursor_disable
+	.export _vtattr_notify
 
-	.globl _video_read
-	.globl _video_write
-	.globl _video_cmd
+	.export _video_read
+	.export _video_write
+	.export _video_cmd
 
-	;
-	; Imports
-	;
-	.globl _fontdata_8x8
-	.globl _vidattr
-	.globl _vid_h
-	.globl _vid_b
-
-	include "kernel.def"
-	include "../../cpu-6809/kernel09.def"
 
 ;
 ;	TODO: could hide the text video functions and init in discard ?
 ;
-	.area .text
+	.code
 
 _vidtxt:
 	; COCO2 defaults to text at 0400-05FF move it to 0200
@@ -61,45 +52,45 @@ _vid256x192:
 ;	Video base for text
 ;
 txtaddr:
-	ldy #VIDEO_BASE
-	leay a,y		; X value
+	ldx #VIDEO_BASE
+	leax a,x		; X value
 	lslb
 	lslb
 	lslb			; x 8 so keep unsigned
-	leay b,y		; and add four times
-	leay b,y
-	leay b,y
-	leay b,y
+	leay b,x		; and add four times
+	leay b,x
+	leay b,x
+	leay b,x
 	rts
 ;
 ;	Compute the video base address
 ;	A = X, B = Y
 ;
 vidaddr:
-	ldy #VIDEO_BASE
+	ldx #VIDEO_BASE
 	exg a,b
-	leay d,y		; 256 x Y + X
+	leax d,x		; 256 x Y + X
 	rts
 ;
 ;	plot_char(int8_t y, int8_t x, uint16_t c)
 ;
 _plot_char:
-	pshs y
+	ldy 2,s
 	lda 4,s
 	tst vidmode
 	bne plot_cg3
 	bsr txtaddr
-	tfr x,d
+	tfr y,d
 	cmpb #0x60
 	bcs upper
 	subb #0x20
 upper:
 	andb #0x3F
-	stb ,y
-	puls y,pc
+	stb ,x
+	rts
 plot_cg3:
 	bsr vidaddr		; preserves X (holding the char)
-	tfr x,d
+	tfr y,d
 	andb #$7F		; no high font bits
 	subb #$20		; skip control symbols
 	rolb			; multiply by 8
@@ -108,8 +99,8 @@ plot_cg3:
 	rola
 	rolb
 	rola
-	tfr d,x
-	leax _fontdata_8x8,x		; relative to font
+	tfr d,y
+	leay _fontdata_8x8,y		; relative to font
 	ldb _vtattr
 	andb #0x3F		; drop the bits that don't affect our video
 	beq plot_fast
@@ -138,7 +129,7 @@ ital_1:
 	orb #0x40		; spare bit borrow for bottom of italic
 	andb #0xFB
 maskdone:
-	lda ,x+			; now throw the row away for a bit
+	lda ,y+			; now throw the row away for a bit
 	bitb #0x10
 	bne notbold
 	lsra
@@ -162,104 +153,104 @@ notuline:
 plot_inv:
 	bitb #0x20		; overstrike or plot ?
 	bne overstrike
-	sta ,y
+	sta ,x
 	bra plotnext
 overstrike:
-	anda ,y
-	sta ,y
+	anda ,x
+	sta ,x
 plotnext:
-	leay 32,y
+	leax 32,x
 	lda _vtrow
 	inca
 	cmpa #8
 	bne plot_loop
-	puls y,pc
+	rts
 ;
 ;	Fast path for normal attributes
 ;
 plot_fast:
 	lda ,x+			; simple 8x8 renderer for now
 	coma
-	sta 0,y
-	lda ,x+
+	sta 0,x
+	lda ,y+
 	coma
-	sta 32,y
-	lda ,x+
+	sta 32,x
+	lda ,y+
 	coma
-	sta 64,y
-	lda ,x+
+	sta 64,x
+	lda ,y+
 	coma
-	sta 96,y
-	lda ,x+
+	sta 96,x
+	lda ,y+
 	coma
-	sta 128,y
-	lda ,x+
+	sta 128,x
+	lda ,y+
 	coma
-	sta 160,y
-	lda ,x+
+	sta 160,x
+	lda ,y+
 	coma
-	sta 192,y
-	lda ,x+
+	sta 192,x
+	lda ,y+
 	coma
-	sta 224,y
-	puls y,pc
+	sta 224,x
+	rts
 
 ;
 ;	void scroll_up(void)
 ;
 _scroll_up:
-	pshs y
-	ldy #VIDEO_BASE
+	pshs u
+	ldu #VIDEO_BASE
 	tst vidmode
 	bne scroll_up_cg3
 scrup_t:
 	ldx #VIDEO_BASE+0x20
 scrup_tl:
 	ldd ,x++
-	std ,y++
+	std ,u++
 	cmpx #VIDEO_BASE+512
 	bne scrup_tl
-	puls y,pc
+	puls u,pc
 
 scroll_up_cg3:
-	leax 256,y
+	leax 256,u
 vscrolln:
 	; Unrolled line by line copy
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	ldd ,x++
-	std ,y++
+	std ,u++
 	cmpx video_endptr
 	bne vscrolln
-	puls y,pc
+	puls u,pc
 
 ;
 ;	void scroll_down(void)
@@ -267,66 +258,63 @@ vscrolln:
 ;	Never used in text mode
 ;
 _scroll_down:
-	pshs y
-	ldy #VIDEO_END
-	leax -256,y
+	pshs u
+	ldu #VIDEO_END
+	leax -256,u
 vscrolld:
 	; Unrolled line by line loop
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	ldd ,--x
-	std ,--y
+	std ,--u
 	cmpx video_startptr
 	bne vscrolld
-	puls y,pc
+	puls u,pc
 
 video_startptr:
-	.dw	VIDEO_BASE
+	.word	VIDEO_BASE
 video_endptr:
-	.dw	VIDEO_END
+	.word	VIDEO_END
 
 ;
 ;	clear_across(int8_t y, int8_t x, uint16_t l)
 ;
-;	Never used in text mode
-;
 _clear_across:
-	pshs y
-	lda 4,s		; x into A, B already has y
+	ldy 2,s		; count
+	ldd 4,s		; Y into A, X into B
 	tst vidmode
 	beq clat
-	jsr vidaddr	; Y now holds the address
-	tfr x,d		; Shuffle so we are writng to X and the counter
-	tfr y,x		; l is in d
-	lda #$ff
+	jsr vidaddr	; X now holds the address
+	tfr y,d		; Shuffle so we are writng to X and the counter
+	lda #0xff
 clearnext:
 	sta ,x
 	sta 32,x
@@ -339,44 +327,43 @@ clearnext:
 	leax 1,x
 	decb
 	bne clearnext
-	puls y,pc
+	rts
 clat:
-	jsr txtaddr
-	ldb #$20
+	jsr txtaddr	; X now holds address
+	tfr y,d		; count into B
+	lda #$20
 clatl:
-	stb ,y+
-	dec 4,s
+	sta ,x+
+	decb
 	bne clatl
-	puls y,pc
+	rts
 ;
 ;	clear_lines(int8_t y, int8_t ct)
 ;
 _clear_lines:
-	pshs y
+	ldd 2,s		; A is Y B is CT
 	tst vidmode
 	bne clines_cg3
-	clra
-	jsr txtaddr
-	lsl 4,s
-	lsl 4,s
-	lsl 4,s
-	lsl 4,s			; x 16 cos dword
+	clrb
+	jsr txtaddr	; Start of line into X
+	lsl 3,s		; max of 15 lines
+	lsl 3,s
+	lsl 3,s
+	lsl 3,s		; x 16 cos as dword
 	ldd #$2020
-	tfr y,x
 clt:
 	std ,x++
-	dec 4,s		; 32 bytes per line max 16 lines in text
+	dec 3,s		; 32 bytes per line max 16 lines in text
 	bne clt
-	puls y,pc
+	rts
 
 clines_cg3:
-	clra			; b holds Y pos already
-	jsr vidaddr		; y now holds ptr to line start
-	tfr y,x
+	clrb			; A is Y B is now 0 (X)
+	jsr vidaddr		; X now holds ptr to line start
 	ldd #$ffff
-	lsl 4,s
-	lsl 4,s
-	lsl 4,s
+	lsl 3,s
+	lsl 3,s
+	lsl 3,s
 wipel:
 	std ,x++
 	std ,x++
@@ -394,19 +381,16 @@ wipel:
 	std ,x++
 	std ,x++
 	std ,x++
-	dec 4,s			; count of lines
+	dec 3,s			; count of lines
 	bne wipel
-	puls y,pc
+	rts
 
 _cursor_on:
-	pshs y
-	lda  4,s
+	ldd  2,s
 	tst vidmode
 	bne con_cg3
 	jsr txtaddr
-	sty cursor_save
-	tfr y,x
-	puls y
+	stx cursor_save
 coff_txt:
 	lda #0x40
 	eora ,x
@@ -415,8 +399,6 @@ coff_txt:
 
 con_cg3:
 	jsr vidaddr
-	tfr y,x
-	puls y
 	stx cursor_save
 	; Fall through
 _cursor_off:
@@ -453,30 +435,31 @@ _video_read:
 ;;;   takes: C = direction 0=write, 1=read
 ;;;   takes: X = transfer buffer ptr + 2
 tfr_cmd:
+	ldx	2,s		; get argument
 	pshs	u,y		; save regs
 	orcc	#$10		; turn off interrupt - int might remap kernel
 	ldd	#$80c0		; this is writing
-	bcc	c@		; if carry clear then keep D write
+	bcc	t_c		; if carry clear then keep D write
 	exg	a,b		; else flip D: now is reading
-c@	sta	b@+1		; !!! self modify inner loop
-	stb	b@+3		; !!!  
+t_c:	sta	t_b+1		; !!! self modify inner loop
+	stb	t_b+3		; !!!  
 	bsr	vidptr		; U = screen addr
 	tfr	x,y		; Y = ptr to Height, width
 	leax	4,x		; X = pixel data
 	;; outter loop: iterate over pixel rows
-a@	lda	3,y		; count = width
+t_a:	lda	3,y		; count = width
 	pshs	u		; save screen ptr
 	;; inner loop: iterate over columns
 	;; modify mod+1 and mod+3 to switch directions
-b@	ldb	,x+		; get a byte from src
+t_b:	ldb	,x+		; get a byte from src
 	stb	,u+		; save byte to dest
 	deca			; bump counter
-	bne	b@		; loop
+	bne	t_b		; loop
 	;; increment outer loop
 	puls	u		; restore original screen ptr
 	leau	32,u		; add byte span of screen (goto next line)
 	dec	1,y		; bump row counter
-	bne	a@		; loop
+	bne	t_a		; loop
 	puls	u,y,pc		; restore regs, return
 	
 
@@ -494,6 +477,7 @@ vidptr:
 	rts
 
 _video_cmd:
+	ldx 2,s
 	pshs u
 	bsr vidptr		; u now points to the screen
 nextline:
@@ -517,10 +501,10 @@ endline:
 	bne oploop
 	puls u,pc
 
-	.area .data
+	.data
 cursor_save:
-	.dw	0
+	.word	0
 _vtrow:
-	.db	0
+	.byte	0
 vidmode:
-	.db	0
+	.byte	0

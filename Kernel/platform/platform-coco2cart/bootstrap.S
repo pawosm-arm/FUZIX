@@ -8,61 +8,59 @@
 ;
 ;	Load block b
 ;
-	.module bootstrap
+	.export load_image
 
-	.globl load_image
-
-	.area .text
+	.code
 
 load_block:
-	lda #$FF
+	lda #0xFF
 	tfr a,dp
 load_block_1:
-	lda #$80
-	bita <$FF57			; busy
+	lda #0x80
+	bita @0x57			; busy
 	bne load_block_1
-	lda #$40
-	sta <$FF56
+	lda #0x40
+	sta @0x56
 load_block_2:
-	lda #$80
-	bita <$FF57			; busy
+	lda #0x80
+	bita @0x57			; busy
 	bne load_block_2
-	clr <$FF55
-	clr <$FF54
-	stb <$FF53			; block number to fetch
+	clr @0x55
+	clr @0x54
+	stb @0x53			; block number to fetch
 	lda #1
-	sta <$FF52
+	sta @0x52
 	
-	lda #$40
+	lda #0x40
 wait_drdy:
-	bita <$FF57
+	bita @0x57
 	beq wait_drdy
-	lda #$20			; read command
-	sta <$FF57
+	lda #0x20			; read command
+	sta @0x57
 	clrb
-	lda #$08
+	lda #0x08
 wait_drq:
-	bita <$FF57			; DRQ
+	bita @0x57			; DRQ
 	beq wait_drq
 copyloop:
-	lda <$FF50			; read word and latch
+	lda @0x50			; read word and latch
 	sta ,x+
-	lda <$FF58			; latched byte
+	lda @0x58			; latched byte
 	sta ,x+
 	decb
 	bne copyloop
-	lda #$80
+	lda #0x80
 wait_bsy:
-	bita <$FF57
+	bita @0x57
 	bne wait_bsy
-	lda #$01
-	bita <$FF57
+	lda #0x01
+	bita @0x57
 	bne load_error
 	rts
 
 
 load_image:
-	orcc #$50
+	orcc #0x50
 	; COCO2 defaults to text at 0400-05FF move it to 0200
 	ldx #0xFFC7
 	clr ,x+			; Set F0
@@ -72,13 +70,13 @@ load_image:
 	clr ,x++
 	clr ,x++
 	clr ,x++
-	ldx #$0200			; display at this point
-	ldd #$6060
+	ldx #0x0200			; display at this point
+	ldd #0x6060
 wiper:
 	std ,x++
-	cmpx #$0400
+	cmpx #0x0400
 	bne wiper
-	ldy #$0200
+	ldy #0x0200
 	lda #'G'
 	sta ,y+
 	ldb #1
@@ -96,10 +94,10 @@ load_loop:
 
 	ldx #0x0400			; check signature
 	lda ,x+
-	cmpa #$15
+	cmpa #0x15
 	bne wrong_err
 	lda ,x+
-	cmpa #$C0
+	cmpa #0xC0
 	bne wrong_err
 	rts
 
@@ -119,7 +117,7 @@ copy_str:
 endstr:	rts
 fail:
 	.ascii "FAIL"
-	.db 0
+	.byte 0
 wrong:
 	.ascii "WRONG IMAGE"
-	.db 0
+	.byte 0

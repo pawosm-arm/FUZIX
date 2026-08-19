@@ -12,40 +12,38 @@
 ;
 ;	Load block b
 ;
-	.module bootstrap
+	.export load_image
 
-	.globl load_image
-
-	.area .text
+	.code
 
 ;;; Load a sector from SDC
 ;;;   takes: B - sector number, X = dest address
 ;;;   returns: nothing
 load_block:
-	clr <$ff49		; put lba to sdc
-	clr <$ff4a		;
-	stb <$ff4b		;
+	clr @0x49		; put lba to sdc
+	clr @0x4a		;
+	stb @0x4b		;
 	ldb #$80		; read sector op
-	stb <$ff48		; 
+	stb @0x48		; 
 	exg x,x			; wait a few cycles for sdc status reg
 	exg x,x			;   to be valid. - 2 long noops
 	ldb #$2			; wait till sdc is ready
 	;; FIXME: test for failure in this loop 
-a@	bitb <$ff48		;
-	beq a@			;
+l_a:	bitb @0x48		;
+	beq l_a
 	;; tranfer data
 	lda #128		; 128 x 16 bits = 256 byte sectors
 	pshs a			; push count on stack
-c@	ldd <$ff4a		; get 16bit data from drive
+l_c:	ldd @0x4a		; get 16bit data from drive
 	std ,x++		; stick it in memory
 	dec ,s			; bump counter
-	bne c@			; repeat
+	bne l_c			; repeat
 	leas 1,s		; drop counter
 	;; wait for return value
 	ldb #$1
 	;; FIXME: test for failure in the loop, also.
-b@	bitb <$ff48		;
-	bne b@			; wait for busy
+l_b:	bitb @0x48		;
+	bne l_b			; wait for busy
 	;; FIXME: get return status here and test?
 	puls pc			; return
 
@@ -67,7 +65,7 @@ load_image:
 	sta ,y+
 	ldd #$ff43		; set DP to io page
 	tfr a,dp		; good for size + speed
-	stb <$ff40		; turn on SDC's LBA mode 
+	stb @0x40		; turn on SDC's LBA mode 
 	;; we have to wait maybe 12us before doing anything
 	;; with the SDC now, but the code below should
 	;; delay SDC access enough.
@@ -109,7 +107,7 @@ copy_str:
 endstr:	rts
 fail:
 	.ascii "FAIL"
-	.db 0
+	.byte 0
 wrong:
 	.ascii "WRONG IMAGE"
-	.db 0
+	.byte 0
