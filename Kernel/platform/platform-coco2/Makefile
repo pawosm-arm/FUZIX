@@ -1,8 +1,6 @@
 
 CSRCS = devices.c main.c devtty.c
 
-C3SRCS = libc.c
-
 CDSRCS = discard.c
 
 DSRCS = ../../dev/tinyide.c ../../dev/tinydisk.c
@@ -13,7 +11,6 @@ ASRCS = crt0.S coco2.S ide.S video.S
 ASRCS += tricks.S commonmem.S
 
 COBJS = $(CSRCS:.c=$(BINEXT))
-C3OBJS = $(C3SRCS:.c=$(BINEXT))
 CDOBJS = $(CDSRCS:.c=$(BINEXT))
 AOBJS = $(ASRCS:.S=$(BINEXT))
 DOBJS = $(patsubst ../../dev/%.c,%.o, $(DSRCS))
@@ -25,9 +22,6 @@ CROSS_CCOPTS += -I../../dev/
 all: $(OBJS)
 
 $(COBJS): %$(BINEXT): %.c
-	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG2) -c $<
-
-$(C3OBJS): %$(BINEXT): %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG2) -c $<
 
 $(CDOBJS): %$(BINEXT): %.c
@@ -59,7 +53,7 @@ image: bootfuz.bin
 	../../devio.o ../../filesys.o ../../process.o ../../inode.o ../../syscall_fs.o \
 	../../syscall_proc.o ../../syscall_other.o ../../mm.o ../../swap.o \
 	../../tty.o ../../devsys.o ../../usermem.o ../../syscall_fs2.o ../../syscall_exec16.o \
-	devtty.o libc.o ../../vt.o ../../syscall_fs3.o ../../syscall_exec.o ../../blk512.o \
+	devtty.o ../../vt.o ../../syscall_fs3.o ../../syscall_exec.o ../../blk512.o \
 	video.o /opt/fcc/lib/6809/lib6809.a
 	# Repack the high spot F0-FF where it wants it
 	dd if=../../fuzix.bin of=fuzix.tmp bs=256 skip=240
@@ -79,6 +73,6 @@ diskimage:
 	# We have 2048 blocks at the start which are the partition table then our
 	# image blocks
 	# Write the rest of the images to the disks
-	dd if=fuzix.img of=$(IMAGES)/disk.img bs=512 seek=1 conv=notrunc
+	dd if=../../fuzix.bin of=$(IMAGES)/disk.img bs=512 seek=1 conv=notrunc
 	# Loader
 	cp bootfuz.bin $(IMAGES)
