@@ -27,6 +27,7 @@
 
 #ifdef HWUART
 
+	.export DWRead
 DWRead:   clra                          ; clear Carry (no framing error)
 	  deca                          ; clear Z flag, A = timeout msb (0xff)
 	  tfr       cc,b
@@ -86,6 +87,7 @@ rxTimout: clra				; represents CC.C=0, CC.Z=0
 #ifdef ARDUINO
 ; Note: this is an optimistic routine. It presumes that the server will always be there, and
 ; has NO timeout fallback. It is also very short and quick.
+	.export DWRead
 DWRead:   clra                          ; clear Carry (no framing error)
           pshs   u,x,cc              ; preserve registers
           leau   ,x
@@ -104,7 +106,7 @@ loop_a:   tst    0xFF51                  ; check for CA1 bit (1=Arduino has byte
 
 #ifdef JMCPBCK
 ; NOTE: There is no timeout currently on here...
-DWRead    clra                          ; clear Carry (no framing error)
+DWRead:   clra                          ; clear Carry (no framing error)
           deca                          ; clear Z flag, A = timeout msb (0xff)
           tfr       cc,b
           pshs      u,x,dp,b,a          ; preserve registers, push timeout msb
@@ -137,6 +139,7 @@ loop_jc: ldb    0xFF4C
 BCKSTAT   equ   0xFF41
 BCKPORT   equ   0xFF42
 
+	.export DWRead
 DWRead:    pshs   dp,x,u                 ; preserve registers, push timeout msb
           ldd    #(60*256)+0xff         ; A = timeout of 1+ sec, B = new DP
           tfr    b,dp                   ; set DP
@@ -173,6 +176,7 @@ a_be:	  ldb    @BCKSTAT
 ; 38400 bps using 6809 code and timimg
 ;******************************************************
 
+	.export DWRead
 DWRead:   clra                          ; clear Carry (no framing error)
           deca                          ; clear Z flag, A = timeout msb (0xff)
           tfr       cc,b
@@ -241,6 +245,7 @@ rxExit:   leas      1,s                 ; remove timeout msb from stack
 ; 57600 (115200) bps using 6309 native mode
 ;******************************************************
 
+	.export DWRead
 DWRead:   clrb                          ; clear Carry (no framing error)
           decb                          ; clear Z flag, B = 0xFF
           pshs      u,x,dp,cc           ; preserve registers
@@ -307,6 +312,7 @@ rx0050:   inca                          ; A = status to be returned in C and Z
 ; 57600 (115200) bps using 6809 code and timimg
 ;******************************************************
 
+	.export DWRead
 DWRead:   clra                          ; clear Carry (no framing error)
           deca                          ; clear Z flag, A = timeout msb (0xff)
           tfr       cc,b

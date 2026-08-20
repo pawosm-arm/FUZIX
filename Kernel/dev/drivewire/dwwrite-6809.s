@@ -25,6 +25,7 @@
 ; 57600 (115200) bps using 6809 code and hw UART
 ;******************************************************
 
+	.export DWWrite
 DWWrite:  pshs      cc,a				; preserve registers
 #ifndef NOINTMASK
           orcc      #IntMasks				; mask interrupts
@@ -45,6 +46,7 @@ WrBiz:    lda		UARTSTA2
 
 #ifdef ARDUNIO
 
+	.export DWWrite
 DWWrite:  pshs      a                  ; preserve registers
 txByte
           lda       ,x+                ; get byte from buffer
@@ -61,6 +63,7 @@ loop_ar:  tst       0xFF53              ; check status register
 
 #ifdef JMCPBCK
 
+	.export DWWrite
 DWWrite:  pshs      d,cc              ; preserve registers
 #ifndef NOINTMASK
           orcc      #IntMasks           ; mask interrupts
@@ -75,6 +78,7 @@ txByte:
 #endif
 
 #ifdef BECKER
+	.export DWWrite
 DWWrite:   pshs      d,cc              ; preserve registers
 #ifndef NOINTMASK
           orcc      #IntMasks           ; mask interrupts
@@ -99,6 +103,7 @@ txByte:
 ; 38400 bps using 6809 code and timimg
 ;******************************************************
 
+	.export DWWrite
 DWWrite:  pshs      u,d,cc              ; preserve registers
 #ifndef NOINTMASK
           orcc      #IntMasks           ; mask interrupts
@@ -136,6 +141,7 @@ tx0010:   stb       ,u++                ; send bit
 ; 57600 (115200) bps using 6309 native mode
 ;******************************************************
 
+	.export DWWrite
 DWWrite:   pshs      u,d,cc              ; preserve registers
 #ifndef NOINTMASK
           orcc      #IntMasks           ; mask interrupts
@@ -176,6 +182,7 @@ tx0040:   stb       -1,u                ; send bit
 
 #ifdef BAUD57600
 
+	.export DWWrite
 DWWrite:   pshs      dp,d,cc             ; preserve registers
 #ifndef NOINTMASK
           orcc      #IntMasks           ; mask interrupts
