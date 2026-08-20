@@ -3,7 +3,7 @@ ASM = fcc -mz8
 AR = ar
 PLATFORM = z8
 export PLATFORM
-CC_OPT = -c -I$(shell pwd)/../include -I$(shell pwd)/../include/$(PLATFORM) -X -O
+CC_OPT = -c -I$(shell pwd)/../include -I$(shell pwd)/../include/$(PLATFORM) -X -Os
 ASM_OPT = -c -o
 LORDER = lorderz8
 ENDIAN =
