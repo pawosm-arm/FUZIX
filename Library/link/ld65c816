@@ -35,4 +35,4 @@ done
 #
 set -e
 #
-fcc -m65c816 -s $ARGS -o "$TARGET"1 -M
+fcc -m65c816 -s $ARGS -o "$TARGET" -M
