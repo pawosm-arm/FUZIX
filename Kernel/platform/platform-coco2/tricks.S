@@ -27,7 +27,7 @@ _plt_switchout:
         ; return from either _switchout OR _dofork, so they must both write 
         ; U_DATA__U_SP with the following on the stack:
 	pshs d,u
-	sts U_DATA__U_SP	; this is where the SP is restored in _switchin
+	sts _udata + U_DATA__U_SP	; this is where the SP is restored in _switchin
 
         ; find another (or same) process to run, returned in X
         jsr _getproc
@@ -62,10 +62,10 @@ _switchin:
 	; room!
 	lds #$0100
 
-	ldx U_DATA__U_PTAB
+	ldx _udata + U_DATA__U_PTAB
 	ldx P_TAB__P_PAGE_OFFSET+1,x
 	beq not_swapout		;	it's dead don't swap it out
-	ldx U_DATA__U_PTAB
+	ldx _udata + U_DATA__U_PTAB
 	pshs x
 ;;	andcc #0xef
 	jsr _swapout		;	swapout(pptr)
@@ -83,14 +83,14 @@ not_swapped:
 ;;	orcc #0x10
 	dec _inswap
 	; we have now new stacks so get new stack pointer before any jsr
-	lds U_DATA__U_SP
+	lds _udata + U_DATA__U_SP
 
 	; get back kernel page so that we see process table
 	jsr map_kernel
 
 	ldx newpp
         ; check u_data->u_ptab matches what we wanted
-	cmpx U_DATA__U_PTAB
+	cmpx _udata + U_DATA__U_PTAB
         bne switchinfail
 
 	lda #P_RUNNING
@@ -98,7 +98,7 @@ not_swapped:
 
 	; fix any moved page pointers
 	lda P_TAB__P_PAGE_OFFSET+1,x
-	sta U_DATA__U_PAGE+1
+	sta _udata + U_DATA__U_PAGE+1
 
 	clra
 	clrb
@@ -106,11 +106,11 @@ not_swapped:
 
         ; restore machine state -- note we may be returning from either
         ; _switchout or _dofork
-        lds U_DATA__U_SP
+        lds _udata + U_DATA__U_SP
         puls d,u ; return code and saved U and Y
 
         ; enable interrupts, if the ISR isn't already running
-	lda U_DATA__U_ININTERRUPT
+	lda _udata + U_DATA__U_ININTERRUPT
         bne swtchdone ; in ISR, leave interrupts off
 	andcc #0xef
 swtchdone:
@@ -153,7 +153,7 @@ _dofork:
         ; _switchin which will immediately return (appearing to be _dofork()
 	; returning) and with X (ie return code) containing the child PID.
         ; Hurray.
-        sts U_DATA__U_SP
+        sts _udata + U_DATA__U_SP
 
         ; now we're in a safe state for _switchin to return in the parent
 	; process.
