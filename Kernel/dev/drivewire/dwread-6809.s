@@ -136,8 +136,12 @@ loop_jc: ldb    0xFF4C
 #endif
 
 #ifdef BECKER
+#ifndef BCKSTAT
 BCKSTAT   equ   0xFF41
+#endif
+#ifndef BCKPORT
 BCKPORT   equ   0xFF42
+#endif
 
 	.export DWRead
 DWRead:    pshs   dp,x,u                 ; preserve registers, push timeout msb
