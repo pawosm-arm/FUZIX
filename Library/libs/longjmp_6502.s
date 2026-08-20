@@ -6,7 +6,7 @@
 _longjmp:
 	ldy	#1
 	jsr	__gloytmp	; pointer into @tmp
-	ldy	#3
+	ldy	#2
 	lda	(@sp),y
 	sta	@tmp2
 	iny
@@ -16,7 +16,7 @@ _longjmp:
 	bne	retok		; Non zero
 	inc	@tmp2		; Make it 1
 retok:
-	; Restore the old @sp
+	; Restore the old @sp (has the setjmp argument on it) 
 	ldy	#0
 	lda	(@tmp),y
 	sta	@sp
@@ -124,9 +124,11 @@ pop_out:
 	sta	@reg4+1
 	iny
 ; Get the return address and push it on the stack
+; Need to reverse this
+	iny
         lda     (@tmp),y
 	pha
-        iny
+        dey
         lda     (@tmp),y
 	pha
 
@@ -134,5 +136,5 @@ pop_out:
 
         lda     @tmp2
         ldx     @tmp2+1
-	ldy	#4
+	ldy	#2
 	jmp	__addysp
