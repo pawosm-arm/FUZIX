@@ -607,54 +607,42 @@ int psleep_flags(void *p, uint_fast8_t flags)
 	return 0;
 }
 
-void kputs(const char *p)
+void kputs(register const char *p)
 {
 	while (*p)
 		kputchar(*p++);
 }
 
-static void putdigit0(uint_fast8_t c)
-{
-	kputchar("0123456789ABCDEF"[c & 15]);
-}
-
-static void putdigit(uint_fast8_t c, unsigned char *flag)
-{
-	if (c || *flag) {
-		*flag |= c;
-		putdigit0(c);
-	}
-}
-
-void kputhex(unsigned int v)
-{
-	putdigit0(v >> 12);
-	putdigit0(v >> 8);
-	putdigit0(v >> 4);
-	putdigit0(v);
-}
-
-void kputhexbyte(unsigned int v)
-{
-	putdigit0(v >> 4);
-	putdigit0(v);
-}
-
-void kputunum(unsigned int v)
-{
-	unsigned char n = 0;
+static unsigned decimal[] = {
 #ifdef CONFIG_32BIT
-	putdigit((v / 1000000000) % 10, &n);
-	putdigit((v / 100000000) % 10, &n);
-	putdigit((v / 10000000) % 10, &n);
-	putdigit((v / 1000000) % 10, &n);
-	putdigit((v / 100000) % 10, &n);
+	1000000000,
+	100000000,
+	10000000,
+	1000000,
+	100000,
 #endif
-	putdigit((v / 10000) % 10, &n);
-	putdigit((v / 1000) % 10, &n);
-	putdigit((v / 100) % 10, &n);
-	putdigit((v / 10) % 10, &n);
-	putdigit0(v % 10);
+	10000,
+	1000,
+	100,
+	10,
+	0
+};
+
+static unsigned hex[] = {
+	4096, 256, 16, 0
+};
+
+void kputval(unsigned int n, unsigned *div, uint_fast8_t zp)
+{
+	static char digit[] = "0123456789ABCDEF";
+	register unsigned i;
+	register uint_fast8_t c;
+	while(i = *div++) {
+		if (zp |= (c = n / i))
+			kputchar(digit[c & 15]);
+		n %= i;
+	}
+	kputchar(digit[n & 15]);
 }
 
 void kputnum(int v)
@@ -663,14 +651,20 @@ void kputnum(int v)
 		kputchar('-');
 		v = -v;
 	}
-	kputunum(v);
+	kputval(v, decimal, 0);
 }
 
-void kprintf(const char *fmt, ...)
+void kputhex(unsigned v)
+{
+	kputval(v, hex, 1);
+}
+
+void kprintf(const char *fmtp, ...)
 {
 	va_list ap;
+	register const char *fmt = fmtp;
 
-	va_start(ap, fmt);
+	va_start(ap, fmtp);
 	while (*fmt) {
 		if (*fmt == '%') {
 			fmt++;
@@ -697,7 +691,6 @@ void kprintf(const char *fmt, ...)
 				case 'l': /* assume an x is following */
 				{
 					long l = va_arg(ap, unsigned long);
-					/* TODO: not 32-bit safe */
 					kputhex((uint16_t)(l >> 16));
 					kputhex((uint16_t)l);
 					fmt += 2;
@@ -707,7 +700,7 @@ void kprintf(const char *fmt, ...)
 				case '2': /* assume an x is following */
 				{
 					char c = va_arg(ap, int);
-					kputhexbyte(c);
+					kputval(c, hex + 2, 1);
 					fmt += 2;
 					continue;
 				}
@@ -726,15 +719,13 @@ void kprintf(const char *fmt, ...)
 					else if (*fmt == 'd')
 						kputnum(v);
 					else if (*fmt == 'u')
-						kputunum(v);
-
+						kputval(v, decimal, 0);
 					fmt++;
 					continue;
 				}
 			}
 		}
-		kputchar(*fmt);
-		fmt++;
+		kputchar(*fmt++);
 	}
 
 	va_end(ap);
@@ -744,7 +735,7 @@ void kprintf(const char *fmt, ...)
 
 void bufdump(void)
 {
-	bufptr j;
+	register bufptr j;
 
 	kprintf("\ndev\tblock\tdirty\tbusy\ttime clock %d\n", bufclock);
 	for (j = bufpool; j < bufpool_end; ++j)
@@ -754,8 +745,8 @@ void bufdump(void)
 
 void idump(void)
 {
-	inoptr ip;
-	ptptr pp;
+	register inoptr ip;
+	register ptptr pp;
 	extern struct cinode i_tab[];
 
 	kprintf("Err %d root %d\n", udata.u_error, root - i_tab);
