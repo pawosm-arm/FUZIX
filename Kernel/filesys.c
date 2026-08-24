@@ -772,12 +772,13 @@ void blk_free(uint16_t devno, blkno_t blk)
 
 int_fast8_t oft_alloc(void)
 {
-    register uint_fast8_t j;
+    register struct oft *ofp;
+    register uint_fast8_t j = 0;
 
-    for(j=0; j < OFTSIZE ; ++j) {
-        if(of_tab[j].o_refs == 0) {
-            of_tab[j].o_refs = 1;
-            of_tab[j].o_inode = NULLINODE;
+    for(ofp = of_tab; ofp < of_tab + OFTSIZE ; ++ofp, ++j) {
+        if(ofp->o_refs == 0) {
+            ofp->o_refs = 1;
+            ofp->o_inode = NULLINODE;
             return j;
         }
     }
