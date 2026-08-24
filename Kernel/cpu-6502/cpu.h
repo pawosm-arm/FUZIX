@@ -38,10 +38,6 @@ typedef union {            /* this structure is endian dependent */
 
 #define ntohs(x)	((((x) & 0xFF) << 8) | (((x) & 0xFF00) >> 8))
 
-/* We need to look at this once the compiler is a bit more mature and see
-   if adding register pointer vars is a win - probably it will be */
-#define regptr register
-
 /* fcc is bright enough to partly optimise this but not fully so do it
    by hand */
 #define HIBYTE32(x)	(((uint8_t *)&(x))[3])

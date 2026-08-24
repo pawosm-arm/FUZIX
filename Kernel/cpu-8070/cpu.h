@@ -20,8 +20,6 @@ extern uint16_t swab(uint16_t);
 /* 8070 doesn't benefit from making a few key variables in
    non-reentrant functions static */
 #define staticfast	auto
-/* Register is cheap and fast although we only have one such pointer to hand */
-#define regptr		register
 
 
 /* User's structure for times() system call */

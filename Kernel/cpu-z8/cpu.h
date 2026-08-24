@@ -22,7 +22,6 @@ extern void *memmove(void *dest, const void *src, size_t n);
 
 extern int16_t strlen(const char *p);
 
-#define regptr register
 #define	staticfast
 
 /* User's structure for times() system call */
