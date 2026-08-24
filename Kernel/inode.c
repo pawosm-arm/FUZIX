@@ -67,7 +67,7 @@ static uint16_t mapcalc(inoptr ino, usize_t *size, uint_fast8_t m)
 }
 
 /* Writei (and readi) need more i/o error handling */
-void readi(regptr inoptr ino, uint_fast8_t flag)
+void readi(register inoptr ino, uint_fast8_t flag)
 {
 	usize_t amount;
 	blkno_t pblk;
@@ -166,7 +166,7 @@ void readi(regptr inoptr ino, uint_fast8_t flag)
 	}
 }
 
-void writei(regptr inoptr ino, uint_fast8_t flag)
+void writei(register inoptr ino, uint_fast8_t flag)
 {
 	usize_t amount;
 	bufptr bp;
@@ -260,7 +260,7 @@ int16_t doclose(uint_fast8_t uindex)
 {
 	int8_t oftindex;
 	struct oft *oftp;
-	regptr inoptr ino;
+	register inoptr ino;
 	uint16_t flush_dev = NO_DEVICE;
 	uint8_t m;
 
@@ -299,7 +299,7 @@ int16_t doclose(uint_fast8_t uindex)
 inoptr rwsetup(bool is_read, uint_fast8_t * flag)
 {
 	inoptr ino;
-	regptr struct oft *oftp;
+	register struct oft *oftp;
 
 	udata.u_sysio = false;	/* I/O to user data space */
 	udata.u_base = (unsigned char *) udata.u_argn1;	/* buf */
@@ -365,8 +365,8 @@ int dev_openi(inoptr *ino, uint16_t flag)
 
 void sync(void)
 {
-	regptr inoptr ino;
-	regptr struct mount *m;
+	register struct mount *m;
+	register inoptr ino;
 	bufptr buf;
 
 	/* Write out modified inodes */
