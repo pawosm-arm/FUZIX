@@ -72,8 +72,8 @@ static struct netevent ne;
 
 int netdev_write(uint8_t flags)
 {
-	regptr struct socket *s;
-	regptr struct sockdata *sd;
+	register struct socket *s;
+	register struct sockdata *sd;
 
 	used(flags);
 	/* Grab a message from the service daemon */
@@ -294,7 +294,7 @@ int netdev_ioctl(uarg_t request, char *data)
  */
 int netdev_close(uint8_t minor)
 {
-	regptr struct socket *s = sockets;
+	register struct socket *s = sockets;
 	used(minor);
 	if (bmem || net_ino) {
 		if (net_ino)
