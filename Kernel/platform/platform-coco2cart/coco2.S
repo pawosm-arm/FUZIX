@@ -123,6 +123,7 @@ ___hard_ei:
 	rts
 
 ___hard_irqrestore:		; B holds the data
+	ldd 2,s
 	tfr b,cc
 	rts
 
