@@ -384,12 +384,10 @@ static void fix_mount(register struct mount *mnt, uint_fast8_t rm)
 	if (rm) {
 		mnt->m_flags &= ~(MS_RDONLY|MS_NOSUID);
 		mnt->m_flags |= flags & (MS_RDONLY|MS_NOSUID);
-#if 0
 		/* You can choose to remount a corrupt fs r/o in which case
 		   it gets marked clean. We may want to rethink that FIXME */
 		if (mnt->m_flags & MS_RDONLY)
 			mnt->m_fs.s_fmod = FMOD_GO_CLEAN;
-#endif
 		return;
 	}
 
