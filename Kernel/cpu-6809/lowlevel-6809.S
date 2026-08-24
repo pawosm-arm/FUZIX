@@ -440,11 +440,11 @@ _swab:	ldd	2,s
 
 _memset:
 	pshs	u
-	ldu	4,s		; pointer
-	ldb	7,s		; byte
 	ldx	8,s		; count
 	beq	nowork
-msl:	clr	,u+
+	ldu	4,s		; pointer
+	ldb	7,s		; byte
+msl:	stb	,u+
 	leax	-1,x
 	bne	msl
 nowork:
