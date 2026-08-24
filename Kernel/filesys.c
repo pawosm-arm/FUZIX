@@ -39,8 +39,8 @@ inoptr n_open(uint8_t *namep, inoptr *parent)
 {
     staticfast inoptr wd;     /* the directory we are currently searching. */
     staticfast inoptr ninode;
-    regptr uint8_t *fp;
-    regptr inoptr temp;
+    register uint8_t *fp;
+    register inoptr temp;
     uint8_t c;
     usize_t len;
 
@@ -997,7 +997,7 @@ int f_trunc_blocks(register inoptr ino, uint16_t nblock)
 
 /* Truncate a file back to nothing using f_trunc_blocks and then write
    the inode size as 0 */
-int f_trunc(regptr inoptr ino)
+int f_trunc(register inoptr ino)
 {
     /* Is it worth checking size already 0 ? */
     if (f_trunc_blocks(ino, 0))
@@ -1051,8 +1051,8 @@ void freeblk(uint16_t dev, blkno_t blk, uint_fast8_t level, uint16_t nblock)
 void freeblk(uint16_t dev, blkno_t blk, uint_fast8_t level, uint16_t nblock)
 {
     struct blkbuf *buf;
-    regptr blkno_t *bn;
-    int16_t j;
+    register blkno_t *bn;
+    register int16_t j;
     int_fast8_t nblock1 = nblock >> 8;
 
     if(!blk)
@@ -1071,6 +1071,7 @@ void freeblk(uint16_t dev, blkno_t blk, uint_fast8_t level, uint16_t nblock)
             uint_fast8_t b = 0;
             if (j == nblock1)
                 b = nblock & 0xFF;
+            /* FIXME: bn[j] would be better as a pointer */
             freeblk(dev, bn[j], level-1, b);
         }
         brelse(buf);
