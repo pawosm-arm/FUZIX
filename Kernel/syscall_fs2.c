@@ -328,7 +328,7 @@ arg_t _fchown(void)
 
 arg_t _utime(void)
 {
-	regptr inoptr ino;
+	register inoptr ino;
 	time_t t[2];
 
 	if (!(ino = n_open_lock(file, NULLINOPTR)))
@@ -370,7 +370,7 @@ out2:
 /*******************************************
   acct(fd)	                 Function 61
   int16_t fd;
-  
+
   Process accounting. Differs from SYS5 in
   that we pass an fd and hide the opening
   in the C library code.
@@ -403,7 +403,7 @@ arg_t _acct(void)
 #else
         udata.u_error = EINVAL;
         return -1;
-#endif        
+#endif
 }
 
 #undef fd

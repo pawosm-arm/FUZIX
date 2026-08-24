@@ -31,7 +31,7 @@ arg_t _lseek(void)
 	off_t p;
 	off_t n;
 	off_t *pt;
-	
+
 	if (uget(offset, &n, sizeof(n)))
 	        return -1;
 
@@ -299,7 +299,7 @@ int fildes[];
 arg_t _pipe(void)
 {
 	int_fast8_t u1, u2, oft1, oft2;
-	regptr inoptr ino;
+	register inoptr ino;
 
 /* bug fix SN */
 	if ((u1 = uf_alloc()) == -1)

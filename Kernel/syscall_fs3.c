@@ -119,7 +119,7 @@ arg_t _open(void)
 		if (dev_openi(iptr, flag) != 0)
 			goto cantopen;
 		/* May have changed */
-		/* get the static pointer back in case it changed via dev 
+		/* get the static pointer back in case it changed via dev
 		   usage or just because we blocked */
 		ino = *iptr;
 		i_lock(ino);
@@ -362,8 +362,8 @@ Perform locking upon a file.
 
 arg_t _flock(void)
 {
-	inoptr ino;
-	regptr struct oft *o;
+	register struct oft *o;
+	register inoptr ino;
 	staticfast uint8_t c;
 	staticfast uint8_t lock;
 	staticfast int self;
@@ -396,8 +396,8 @@ arg_t _flock(void)
 			return 0;
 		/* Shared to exclusive - handle via the loop */
 	}
-		
-		
+
+
 	/* Unlock - drop the locks, mark us not a lock holder. Doesn't block */
 	if (lockop == LOCK_UN) {
 		o->o_access &= ~O_FLOCK;
