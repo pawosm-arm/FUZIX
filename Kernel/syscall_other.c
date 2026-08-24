@@ -309,7 +309,7 @@ arg_t _rmdir(void)
 
 arg_t _mount(void)
 {
-	inoptr sino, dino;
+	register inoptr dino, sino;
 	uint16_t dev;
 
 	if (esuper()) {
@@ -374,11 +374,35 @@ arg_t _mount(void)
 #define spec (uint8_t *)udata.u_argn
 #define flags (uint16_t)udata.u_argn1
 
+static void fix_mount(register struct mount *mnt, uint_fast8_t rm)
+{
+	if (!rm)
+		mnt->m_fs.s_fmod = FMOD_GO_CLEAN;
+
+	sync();
+
+	if (rm) {
+		mnt->m_flags &= ~(MS_RDONLY|MS_NOSUID);
+		mnt->m_flags |= flags & (MS_RDONLY|MS_NOSUID);
+#if 0
+		/* You can choose to remount a corrupt fs r/o in which case
+		   it gets marked clean. We may want to rethink that FIXME */
+		if (mnt->m_flags & MS_RDONLY)
+			mnt->m_fs.s_fmod = FMOD_GO_CLEAN;
+#endif
+		return;
+	}
+
+	i_deref(mnt->m_mntpt);
+	/* Vanish the entry */
+	mnt->m_dev = NO_DEVICE;
+}
+
 static int do_umount(uint16_t dev)
 {
-	regptr struct mount *mnt;
+	register inoptr ptr;
+	struct mount *mnt;
 	uint_fast8_t rm = flags & MS_REMOUNT;
-	regptr inoptr ptr;
 
 	mnt = fs_tab_get(dev);
 	if (mnt == NULL) {
@@ -419,24 +443,7 @@ static int do_umount(uint16_t dev)
 		}
 	}
 
-	if (!rm)
-		mnt->m_fs.s_fmod = FMOD_GO_CLEAN;
-
-	sync();
-
-	if (rm) {
-		mnt->m_flags &= ~(MS_RDONLY|MS_NOSUID);
-		mnt->m_flags |= flags & (MS_RDONLY|MS_NOSUID);
-		/* You can choose to remount a corrupt fs r/o in which case
-		   it gets marked clean. We may want to rethink that FIXME */
-		if (mnt->m_flags & MS_RDONLY)
-			mnt->m_fs.s_fmod = FMOD_GO_CLEAN;
-		return 0;
-	}
-
-	i_deref(mnt->m_mntpt);
-	/* Vanish the entry */
-	mnt->m_dev = NO_DEVICE;
+	fix_mount(mnt, rm);
 	return 0;
 }
 
@@ -491,7 +498,7 @@ arg_t _profil(void)
 	/* For performance reasons scale as
 	   passed to the kernel is a shift value
 	   not a divider */
-	regptr ptptr p = udata.u_ptab;
+	register ptptr p = udata.u_ptab;
 
 	if (scale == 0) {
 		p->p_profscale = scale;
@@ -599,7 +606,7 @@ int16_t pri;
 
 arg_t _nice(void)
 {
-	regptr ptptr p = udata.u_ptab;
+	register ptptr p = udata.u_ptab;
 	int16_t np;
 
 	if (pri < 0 && !esuper())
