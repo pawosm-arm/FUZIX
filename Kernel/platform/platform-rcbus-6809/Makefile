@@ -1,4 +1,4 @@
-CSRCS = devices.c main.c libc.c devtty.c devinput.c
+CSRCS = devices.c main.c devtty.c devinput.c
 
 CDSRCS = discard.c
 
@@ -54,7 +54,7 @@ image:
 	../../devio.o ../../filesys.o ../../process.o ../../inode.o ../../syscall_fs.o \
 	../../syscall_proc.o ../../syscall_other.o ../../mm.o ../../swap.o \
 	../../tty.o ../../devsys.o ../../usermem.o ../../syscall_fs2.o ../../syscall_fs3.o \
-	../../syscall_exec16.o ../../syscall_exec.o devtty.o libc.o \
+	../../syscall_exec16.o ../../syscall_exec.o devtty.o \
 	../../dev/tinydisk.o ../../dev/tinyide.o ide.o ../../dev/tinysd.o sdcard.o \
 	../../dev/tinydisk_discard.o ../../dev/tinyide_discard.o discard.o \
 	../../dev/ds1302_discard.o ../../dev/tinysd_discard.o \
