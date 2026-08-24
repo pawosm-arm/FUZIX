@@ -333,7 +333,7 @@ udata.u_base should be consulted instead.
 Any device other than a disk will have only raw access.
 **********************************************************************/
 
-static void bdsetup(bufptr bp)
+static void bdsetup(register bufptr bp)
 {
 	udata.u_buf = bp;
 	udata.u_block = bp->bf_blk;
@@ -483,9 +483,8 @@ int no_ioctl(uint_fast8_t minor, uarg_t a, char *b)
  */
 
 /* add something to the tail of the queue. */
-bool insq(struct s_queue * qp, uint_fast8_t c)
+bool insq(register struct s_queue *q, uint_fast8_t c)
 {
-	register struct s_queue *q = qp;
 	bool r;
 
 	irqflags_t irq = di();
@@ -541,9 +540,8 @@ void clrq(struct s_queue *qp)
 
 
 /* Remove something from the tail; the most recently added char. */
-bool uninsq(struct s_queue *qp, uint_fast8_t *cp)
+bool uninsq(register struct s_queue *q, uint_fast8_t *cp)
 {
-	register struct s_queue *q = qp;
 	bool r;
 	irqflags_t irq = di();
 
@@ -561,12 +559,12 @@ bool uninsq(struct s_queue *qp, uint_fast8_t *cp)
 }
 
 /* Returns true if the queue has more characters than its wakeup number */
-bool fullq(struct s_queue *q)
+bool fullq(register struct s_queue *q)
 {
-    if (q->q_count > q->q_wakeup) // WRS: shouldn't this be >= ?
-        return true;
-    else
-        return false;
+	if (q->q_count > q->q_wakeup) // WRS: shouldn't this be >= ?
+	        return true;
+	else
+		return false;
 }
 
 /*********************************************************************
