@@ -30,8 +30,8 @@ vectors:
 	.word badswi_handler		; SWI2
 	.word firq_handler		; FIR
 	.word interrupt_handler		; IRQ
-	.word unix_syscall_entry 		; SWI
-	.word nmi_handler			; NMI
+	.word unix_syscall_entry	; SWI
+	.word nmi_handler		; NMI
 	.word 0				; RESET (never used)
 
 	.buffers
@@ -56,18 +56,26 @@ init_early:
 init_hardware:
 	jsr size_ram
 	ldx #$FE60		; 6840 PTM at I/O 0x60
-	lda #1
+	lda #0x01		; CR1 visible
 	sta 1,x			; Enable CR1, set CR2 to be
 				; square wave no IRQ, refclk, 16bit
 	lda #0x01
 	sta ,x			; Reset the chip, CR1 config doesn't matter
 				; providing output is disabled
 	ldd #CLKVAL
-	std 6,x			; Timer 3
+	std 4,x			; Timer 2
+	ldd #0x08
+	std 6,x			; And divide down further
 	clr 1,x			; CR2 square, no IRQ, no out, no input,
-				; CR3 accessible
-	lda #0x43		; counter mode, count E clocks, prescale
+				; CR3 accessible, drive output
+	lda #0x40		; counter mode, count external clocks off T2
 				; IRQ on
+	sta ,x
+
+	lda #0x81
+	sta 1,x			; Back to CR1
+	clr ,x			; out of reset
+
 	ldx #vectors
 	ldu #0xFFF0
 	ldd ,x++
@@ -86,11 +94,7 @@ init_hardware:
 	std ,u++
 	ldd ,x
 	std ,u
-	sta ,x
 
-	lda #0x01
-	sta 1,x			; Back to CR1
-	clr ,x			; out of reset
 	jmp set_vector
 
         .common
@@ -110,7 +114,7 @@ ___hard_ei:
 	rts
 
 ___hard_irqrestore:		; B holds the data
-	ldb 3,s
+	ldb 2,s
 	tfr b,cc
 	rts
 
