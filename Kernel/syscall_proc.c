@@ -121,7 +121,7 @@ arg_t _setgid(void)
 {
 	/* We must be superuser, have the group in question is our effective
 	   ore real group, or be a member of that group */
-	if (super() || udata.u_gid == gid || udata.u_egid == gid 
+	if (super() || udata.u_gid == gid || udata.u_egid == gid
 		|| in_group(gid)) {
 		if (udata.u_egid == 0)
 			udata.u_gid = gid;
@@ -206,7 +206,7 @@ arg_t _times(void)
 {
 	irqflags_t irq;
 
-	irq = di();	
+	irq = di();
 
 	uput(&udata.u_ptab->p_utime, buf, 4 * sizeof(clock_t));
 	uput(&ticks, buf + 4 * sizeof(clock_t),
@@ -312,7 +312,7 @@ int options;
 
 arg_t _waitpid(void)
 {
-	regptr ptptr p;
+	register ptptr p;
 	int retval;
 	uint_fast8_t found;
 
@@ -325,8 +325,7 @@ arg_t _waitpid(void)
 		pid = -udata.u_ptab->p_pgrp;
 	/* Search for an exited child; */
 	for (;;) {
-		chksigs();
-		if (udata.u_cursig) {
+		if (chksigs()) {
 			udata.u_error = EINTR;
 			return -1;
 		}
@@ -527,7 +526,7 @@ arg_t _signal(void)
 	/* Force recalculation of signal pending in the syscall return path */
 	recalc_cursig();
 	irqrestore(irq);
-	
+
 	return (retval);
 
 nogood:
@@ -577,7 +576,7 @@ int16_t sig;
 
 arg_t _kill(void)
 {
-	regptr ptptr p;
+	register ptptr p;
 	register unsigned f = 0, s = 0;
 
 	if (sig < 0 || sig >= NSIGS) {
@@ -649,7 +648,7 @@ arg_t _setpgrp(void)
 	udata.u_ptab->p_pgrp = udata.u_ptab->p_pid;
 	udata.u_ptab->p_tty = 0;
 	return 0;
-#endif	
+#endif
 }
 
 /********************************************
