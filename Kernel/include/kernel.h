@@ -26,10 +26,6 @@ From UZI by Doug Braun and UZI280 by Stefan Nitschke.
 #define NULL (void *)0
 #endif
 
-#ifndef regptr
-#define regptr
-#endif
-
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 #define max(a,b) ( (a) > (b) ? (a) : (b) )
 #define aligndown(v,a) (uint8_t*)((intptr_t)(v) & ~((a)-1))
