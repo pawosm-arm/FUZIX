@@ -37,8 +37,8 @@ static uint8_t getcf(void)
 
 inoptr n_open(uint8_t *namep, inoptr *parent)
 {
-    staticfast inoptr wd;     /* the directory we are currently searching. */
-    staticfast inoptr ninode;
+    register inoptr wd;     /* the directory we are currently searching. */
+    register inoptr ninode;
     register uint8_t *fp;
     register inoptr temp;
     uint8_t c;
@@ -235,7 +235,7 @@ inoptr srch_dir(register inoptr wd, uint8_t *compname)
  * root of the mounted filesystem.
  */
 
-inoptr srch_mt(register inoptr ino)
+inoptr srch_mt(inoptr ino)
 {
     register uint_fast8_t j;
     register struct mount *m = &fs_tab[0];
@@ -261,7 +261,7 @@ inoptr srch_mt(register inoptr ino)
  * inodes.
  */
 
-inoptr i_open(register uint16_t dev, uint16_t ino)
+inoptr i_open(uint16_t dev, uint16_t ino)
 {
     register inoptr nindex;
     register inoptr j;
@@ -829,12 +829,12 @@ void oft_deref(uint_fast8_t of)
 
 int_fast8_t uf_alloc_n(uint_fast8_t base)
 {
-    register uint_fast8_t j;
+    register uint8_t *p = udata.u_files;
 
-    for(j=base; j < UFTSIZE ; ++j) {
-        if(udata.u_files[j] == NO_FILE) {
-            return j;
-        }
+    while(p < udata.u_files + UFTSIZE) {
+        if(*p == NO_FILE)
+            return p - udata.u_files;
+        p++;
     }
     udata.u_error = EMFILE;
     return -1;
