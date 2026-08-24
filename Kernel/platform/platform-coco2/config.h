@@ -64,6 +64,6 @@ extern uint16_t swap_dev;
 #define CONFIG_TD_NUM	2
 #define CONFIG_TD_IDE
 
-#define plt_copyright(x)
+#define plt_copyright()
 
 #define CONFIG_SMALL
