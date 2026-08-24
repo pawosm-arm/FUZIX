@@ -63,7 +63,7 @@ void psleep_nosig(void *event)
 
 void wakeup(void *event)
 {
-	regptr ptptr p;
+	register ptptr p;
 	irqflags_t irq;
 
 #ifdef DEBUGHARDER
@@ -248,7 +248,7 @@ ptptr getproc(void)
 
 ptptr getproc(void)
 {
-	regptr ptptr p = udata.u_ptab;
+	register ptptr p = udata.u_ptab;
 
 #ifdef DEBUGREALLYHARD
 	kputs("getproc(");
@@ -290,7 +290,7 @@ ptptr getproc(void)
  * The fork code has already copied the udata into u so we only need to
  * touch things that changed. u may or may not be the current udata
  */
-void makeproc(regptr ptptr p, u_data *u)
+void makeproc(register ptptr p, u_data *u)
 {				/* Passed New process table entry */
 	uint8_t *j, *e;
 	irqflags_t irq;
@@ -359,8 +359,8 @@ static uint16_t nextpid = 0;
 
 ptptr ptab_alloc(void)
 {
-	regptr ptptr p;
-	regptr ptptr newp;
+	register ptptr p;
+	register ptptr newp;
 	irqflags_t irq;
 
 	newp = NULL;
@@ -416,7 +416,7 @@ ptptr ptab_alloc(void)
 
 static void load_average(void)
 {
-	regptr struct runload *r;
+	register struct runload *r;
 	static uint_fast8_t utick;
 	uint_fast8_t i;
 	uint16_t nr;
@@ -612,7 +612,7 @@ void unix_syscall(void)
 
 void sgrpsig(uint16_t pgrp, uint_fast8_t sig)
 {
-	regptr ptptr p;
+	register ptptr p;
 	if (pgrp) {
 		for (p = ptab; p < ptab_end; ++p)
 			if (p->p_pgrp == pgrp)
