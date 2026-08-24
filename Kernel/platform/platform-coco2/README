@@ -12,7 +12,7 @@ Memory Map
 0100-01FF	Vectors and should shove some bits here
 0200-03FF	Display
 0400-ACFF	Kernel
-AD00-FCFF	User space (20K)
+A900-FCFF	User space (21K)
 FD00-FEFF	udata
 FF00-FFFF	I/O etc
 

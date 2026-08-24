@@ -20,8 +20,8 @@ extern uint16_t swap_dev;
 
 /* We will need to grow this to be useful */
 #define SWAPDEV     swap_dev    /* From partiton */
-#define SWAP_SIZE   0x30	/* 512 byte blocks */
-#define SWAPBASE    0xAD00	/* We swap the lot, including stashed uarea */
+#define SWAP_SIZE   0x32	/* 512 byte blocks */
+#define SWAPBASE    0xA900	/* We swap the lot, including stashed uarea */
 #define SWAPTOP     0xFD00	/* so it's a round number of 512 byte sectors */
 #define UDATA_SIZE  0x0200	/* one block */
 #define UDATA_BLKS  1
@@ -47,8 +47,8 @@ extern uint16_t swap_dev;
 #define VT_INITIAL_LINE	0
 
 #define TICKSPERSEC 10   /* Ticks per second */
-#define PROGBASE    0xAD00  /* also data base */
-#define PROGLOAD    0xAD00  /* also data base */
+#define PROGBASE    0xA900  /* also data base */
+#define PROGLOAD    0xA900  /* also data base */
 #define PROGTOP     0xFD00  /* Top of program */
 
 /* We need a tidier way to do this from the loader */
