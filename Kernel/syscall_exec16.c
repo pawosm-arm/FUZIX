@@ -50,9 +50,7 @@ static int header_ok(register struct exec *pp)
 
 arg_t _execve(void)
 {
-	/* We aren't re-entrant where this matters */
-	staticfast struct exec hdr;
-	staticfast inoptr ino;
+	register inoptr ino;
 	uint8_t **nargv;		/* In user space */
 	uint8_t **nenvp;		/* In user space */
 	struct s_argblk *abuf, *ebuf;
@@ -63,6 +61,8 @@ arg_t _execve(void)
 	uaddr_t bin_size;	/* Will need to be bigger on some cpus */
 	uaddr_t bss;
 	uint_fast8_t mflags;
+	/* We aren't re-entrant where this matters */
+	staticfast struct exec hdr;
 
 	top = ramtop;
 
