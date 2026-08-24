@@ -83,7 +83,7 @@ static void bunlock(bufptr bp)
  */
 bufptr bread(uint16_t dev, blkno_t blk, bool rewrite)
 {
-	regptr bufptr bp;
+	register bufptr bp;
 
 	/* TODO speed up the bfind/freebuf into one pass */
 	if ((bp = bfind(dev, blk)) == NULL) {
@@ -129,7 +129,7 @@ void bawrite(bufptr bp)
  *	If a writeback now is requested an an error occurs then u_error will
  *	be set and -1 returned.
  */
-int bfree(regptr bufptr bp, uint_fast8_t dirty)
+int bfree(register bufptr bp, uint_fast8_t dirty)
 {				/* dirty: 0=clean, 1=dirty (write back), 2=dirty+immediate write */
 	int ret = 0;
 	if (dirty)
@@ -157,7 +157,7 @@ int bfree(regptr bufptr bp, uint_fast8_t dirty)
  */
 bufptr zerobuf(void)
 {
-	regptr bufptr bp;
+	register bufptr bp;
 
 	bp = freebuf();
 	bp->bf_dev = NO_DEVICE;
@@ -177,7 +177,7 @@ bufptr zerobuf(void)
 
 void *tmpbuf(void)
 {
-	regptr bufptr bp;
+	register bufptr bp;
 
 	bp = freebuf();
 	bp->bf_dev = NO_DEVICE;
@@ -200,7 +200,7 @@ void tmpfree(void *p)
  * an active I/O so the block/bunlock should be fine - but not needed. In
  * async mode they are
  */
-static void bdput(regptr bufptr bp)
+static void bdput(register bufptr bp)
 {
 	block_s(bp);
 	if (bp->bf_dirty) {
@@ -218,7 +218,7 @@ static void bdput(regptr bufptr bp)
  */
 void bufsync(void)
 {
-	regptr bufptr bp;
+	register bufptr bp;
 
 	/* FIXME: this can generate a lot of d_flush calls when you have
 	   plenty of buffers */
@@ -236,7 +236,7 @@ void bufsync(void)
  */
 bufptr bfind(uint16_t dev, blkno_t blk)
 {
-	regptr bufptr bp;
+	register bufptr bp;
 
 	for (bp = bufpool; bp < bufpool_end; ++bp) {
 		if (bp->bf_dev == dev && bp->bf_blk == blk) {
@@ -264,7 +264,7 @@ bufptr bfind(uint16_t dev, blkno_t blk)
  */
 void bdrop(uint16_t dev)
 {
-	regptr bufptr bp;
+	register bufptr bp;
 
 	for (bp = bufpool; bp < bufpool_end; ++bp) {
 		if (bp->bf_dev == dev) {
@@ -276,8 +276,8 @@ void bdrop(uint16_t dev)
 
 bufptr freebuf(void)
 {
-	regptr bufptr bp;
-	regptr bufptr oldest;
+	register bufptr bp;
+	register bufptr oldest;
 	register uint16_t oldtime;
 	uint16_t age;
 
@@ -485,7 +485,7 @@ int no_ioctl(uint_fast8_t minor, uarg_t a, char *b)
 /* add something to the tail of the queue. */
 bool insq(struct s_queue * qp, uint_fast8_t c)
 {
-	regptr struct s_queue *q = qp;
+	register struct s_queue *q = qp;
 	bool r;
 
 	irqflags_t irq = di();
@@ -507,7 +507,7 @@ bool insq(struct s_queue * qp, uint_fast8_t c)
 /* Remove something from the head of the queue. */
 bool remq(struct s_queue * qp, uint_fast8_t *cp)
 {
-	regptr struct s_queue *q = qp;
+	register struct s_queue *q = qp;
 	bool r;
 
 	irqflags_t irq = di();
@@ -530,7 +530,7 @@ bool remq(struct s_queue * qp, uint_fast8_t *cp)
 /* Clear the queue to empty conditions.  (UZI280 addition) */
 void clrq(struct s_queue *qp)
 {
-	regptr struct s_queue *q = qp;
+	register struct s_queue *q = qp;
 	irqflags_t irq = di();
 
 	q->q_head = q->q_tail = q->q_base;
@@ -543,7 +543,7 @@ void clrq(struct s_queue *qp)
 /* Remove something from the tail; the most recently added char. */
 bool uninsq(struct s_queue *qp, uint_fast8_t *cp)
 {
-	regptr struct s_queue *q = qp;
+	register struct s_queue *q = qp;
 	bool r;
 	irqflags_t irq = di();
 
