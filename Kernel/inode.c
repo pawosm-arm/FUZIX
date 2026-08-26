@@ -14,7 +14,7 @@
    need to integrate this into the I/O loop, but when we do it changes
    how we handle the psleep_flags bit. Pipes wrap before 64k so we can
    shorten the check */
-static uint8_t wait_pipe_read(inoptr ino, uint_fast8_t flag)
+static uint8_t wait_pipe_read(register inoptr ino, uint_fast8_t flag)
 {
         while((uint16_t)ino->c_node.i_size == 0) {
                 if (ino->c_writers == 0 || psleep_flags(ino, flag)) {
@@ -28,7 +28,7 @@ static uint8_t wait_pipe_read(inoptr ino, uint_fast8_t flag)
 
 /* Wait for our pipe to become writable. We must have enough space and
    a reader */
-static uint8_t wait_pipe_write(inoptr ino, uint_fast8_t flag)
+static uint8_t wait_pipe_write(register inoptr ino, uint_fast8_t flag)
 {
 	while (LOWORD(ino->c_node.i_size) > 8 * BLKSIZE) {
 		if (ino->c_readers == 0) {	/* No readers */
@@ -338,7 +338,8 @@ inoptr rwsetup(bool is_read, uint_fast8_t * flag)
 int dev_openi(inoptr *ino, uint16_t flag)
 {
         int ret;
-        uint16_t da = (*ino)->c_node.i_addr[0];
+        register inoptr i = *ino;
+        uint16_t da = i->c_node.i_addr[0];
         /* Handle the special casing where we need to know about inodes */
 
         /* /dev/tty processing */
@@ -347,10 +348,10 @@ int dev_openi(inoptr *ino, uint16_t flag)
                         udata.u_error = ENODEV;
                         return -1;
                 }
-                i_deref(*ino);
-                *ino = udata.u_ctty;
-                da = (*ino)->c_node.i_addr[0];
-                i_ref(*ino);
+                i_deref(i);
+                *ino = i = udata.u_ctty;
+                da = i->c_node.i_addr[0];
+                i_ref(i);
                 /* fall through opening the real device */
         }
         /* normal device opening */
@@ -359,23 +360,15 @@ int dev_openi(inoptr *ino, uint16_t flag)
         if (ret != 0 || (da & 0xFF00) != 0x0200)
                 return ret;
         /* tty post processing */
-        tty_post(*ino, da & 0xFF, flag);
+        tty_post(i, da & 0xFF, flag);
         return 0;
 }
 
-void sync(void)
+static void sync_mounts(void)
 {
 	register struct mount *m;
-	register inoptr ino;
-	bufptr buf;
+	register bufptr buf;
 
-	/* Write out modified inodes */
-
-	for (ino = i_tab; ino < i_tab + ITABSIZE; ++ino)
-		if (ino->c_refs > 0 && (ino->c_flags & CDIRTY)) {
-			wr_inode(ino);
-			ino->c_flags &= ~CDIRTY;
-		}
 	for (m = fs_tab; m < fs_tab + NMOUNTS; m++) {
 		if (m->m_dev != NO_DEVICE &&
 			m->m_fs.s_fmod != FMOD_CLEAN) {
@@ -389,6 +382,20 @@ void sync(void)
 			}
 		}
 	}
+}
+
+void sync(void)
+{
+	register inoptr ino;
+
+	/* Write out modified inodes */
+
+	for (ino = i_tab; ino < i_tab + ITABSIZE; ++ino)
+		if (ino->c_refs > 0 && (ino->c_flags & CDIRTY)) {
+			wr_inode(ino);
+			ino->c_flags &= ~CDIRTY;
+		}
+	sync_mounts();
 	/* WRS: also call d_flush(dev) here for each dirty dev ? */
 	bufsync();		/* Clear buffer pool */
 }
@@ -396,7 +403,6 @@ void sync(void)
 #ifdef CONFIG_BLOCK_SLEEP
 
 /* ptab is an array so won't exceed 64K so this crude cast works nicely */
-
 static void i_lock(inoptr i)
 {
 	if (i->lock == (uint16_t)udata.u_ptab)
