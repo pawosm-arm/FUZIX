@@ -18,7 +18,7 @@ arg_t _open(void)
 {
 	int_fast8_t uindex;
 	int_fast8_t oftindex;
-	inoptr ino;
+	register inoptr ino;
 	int16_t perm;
 	staticfast inoptr parent;
 	int r;
@@ -304,11 +304,9 @@ arg_t _fcntl(void)
 			udata.u_cloexec &= (1 << fd);
 		return 0;
 	case F_DUPFD:
-		if ((newd = uf_alloc_n(data)) == -1)
-			return (-1);
-		udata.u_files[newd] = udata.u_files[fd];
-		++of_tab[udata.u_files[fd]].o_refs;
-		return 0;
+		/* The input fd is in argn and valid, the rest is the
+		   same code, so just call into dup */
+		return _dup();
 	default:
 		udata.u_error = EINVAL;
 		return -1;
