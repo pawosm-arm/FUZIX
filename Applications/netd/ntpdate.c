@@ -41,6 +41,7 @@ struct ntp_t {
 
 
 #define MAXBUF 256
+#define NTP_UNIX_EPOCH_OFFSET 2208988800UL  /*NTP Time  1900-01-01 to Unix Time 1970-01-01 */
 int fd;
 char buf[MAXBUF];
 struct sockaddr_in addr;
@@ -81,7 +82,7 @@ void my_open( int argc, char *argv[]){
 	exit(1);
     }
 
-    addr.sin_port = port;
+    addr.sin_port = htons(port);
     addr.sin_family = AF_INET;
     if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 	perror("connect");
@@ -93,7 +94,8 @@ void my_open( int argc, char *argv[]){
 int main( int argc, char *argv[] ){
     int retries;
     int rv;
-    uint32_t uv = 0;
+    uint32_t ntpsec;
+    time_t uv;
     int tz = 0;
     struct ntp_t *ptr = (struct ntp_t *)buf;
 
@@ -140,20 +142,18 @@ int main( int argc, char *argv[] ){
     exit(1);
 
  process:
-
-    uv = ptr->xmit.sec;
-    uv -= 2208988800L;
+    ntpsec = ntohl(ptr->xmit.sec);
+    uv = (time_t)(ntpsec - NTP_UNIX_EPOCH_OFFSET);
     uv += tz * 60 * 60;
 
     if (disflg || !setflg)
-	printf(ctime((time_t *)&uv));
-
+        printf(ctime(&uv));
     if (setflg){
-	rv = stime((time_t *)&uv);
-	if (rv){
-	    perror( "stime" );
-	    exit(1);
-	}
+        rv = stime(&uv);
+        if (rv){
+            perror("stime");
+            exit(1);
+        }
     }
     exit(0);
 }
