@@ -11,8 +11,8 @@ Memory Map
 0000-00FF	Interrupt stack (borrowed as swap stack)
 0100-01FF	Vectors and should shove some bits here
 0200-03FF	Display
-0400-ACFF	Kernel
-A900-FCFF	User space (21K)
+0400-A0FF	Kernel
+A100-FCFF	User space (23K)
 FD00-FEFF	udata
 FF00-FFFF	I/O etc
 

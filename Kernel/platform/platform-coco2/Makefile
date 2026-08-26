@@ -7,7 +7,7 @@ DSRCS = ../../dev/tinyide.c ../../dev/tinydisk.c
 
 DDSRCS = ../../dev/tinydisk_discard.c ../../dev/tinyide_discard.c
 
-ASRCS = crt0.S coco2.S ide.S video.S
+ASRCS = crt0.S coco2.S video.S
 ASRCS += tricks.S commonmem.S
 
 COBJS = $(CSRCS:.c=$(BINEXT))
@@ -49,7 +49,7 @@ image: bootfuz.bin
 	../../start.o ../../version.o ../../cpu-6809/lowlevel-6809.o ../../mm/memalloc_none.o \
 	tricks.o main.o ../../timer.o ../../kdata.o devices.o \
 	../../dev/tinydisk.o ../../dev/tinydisk_discard.o ../../dev/tinyide.o \
-	../../dev/tinyide_discard.o ide.o \
+	../../dev/tinyide_discard.o \
 	../../devio.o ../../filesys.o ../../process.o ../../inode.o ../../syscall_fs.o \
 	../../syscall_proc.o ../../syscall_other.o ../../mm.o ../../swap.o \
 	../../tty.o ../../devsys.o ../../usermem.o ../../syscall_fs2.o ../../syscall_exec16.o \

@@ -24,16 +24,18 @@
 ;
 ;	Video base for text
 ;
+;	A = X B = Y
+;
 txtaddr:
 	ldx #VIDEO_BASE
-	leay b,x		; X value
-	lsla
-	lsla
-	lsla			; x 8 so keep unsigned
-	leay a,x		; and add four times
-	leay a,x
-	leay a,x
-	leay a,x
+	leay a,x		; X value
+	lslb
+	lslb
+	lslb			; x 8 so keep unsigned
+	leax b,x		; and add four times
+	leax b,x
+	leax b,x
+	leax b,x		; result in X
 	rts
 ;
 ;	Compute the video base address
@@ -43,7 +45,8 @@ txtaddr:
 ;	plot_char(int8_t y, int8_t x, uint16_t c)
 ;
 _plot_char:
-	ldd 2,s
+	; B holds Y at this point
+	lda 2,s
 	bsr txtaddr
 	lda 4,s
 	tst _lower
@@ -117,7 +120,7 @@ scrdn_tl:
 ;	Never used in text mode
 ;
 _clear_across:
-	ldd 2,s		; Y,X into A,B
+	lda 2,s		; Y,X into B,A
 	jsr txtaddr
 	ldb _spaces
 clatl:
@@ -138,12 +141,12 @@ _clear_lines:
 	ldd _spaces
 clt:
 	std ,x++
-	dec 3,s		; 32 bytes per line max 16 lines in text
+	dec 2,s		; 32 bytes per line max 16 lines in text
 	bne clt
 	rts
 
 _cursor_on:
-	ldd  2,s
+	lda  2,s
 	jsr txtaddr
 	stx cursor_save
 coff_txt:

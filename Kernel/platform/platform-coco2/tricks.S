@@ -31,7 +31,6 @@ _plt_switchout:
 
         ; find another (or same) process to run, returned in X
         jsr _getproc
-	pshs d
         jsr _switchin
         ; we should never get here
         jsr _plt_monitor
@@ -48,7 +47,7 @@ newpp:
 ; new process pointer is in X
 _switchin:
         orcc #0x10		; irq off
-	ldx 2,s
+	tfr d,x
 	stx newpp
 	inc _inswap
 	; get process table
@@ -71,11 +70,9 @@ _switchin:
 	jsr _swapout		;	swapout(pptr)
 	leas 2,s
 not_swapout:
-	ldx newpp
+	ldd newpp
 ;;	andcc #0xef
-	pshs x
 	jsr _swapper		; 	fetch our process
-	leas 2,s
 	ldx newpp
 	lda #1
 	sta P_TAB__P_PAGE_OFFSET+1,x	; marked paged in
@@ -139,15 +136,14 @@ _dofork:
 
 	; new process in X so make sure x is 0 in the child image
 
-	ldx 2,s
-	stx fork_proc_ptr
+	std fork_proc_ptr
 	clra
 	clrb		; Child returns 0
 
         ; Save the stack pointer and critical registers (Y and U used by C).
         ; When this process (the parent) is switched back in, it will be as if
         ; it returns with the value of the child's pid.
-        pshs d,u ;  x has p->p_pid from above, the return value in the parent
+        pshs d,u ;  d has p->p_pid from above, the return value in the parent
 
         ; save kernel stack pointer -- when it comes back in for the childt we'll be in
         ; _switchin which will immediately return (appearing to be _dofork()
@@ -160,7 +156,8 @@ _dofork:
 
 	; Copy the parent properties into a temporary udata buffer
 	jsr _tmpbuf
-	tfr d,y
+	pshs d		; save work buffer
+
 	ldu #_udata
 udsave:
 	ldd ,u++
@@ -168,19 +165,16 @@ udsave:
 	cmpu #_udata+U_DATA__TOTALSIZE
 	bne udsave
 
-	; Buffer is in Y - make a new process using the buffer in Y
-	; not the live updata
-	ldx fork_proc_ptr
-	pshs x,y
+	; TOS is the work buffer pointer already
+	ldd fork_proc_ptr
 	jsr _makeproc
+	ldd fork_proc_ptr
 	; We cheat a bit as we know makeproc won't change the stacked
 	; pointers FIXME!
 	jsr _swapout_new
-	puls x,y	; clean up from both calls
-
-	pshs y		; free work buffer
+	puls d	; clean up from both calls and the stack of the work buffer
+	; free the buffer in D
 	jsr _tmpfree
-	leas 2,s
 
 	; The child is now on disk, the parent is still running. This is
 	; good, it reduces thrash

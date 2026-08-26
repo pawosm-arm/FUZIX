@@ -28,6 +28,8 @@
 
 	.abs
 	.org 0x0100
+	; This block occupies just under 0x0100 bytes. If you change it you'll
+	; need to adjust something to make space!
 vectors:
 	;
 	;	Will end up at 0x100 as required by the COCO ROM
@@ -39,6 +41,189 @@ vectors:
 	jmp badswi_handler			; 0x109
 	jmp interrupt_handler			; 0x10C
 	jmp firq_handler			; 0x10F
+
+_plt_reboot:
+	orcc #0x10
+	clr 0xFFBE
+	lda #0x7e
+	sta 0x0071		; in case IRQ left it looking valid
+	jmp [0xFFFE]
+
+_plt_monitor:
+	orcc #0x10
+	bra _plt_monitor
+
+___hard_di:
+	tfr cc,b		; return the old irq state
+	orcc #0x10
+	rts
+___hard_ei:
+	andcc #0xef
+	rts
+
+___hard_irqrestore:		; B holds the data
+	tfr b,cc
+ 	rts
+
+;
+;	Our vectors live in a fixed block and are not banked out. Likewise
+;	No memory management for now
+;
+_program_vectors:
+map_kernel:
+map_restore:
+map_proc:
+map_proc_always:
+map_proc_a:
+map_save:
+	rts
+firq_handler:
+badswi_handler:
+	rti
+
+;
+;	debug via printer port
+;
+outchar:
+	sta 0xFF02
+	lda 0xFF20
+	ora #0x02
+	sta 0xFF20
+	anda #0xFD
+	sta 0xFF20
+	rts
+
+;
+;	Glenside style IDE block transfer logic
+;	Single unified map so trivial
+;
+
+	.export _devide_read_data
+	.export _devide_write_data
+
+ideprep:
+	tfr d,x
+	lda #0xFF
+	tfr a,dp
+	leay 512,x
+	sty endp
+	rts
+
+_devide_read_data:
+	pshs dp
+	bsr ideprep
+readword:
+	; word 1
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 2
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 3
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 4
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 5
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 6
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 7
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 8
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 8
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 9
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 10
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 11
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 12
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 13
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 14
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	; word 15
+	lda @IDEDATA
+	ldb @IDEDATA_L		; latched
+	std ,x++
+	cmpx endp
+	bne readword
+	puls dp,pc
+
+_devide_write_data:
+	pshs dp
+	bsr ideprep
+writeword:
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	ldd ,x++
+	stb @IDEDATA_L
+	sta @IDEDATA
+	cmpx endp
+	bne writeword
+	puls dp,pc
+
+endp:	.word 0
+
+_need_resched:
+	.byte 0
+
+	.export _framedet
+
+	; As the code stands this should be at 0x01FC/0x01FD
+_framedet:
+	.word	0		; Check this below 0x0200
+
 
 	.discard
 
@@ -87,77 +272,3 @@ waitvb2:
 	bpl	waitvb2
 	stx	_framedet
 	rts
-
-	.data
-
-	.export _framedet
-
-_framedet:
-	.word	0
-
-        .code
-
-; TODO: work out where to put this block
-; Borrow a tiny bit of page1 to get this low so it can turn the ROM back on
-
-_plt_reboot:
-	orcc #0x10
-	clr 0xFFBE
-	lda #0x7e
-	sta 0x0071		; in case IRQ left it looking valid
-	jmp [0xFFFE]
-
-	.common
-_plt_monitor:
-	orcc #0x10
-	bra _plt_monitor
-
-___hard_di:
-	tfr cc,b		; return the old irq state
-	orcc #0x10
-	rts
-___hard_ei:
-	andcc #0xef
-	rts
-
-___hard_irqrestore:		; B holds the data
-	tfr b,cc
- 	rts
-
-;
-; COMMON MEMORY PROCEDURES FOLLOW
-;
-
-	.common
-;
-;	Our vectors live in a fixed block and are not banked out. Likewise
-;	No memory management for now
-;
-_program_vectors:
-map_kernel:
-map_restore:
-map_proc:
-map_proc_always:
-map_proc_a:
-map_save:
-	rts
-firq_handler:
-badswi_handler:
-	rti
-
-;
-;	debug via printer port
-;
-outchar:
-	sta 0xFF02
-	lda 0xFF20
-	ora #0x02
-	sta 0xFF20
-	anda #0xFD
-	sta 0xFF20
-	rts
-
-	.common
-
-_need_resched:
-	.byte 0
