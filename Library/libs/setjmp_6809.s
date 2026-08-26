@@ -7,7 +7,7 @@
 
 ; int setjmp(jmp_buf)
 _setjmp:
-	ldx 2,s
+	tfr d,x
 	ldd ,s		; return address
 	sty ,x++
 	stu ,x++

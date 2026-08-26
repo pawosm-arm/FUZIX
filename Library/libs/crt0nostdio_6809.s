@@ -31,8 +31,8 @@ start:
 	stx _environ
 	ldx 2,s
 	stx ___argv
+	puls d			; argc into register
 	jsr _main		; go
-	pshs d
 	jsr _exit
 
 	.data

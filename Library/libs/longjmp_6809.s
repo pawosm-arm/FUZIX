@@ -3,9 +3,9 @@
 	.code
 ; void longjmp(jmp_buf, int)
 _longjmp:
-	ldx 2,s
+	tfr d,x
 	; read back Y,U,S and return address
-	ldd 4,s		; second argument
+	ldd 2,s		; second argument
 	bne nz		; must not be 0
 	incb
 nz:	ldy ,x++

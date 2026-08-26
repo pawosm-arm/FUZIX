@@ -68,11 +68,8 @@ relocdone:
 		; This will be relocated before it is run
 		ldd #__bss
 		addd #__bss_size
-		std ,--s
-		std ,--s
-		ldd #30				; brk(x)
-		swi				; and syscall
-		leas 4,s
+		ldx #30				; brk(x)
+		jsr head			; and syscall
 		;
 		;  This jmp was relocated by the relocation loop above
 		;
@@ -84,8 +81,8 @@ relocdone:
 		stx _environ,pc
 		ldx 2,s
 		stx ___argv,pc
+		puls d
 		lbsr _main		; go
-		pshs d
 		lbsr _exit
 
 		.data
