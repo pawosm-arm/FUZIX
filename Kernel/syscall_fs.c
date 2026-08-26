@@ -30,7 +30,7 @@ arg_t _lseek(void)
 	struct oft *o;
 	off_t p;
 	off_t n;
-	off_t *pt;
+	register off_t *pt;
 
 	if (uget(offset, &n, sizeof(n)))
 	        return -1;
@@ -138,7 +138,7 @@ arg_t _fstat(void)
 
 
 /* Utility for stat and fstat */
-int stcpy(inoptr ino, uint8_t *buf)
+int stcpy(register inoptr ino, uint8_t *buf)
 {
 	static struct _uzistat st;
 

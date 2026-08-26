@@ -243,7 +243,7 @@ arg_t _fchmod(void)
 #define owner (int16_t)udata.u_argn1
 #define group (int16_t)udata.u_argn2
 
-static int chown_op(inoptr ino)
+static int chown_op(register inoptr ino)
 {
 	if (ino->c_flags & CRDONLY) {
 		udata.u_error = EROFS;
