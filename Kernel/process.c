@@ -792,9 +792,9 @@ rescan:
  *	Send signal, avoid touching uarea
  */
 
-void ssig(ptptr proc, uint_fast8_t sig)
+void ssig(register ptptr proc, uint_fast8_t sig)
 {
-	struct sigbits *m = proc->p_sig;
+	register struct sigbits *m = proc->p_sig;
 	uint16_t sigm;
 	irqflags_t irq;
 
@@ -911,8 +911,8 @@ static int signal_parent(ptptr c)
 
 void doexit(uint16_t val)
 {
-	uint_fast8_t j;
-	ptptr p;
+	register ptptr p;
+	register uint_fast8_t j;
 	irqflags_t irq;
 
 #ifdef DEBUG_SLEEP
@@ -942,6 +942,7 @@ void doexit(uint16_t val)
 #endif
 	pagemap_free(udata.u_ptab);
 
+	/* FIXME: switch to pointer walking */
 	for (j = 0; j < UFTSIZE; ++j) {
 		if (udata.u_files[j] != NO_FILE)
 			doclose(j);
