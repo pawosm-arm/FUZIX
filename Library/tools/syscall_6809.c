@@ -21,11 +21,32 @@ static void write_call(int n)
     perror(namebuf);
     exit(1);
   }
+
+  /*
+   *	Our stackframe is usually
+   *	arg3
+   *	arg2
+   *	return
+   *	D = arg1
+   *
+   *	but for varargs calls we have
+   *	arg3
+   *	arg2
+   *	arg1
+   *	return
+   *	D = unused
+   *
+   */
   fprintf(fp, "\t.code\n\n"
 	      "\t.export _%1$s\n\n"
 	      "_%1$s:\n", syscall_name[n]);
-	fprintf(fp, "\tldd #%d\n"
+  if (syscall_args[n] == VARARGS) {
+	fprintf(fp, "\tldb #%d\n"
+		    "\tjmp __syscallva\n", n);
+  } else {
+	fprintf(fp, "\tldx #%d\n"
 		    "\tjmp __syscall\n", n);
+  }
   fclose(fp);
 }
 
