@@ -116,21 +116,21 @@ skipio:
 	bra	commoncp
 
 __ugetc:
-	ldx	2,s
+	tfr	d,x
 	jsr	map_proc_always
 	ldb	,x
 	clra
 	jmp	map_kernel
 __ugetw:
-	ldx	2,s
+	tfr	d,x
 	jsr	map_proc_always
 	ldd	,x
 	jmp	map_kernel
 __uget:
 	pshs	u
-	ldx	4,s		; user
-	ldu	6,s		; dst
-	ldy	8,s		; size
+	tfr	d,x		; user
+	ldu	4,s		; dst
+	ldy	6,s		; size
 ugetl:
 	jsr	map_proc_always
 	lda	,x+
@@ -142,16 +142,14 @@ ugetl:
 	puls	u,pc
 
 __uputc:
-	ldx	4,s
-	ldb	3,s
+	ldx	2,s
 	jsr	map_proc_always
 	stb	,x
 	jsr	map_kernel
 	ldd	#0
 	rts
 __uputw:
-	ldx	4,s
-	ldd	2,s
+	ldx	2,s
 	jsr	map_proc_always
 	std	,x
 	jsr	map_kernel
@@ -162,9 +160,9 @@ __uputw:
 ;
 __uput:
 	pshs u
-	ldx 4,s		; src
-	ldu 6,s		; dst
-	ldy 8,s		; size
+	tfr d,x		; src
+	ldu 4,s		; dst
+	ldy 6,s		; size
 uputl:
 	lda ,x+
 	jsr map_proc_always
@@ -176,9 +174,9 @@ uputl:
 	puls u,pc
 
 __uzero:
-	ldx	2,s
-	ldy	4,s
-	ldb	5,s		; so we can check if odd byte count
+	tfr	d,x
+	ldy	2,s
+	ldb	3,s		; so we can check if odd byte count
 	jsr	map_proc_always
 	clra
 	lsrb

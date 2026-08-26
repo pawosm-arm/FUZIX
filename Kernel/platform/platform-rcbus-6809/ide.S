@@ -16,9 +16,9 @@
 ;	Set up the mapping and registers for the I/O
 ;
 iomap:
+	tfr	d,x		; buffer
 	lda	#0xFE
 	tfr	a,dp
-	ldx	5,s		; first argument is address of buffer
 	ldb	#64		; length in words
 	lda	_td_raw
 	beq	kmap		; no separate buffer map

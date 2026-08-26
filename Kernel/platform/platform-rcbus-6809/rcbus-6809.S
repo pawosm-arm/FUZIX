@@ -30,7 +30,7 @@ vectors:
 	.word badswi_handler		; SWI2
 	.word firq_handler		; FIR
 	.word interrupt_handler		; IRQ
-	.word unix_syscall_entry	; SWI
+	.word badswi_handler		; SWI
 	.word nmi_handler		; NMI
 	.word 0				; RESET (never used)
 
@@ -104,7 +104,6 @@ _plt_reboot:
 _plt_monitor:
 	orcc #0x10
 	bra _plt_monitor
-
 ___hard_di:
 	tfr cc,b		; return the old irq state
 	orcc #0x10
@@ -112,12 +111,9 @@ ___hard_di:
 ___hard_ei:
 	andcc #0xef
 	rts
-
 ___hard_irqrestore:		; B holds the data
-	ldb 2,s
 	tfr b,cc
 	rts
-
 
         .common
 
@@ -126,7 +122,7 @@ ___hard_irqrestore:		; B holds the data
 ;	change if we move to properly using the paging.
 ;
 _program_vectors:
-	ldx	2,s
+	tfr	d,x
 	lda	,x
 	sta	0xFE78		; map low page
 	jsr	set_vector

@@ -32,15 +32,14 @@ _plt_switchout:
 	clrb			; return code set here is ignored, but _switchin can
         ; return from either _switchout OR _dofork, so they must both write 
         ; U_DATA__U_SP with the following on the stack:
-	pshs	d,y,u
+	pshs	d,u
 	sts	_udata + U_DATA__U_SP	; this is where the SP is restored in _switchin
 
         ; find another (or same) process to run, returned in D
         jsr	_getproc
-	pshs	d
         jsr	_switchin
         ; we should never get here
-        jsr	_plt_monitor
+        jmp	_plt_monitor
 
 badswitchmsg:
 	.ascii "_switchin: FAIL"
@@ -48,13 +47,12 @@ badswitchmsg:
 	.byte	10
 	.byte	0
 
-; new process pointer is in X
+; new process pointer is in D
 _switchin:
-	ldx	2,s		; get the task pointer
         orcc	#0x10		; irq off
-
-	stx	newpp
+	std	newpp		; save task pointer
 	; get process table
+	tfr	d,x
 	ldd	P_TAB__P_PAGE_OFFSET,x		; Will be 0 in swap cases
 	bne	not_swapped
 
@@ -65,7 +63,7 @@ _switchin:
 	stb	0xFE7B		; top 16K switched to new bank
 	stb	cur_map+3	; remember the new mapping
 	stx	newpp		; put newpp back in the new bank
-
+	tfr	x,d
 	jsr	_swap_finish	; void swap_finish(ptptr p)
 	ldx	newpp
 	lda	P_TAB__P_PAGE_OFFSET+1,x
@@ -98,14 +96,13 @@ not_swapped:
         ; restore machine state -- note we may be returning from either
         ; _switchout or _dofork
         lds	_udata + U_DATA__U_SP
-        puls	d,y,u ; return code and saved U and Y
 
         ; enable interrupts, if the ISR isn't already running
 	lda	_udata + U_DATA__U_ININTERRUPT
         bne	swtchdone ; in ISR, leave interrupts off
 	andcc	#0xef
 swtchdone:
-        rts
+	puls	d,u,pc	; return code and saved U
 
 switchinfail:
 	jsr	outx
@@ -124,19 +121,19 @@ fork_proc_ptr: .word 0 ; (C type is struct p_tab *) -- address of child process 
 ;	parent uarea. The kernel is the mapped object.
 ;
 _dofork:
-	ldx	2,s
         ; always disconnect the vehicle battery before performing maintenance
         orcc #0x10	 ; should already be the case ... belt and braces.
 
 	; new process in X, get parent pid into y
 
-	stx	fork_proc_ptr
+	std	fork_proc_ptr
+	tfr	d,x
 	ldd	P_TAB__P_PID_OFFSET,x
 
         ; Save the stack pointer and critical registers (Y and U used by C).
         ; When this process (the parent) is switched back in, it will be as if
         ; it returns with the value of the child's pid.
-        pshs	d,y,u ;  d has p->p_pid from above, the return value in the parent
+        pshs	d,u ;  d has p->p_pid from above, the return value in the parent
 
         ; save kernel stack pointer -- when it comes back in the parent we'll be in
         ; _switchin which will immediately return (appearing to be _dofork()
@@ -164,22 +161,22 @@ _dofork:
 
 	ldx	#_udata
 	pshs	x
-        ldx	fork_proc_ptr
-	pshs	x
+        ldd	fork_proc_ptr
         jsr	_makeproc
-	leas	4,s
+	leas	2,s
 
 	; any calls to map process will now map the childs memory
 
         ; in the child process, fork() returns zero.
-	ldd	#0
+	clra
+	clrb
         ; runticks = 0;
 	std	_runticks
 	;
 	; And we exit, with the kernel mapped, the child now being deemed
 	; to be the live uarea. The parent is frozen in time and space as
 	; if it had done a switchout().
-	puls	y,u,pc
+	puls	u,pc
 
 fork_copy:
 ; copy the process memory to the new bank and stash parent uarea to old bank
