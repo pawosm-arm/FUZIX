@@ -19,7 +19,6 @@
         ; exported symbols
         .export unix_syscall_entry
 	.export null_handler
-	.export unix_syscall_entry
 	.export dispatch_process_signal
         .export _doexec
         .export trap_illegal
@@ -35,23 +34,50 @@
 
         .common
 
-; entry point for Fuzix system calls
 ;
-; Called by swi, which has already saved our CPU state for us
+;	The vararg syscalls end up with a slightly different calling
+;	sequence
+;		arg4
+;		arg3
+;		arg2
+;		arg1
+;		return addr (to syscall C function)
+;		return addr (to syscall handler)
+;		B = syscall no
+;
+unix_va_syscall:
+	pshs u
+	ldu	#_udata + U_DATA__U_ARGN
+	stb	_udata + U_DATA__U_CALLNO
+	leax	6,s
+	ldd	,x++
+	std	,u++
+	bra	syscall
+;
+;
+; entry point for Fuzix system calls. Called via JSR. On entry we are on the
+; user stack and our stack looks like this
+;		arg4
+;		arg3
+;		arg2
+;		return addr (to syscall C function)
+;		return addr (to syscall handler)
+;		X = syscall number, D = arg1
 ;
 unix_syscall_entry:
-	leax 14,s	; 12 stacked by the swi + return address of caller
+	pshs u
 	ldu #_udata + U_DATA__U_ARGN
-	ldd ,x++	; first argument in swi stacked X
 	std ,u++
+	tfr x,d
+	stb _udata + U_DATA__U_CALLNO
+	leax 6,s	; skip return addresses
+syscall:
 	ldd ,x++	; second argument from caller's stack
 	std ,u++
 	ldd ,x++ 	; third
 	std ,u++
 	ldd ,x++ 	; fourth
 	std ,u++
-	ldd 1,s		; stacked D register -> syscall number in B
-	stb _udata + U_DATA__U_CALLNO
         ; save process stack pointer (in user page)
         sts _udata + U_DATA__U_SYSCALL_SP
         ; switch to kernel stack (makes our stack valid again)
@@ -86,20 +112,17 @@ unix_syscall_entry:
         jsr dispatch_process_signal
 
         ; check if error condition to be signalled on return
-        ldd _udata + U_DATA__U_ERROR
+        ldx _udata + U_DATA__U_ERROR
 	beq not_error
-	ldx #-1	
+	ldd #-1
         ; error code in d, result in x
         bra unix_return
 
 not_error:
         ; no error to signal! return syscall return value instead of error code
-        ldx _udata + U_DATA__U_RETVAL
+        ldd _udata + U_DATA__U_RETVAL
 unix_return:
-	; we never make a syscall from in kernel space
-	stx 4,s		; replace stacked values before rti
-	std 1,s
-	rti
+	puls u,pc
 ;
 ;	We must rts on the right bank !
 ;
@@ -145,8 +168,9 @@ dosigrts:
         rts
 
 _doexec:
-	ldx 2,s
-	; x is the jump address
+	; d is the jump address
+	tfr d,x
+	;
         orcc #0x10
 	; this is a funny extra path out of syscall so we must also cover
 	; the exit from kernel here
@@ -260,7 +284,7 @@ not_running:
 	bra intdone
 
 	    ; Not task switching - the easy and usual path
-no_switch:   
+no_switch:
 	; On a return from an interrupt restore the old mapping as it
 	; will vary during kernel activity and we need to put it put
 	; it back as it was before the interrupt
@@ -268,7 +292,7 @@ no_switch:
 	jsr map_restore
 	lds istack_switched_sp
 
-intdone: 
+intdone:
         ; we're not in kernel mode, check for signals
 	; runs off the user stack
 	pshs y
@@ -287,8 +311,10 @@ intret_x:
 
 ;  Enter with B being the signal to send ourself
 trap_signal:
-	ldx _udata + U_DATA__U_PTAB	;  ssig(pid, B)
-	jmp _ssig
+	pshs b
+	ldd _udata + U_DATA__U_PTAB	;  ssig(pid, B)
+	jsr _ssig
+	puls b,pc
 
 ;  Called from process context (hopefully)
 null_handler:
@@ -296,24 +322,23 @@ null_handler:
 	lda _udata + U_DATA__U_INSYS
 	bne trap_illegal
 	; user is merely not good
-	; check order of push arguments !!
-	ldx #7			; SIGBUS
-	pshs d,x		; D only to fill stack (no caller)
-	ldx _udata + U_DATA__U_PTAB
-	ldb #39			; Function 39 = kill
-	swi			; kill (getpid(), SIGBUS)
-	leas 4,s
+	ldd #7			; SIGBUS
+	pshs d
+	ldd _udata + U_DATA__U_PTAB
+	ldx #39			; Function 39 = kill
+	jsr unix_syscall_entry	; kill (getpid(), SIGBUS)
+	leas 2,s
 	ldx #0
-	clrb			; Function 0 = exit
-	swi			; exit (0)
-
-illegalmsg: .ascii "[trap_illegal]"
-        .byte 13,10,0
-
+	jsr unix_syscall_entry
+	; Fall into trap handler if this impossibly returns
 trap_illegal:
 	ldx #illegalmsg
 	jsr outstring
 	jsr _plt_monitor
+
+illegalmsg: .ascii "[trap_illegal]"
+        .byte 13,10,0
+
 
 dpsmsg:	.ascii "[dispsig]"
         .byte 13,10,0
@@ -333,10 +358,15 @@ nmi_handler:
 ;	CPU type management
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; We don't use the stubs as we have a proper architected syscalling
-; interface via swi. Set it here so the binary gets 16bytes of free
-; but uninteresting noise
+;
+;	Stubs starts with a jump for syscall entry and a second jump
+;	for vararg syscall entry (subtly different stack layout). Two entry
+;	points is cheap enough. Avoid SWI and SWI2 as they are used on some
+;	platforms by ROM firmware we can't get rid off
+;
 _sys_stubs:
+	jmp unix_syscall_entry
+	jmp unix_va_syscall
 
 	.commondata
 
@@ -428,34 +458,34 @@ num:    adda #0x30 ; start at '0' (0x30='0')
         rts
 
 
+	.code
+
 ; Compiler helpers
 
 	.export _swab
 
-_swab:	ldd	2,s
-	exg	a,b
+_swab:	exg	a,b
 	rts
 
 	.export _memset
 
 _memset:
-	pshs	u
+	pshs	u,d		; d is the address
+	tfr	d,u
 	ldx	8,s		; count
 	beq	nowork
-	ldu	4,s		; pointer
 	ldb	7,s		; byte
 msl:	stb	,u+
 	leax	-1,x
 	bne	msl
 nowork:
-	ldd	4,s
-	puls	u,pc
+	puls	d,u,pc
 
 	.export _memcpy
 
 _memcpy:
-	pshs	u
-	ldu	4,s		; dest
+	pshs	u,d
+	tfr	d,u		; dest
 	ldx	6,s		; src
 	ldy	8,s		; count
 	beq	nowork
@@ -463,14 +493,13 @@ mcl:	lda	,x+
 	sta	,u+
 	leay	-1,y
 	bne	mcl
-	ldd	4,s
-	puls	u,pc
+	puls	d,u,pc
 
 	.export _strlen
 
 _strlen:
+	tfr	d,x
 	ldd	#0xFFFF
-	ldx	2,s
 next:
 	addd	#1
 	tst	,x+
