@@ -50,7 +50,7 @@ f 0755 /usr/games/z5            z5
 f 0755 /usr/games/z8            z8
 d 0711 /usr/lib/games
 f 0711 /usr/lib/games/zork1.z3	zork/zork1.z3
-f 0711 /usr/lib/games/zork2.z3	zork/zork3.z3
+f 0711 /usr/lib/games/zork2.z3	zork/zork2.z3
 f 0711 /usr/lib/games/zork3.z3	zork/zork3.z3
 l /usr/games/z3 /usr/games/zork1
 l /usr/games/z3 /usr/games/zork2
