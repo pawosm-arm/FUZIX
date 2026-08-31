@@ -96,7 +96,7 @@ arg_t _execve(void)
 	uint32_t true_brk;
 	uint_fast8_t mflags;
 
-	if (!(ino = n_open_lock(name, NULLINOPTR)))
+	if (!(ino = n_open_argn()))
 		return (-1);
 
 	if (!((getperm(ino) & OTH_EX) &&
@@ -212,7 +212,7 @@ arg_t _execve(void)
 	if (plt_relocate(&aout))
 		goto nogood4;
 
-	/* This may wipe the relocations */	
+	/* This may wipe the relocations */
 	uzero((uint8_t *)udata.u_database + aout.a_data,
 		aout.a_bss);
 
@@ -236,7 +236,7 @@ arg_t _execve(void)
 
 	tmpfree(abuf);
 	tmpfree(ebuf);
-	i_unlock_deref(ino);
+	i_deref(ino);
 
 	/* Shove argc and the address of argv just below envp */
 	uputl((uint32_t) nargv, nenvp - 1);
@@ -268,7 +268,7 @@ nogood3:
 	tmpfree(ebuf);
 nogood2:
 nogood:
-	i_unlock_deref(ino);
+	i_deref(ino);
 	return (-1);
 }
 

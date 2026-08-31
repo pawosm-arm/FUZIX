@@ -58,15 +58,6 @@ From UZI by Doug Braun and UZI280 by Stefan Nitschke.
 #define HIBYTE32(x)	((uint8_t)((x) >> 24))
 #endif
 
-#ifndef CONFIG_BLOCK_SLEEP
-#define i_unlock(x)	do {} while(0)
-#define i_lock(x)	do {} while(0)
-#define i_islocked(x)	do {} while(0)
-#define i_unlock_deref(x)	i_deref(x)
-#define n_open_lock(a,b)	n_open((a),(b))
-#define getinode_lock(x)	getinode(x)
-#endif
-
 #ifdef CONFIG_LEVEL_2
 #include "level2.h"
 #else
@@ -996,6 +987,7 @@ extern int no_ioctl(uint_fast8_t minor, uarg_t a, char *b);
 /* open file, "name" in user address space */
 extern uint8_t lastname[31];
 extern inoptr n_open(uint8_t *uname, inoptr *parent);
+extern inoptr n_open_argn(void);
 extern inoptr i_open(uint16_t dev, uint16_t ino);
 extern inoptr srch_dir(inoptr wd, uint8_t *compname);
 extern inoptr srch_mt(inoptr ino);

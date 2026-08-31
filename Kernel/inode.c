@@ -323,8 +323,7 @@ inoptr rwsetup(bool is_read, uint_fast8_t * flag)
 		oftp->o_ptr = ino->c_node.i_size;
 	/* Initialize u_offset from file pointer */
 	udata.u_offset = oftp->o_ptr;
-	i_lock(ino);
-	return (ino);
+	return ino;
 }
 
 /*
@@ -399,52 +398,3 @@ void sync(void)
 	/* WRS: also call d_flush(dev) here for each dirty dev ? */
 	bufsync();		/* Clear buffer pool */
 }
-
-#ifdef CONFIG_BLOCK_SLEEP
-
-/* ptab is an array so won't exceed 64K so this crude cast works nicely */
-static void i_lock(inoptr i)
-{
-	if (i->lock == (uint16_t)udata.u_ptab)
-		panic(LOCKLOCK);
-	while(i->i_lock)
-		psleep_nosig(i);
-	i->i_lock = (uint16_t)udata.u_ptab;
-}
-
-static void i_unlock(inoptr i)
-{
-	i_islocked(i);
-	i->i_lock = 0;
-	pwakeup_nosig(i);
-}
-
-static void i_unlock_deref(inoptr i)
-{
-	i->i_lock = 0;
-	i_deref(i);
-}
-
-void i_islocked(inoptr i)
-{
-	if (i->lock != (uint16_t)udata.u_ptab)
-		panic(IUNLOCK);
-}
-
-inoptr n_open_lock(char *uname, inoptr *parent)
-{
-	inoptr i = n_open(uname, parent);
-	if (i)
-		i_lock(i);
-	return i;
-}
-
-inoptr getinode_lock(uint8_t uindex)
-{
-	inoptr i = getinode(uindex);
-	if (i)
-		i_lock(i);
-	return i;
-}
-
-#endif

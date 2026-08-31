@@ -40,7 +40,7 @@ arg_t _open(void)
 	if ((oftindex = oft_alloc()) == -1)
 		goto nooft;
 
-	ino = n_open_lock(name, &parent);
+	ino = n_open(name, &parent);
 	if (ino) {
 		/* We hold a reference to the found inode. but we don't need
 		   one to the parent as we have nothing to create */
@@ -115,14 +115,12 @@ arg_t _open(void)
 		   parent (but we don't need it again). It may also be changed
 		   by the call to dev_openi. /dev/tty in particular does this
 		   to assign device instances */
-		i_unlock(*iptr);
 		if (dev_openi(iptr, flag) != 0)
 			goto cantopen;
 		/* May have changed */
 		/* get the static pointer back in case it changed via dev
 		   usage or just because we blocked */
 		ino = *iptr;
-		i_lock(ino);
 	} else if (w && (flag & O_TRUNC) && getmode(ino) == MODE_R(F_REG)) {
 		/* O_TRUNC applied to a writeable ordinary file causes the
 		   file to be truncated back to zero size */
@@ -150,8 +148,6 @@ arg_t _open(void)
 		ino->c_writers++;
 	if (O_ACCMODE(flag) != O_WRONLY)
 		ino->c_readers++;
-
-	i_unlock(ino);
 
 	/* FIXME: ATIME ? */
 
@@ -182,7 +178,6 @@ ideref:
 	if (ino)
 		i_deref(ino);
 idrop:
-	i_unlock(ino);
 	/* Falls through and drops the reference count */
 cantopen:
 	oft_deref(oftindex);	/* This will call i_deref() */
@@ -211,7 +206,7 @@ arg_t _link(void)
 	inoptr ino2;
 	inoptr parent2;
 
-	if (!(ino = n_open(name1, NULLINOPTR)))
+	if (!(ino = n_open_argn()))
 		return (-1);
 
 	if (getmode(ino) == MODE_R(F_DIR)) {
@@ -241,10 +236,9 @@ arg_t _link(void)
 		goto nogood;
 	}
 
-	i_lock(parent2);
 	if (!ch_link(parent2, (uint8_t *)"", lastname, ino)) {
-		i_unlock_deref(parent2);
-		goto nogoodl;
+		i_deref(parent2);
+		goto nogood;
 	}
 
 	/* Update the link count. */
@@ -252,12 +246,10 @@ arg_t _link(void)
 	wr_inode(ino);
 	setftime(ino, C_TIME);
 
-	i_unlock_deref(parent2);
+	i_deref(parent2);
 	i_deref(ino);
 	return 0;
 
-nogoodl:
-	i_unlock(ino);
 nogood:
 	i_deref(ino);
 	return -1;

@@ -290,7 +290,7 @@ ptptr getproc(void)
  * The fork code has already copied the udata into u so we only need to
  * touch things that changed. u may or may not be the current udata
  */
-void makeproc(register ptptr p, u_data *u)
+void makeproc(register ptptr p, register u_data *u)
 {				/* Passed New process table entry */
 	uint8_t *j, *e;
 	irqflags_t irq;
@@ -896,7 +896,7 @@ void acctexit(ptptr p)
 static int signal_parent(ptptr c)
 {
 	ptptr p = c->p_pptr;
-        if (p->p_sig[1].s_ignored & (1UL << (SIGCHLD - 16))) {
+        if (p->p_sig[1].s_ignored & (1 << (SIGCHLD - 16))) {
 		/* POSIX.1 says that SIG_IGN for SIGCHLD means don't go
 		   zombie, just clean up as we go */
 		udata.u_ptab->p_status = P_EMPTY;

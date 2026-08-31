@@ -66,7 +66,7 @@ arg_t _execve(void)
 
 	top = ramtop;
 
-	if (!(ino = n_open_lock(name, NULLINOPTR)))
+	if (!(ino = n_open_argn()))
 		return (-1);
 
 	if (!((getperm(ino) & OTH_EX) &&
@@ -264,7 +264,7 @@ nogood3:
 	tmpfree(ebuf);
 nogood2:
 nogood:
-	i_unlock_deref(ino);
+	i_deref(ino);
 	return (-1);
 }
 

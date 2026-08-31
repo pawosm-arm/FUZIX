@@ -206,8 +206,6 @@ inoptr srch_dir(register inoptr wd, uint8_t *compname)
     int nblocks;
     uint16_t inum;
 
-    i_lock(wd);
-
     nblocks = inode_blocks(wd);
 
     for(curblock=0; curblock < nblocks; ++curblock) {
@@ -219,13 +217,11 @@ inoptr srch_dir(register inoptr wd, uint8_t *compname)
             if(namecomp(compname, d->d_name)) {
                 inum = d->d_ino;
                 brelse(buf);
-                i_unlock(wd);
                 return i_open(wd->c_dev, inum);
             }
         }
         brelse(buf);
     }
-    i_unlock(wd);
     return NULLINODE;
 }
 
@@ -237,8 +233,8 @@ inoptr srch_dir(register inoptr wd, uint8_t *compname)
 
 inoptr srch_mt(inoptr ino)
 {
-    register uint_fast8_t j;
     register struct mount *m = &fs_tab[0];
+    register uint_fast8_t j;
 
     for(j=0; j < NMOUNTS; ++j){
         if(m->m_dev != NO_DEVICE &&  m->m_mntpt == ino) {
@@ -250,6 +246,15 @@ inoptr srch_mt(inoptr ino)
     return ino;
 }
 
+
+/* Most of the time we open the first argument with no
+ * parent info needed. So we have a helper
+ */
+
+inoptr n_open_argn(void)
+{
+    return n_open((uint8_t *)udata.u_argn, NULL);
+}
 
 /* I_open is given an inode number and a device number,
  * and makes an entry in the inode table for them, or
@@ -333,8 +338,6 @@ bool emptydir(register inoptr wd)
 {
     struct direct curentry;
 
-    i_islocked(wd);
-
     udata.u_offset =  2 * DIR_LEN;	/* . .. ignored */
 
     do
@@ -362,12 +365,18 @@ bool emptydir(register inoptr wd)
  * or the user did not have write permission.
  */
 
+/* This needs a proper home */
+void namecpy(register uint8_t *to, register uint8_t *from, unsigned len)
+{
+    while(*from && len--)
+        *to++ = *from++;
+    while(len--)
+        *to++ = 0;
+}
+
 bool ch_link(register inoptr wd, uint8_t *oldname, uint8_t *newname, inoptr nindex)
 {
     struct direct curentry;
-    register int i;
-
-    i_islocked(wd);
 
     if (wd->c_flags & CRDONLY) {
         udata.u_error = EROFS;
@@ -407,13 +416,7 @@ bool ch_link(register inoptr wd, uint8_t *oldname, uint8_t *newname, inoptr nind
         return false;                  /* Entry not found */
     }
 
-    memcpy(curentry.d_name, newname, FILENAME_LEN);
-    /* FIXME: add strncpy and use for this */
-    for(i = 0; i < FILENAME_LEN; ++i)
-        if(curentry.d_name[i] == '\0')
-            break;
-    for(; i < FILENAME_LEN; ++i)
-        curentry.d_name[i] = '\0';
+    namecpy(curentry.d_name, newname, FILENAME_LEN);
 
     if(nindex)
         curentry.d_ino = nindex->c_num;
@@ -448,7 +451,7 @@ bool ch_link(register inoptr wd, uint8_t *oldname, uint8_t *newname, inoptr nind
  * TODO: This generates crap code on most compilers so we probably ought to
  * turn it into platform asm code.
  */
-bool namecomp(uint8_t *n1, uint8_t *n2) // return true if n1 == n2
+bool namecomp(register uint8_t *n1, register uint8_t *n2) // return true if n1 == n2
 {
     uint_fast8_t n; // do we have enough variables called n?
 
@@ -508,8 +511,6 @@ inoptr newfile(register inoptr pino, uint8_t *name)
         goto nogood;
     }
 
-    i_lock(pino);	/* Lock in tree order */
-    i_lock(ino);
     /* This does not implement BSD style "sticky" groups */
     nindex->c_node.i_uid = udata.u_euid;
     nindex->c_node.i_gid = udata.u_egid;
@@ -526,11 +527,11 @@ inoptr newfile(register inoptr pino, uint8_t *name)
 	/* ch_link sets udata.u_error */
         goto nogood;
     }
-    i_unlock_deref(pino);
+    i_deref(pino);
     return nindex;
 
 nogood:
-    i_unlock_deref(pino);
+    i_deref(pino);
     return NULLINODE;
 }
 

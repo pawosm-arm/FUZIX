@@ -88,30 +88,20 @@ arg_t _rename(void)
 			udata.u_error = EISDIR;
 			goto nogood;
 		}
-		i_lock(dstp);
-		if (unlinki(dsti, dstp, lastname) == -1) {
-			i_unlock(dstp);
+		if (unlinki(dsti, dstp, lastname) == -1)
 			goto nogood;
-		}
 		/* Drop the reference to the unlinked file */
 		i_deref(dsti);
-	} else
-		i_lock(dstp);
-	/* Ok we may proceed: we set up fname earlier */
-	if (!ch_link(dstp, (uint8_t *)"", lastname, srci)) {
-		i_unlock(dstp);
-		goto nogood2;
 	}
-	i_unlock(dstp);
+	/* Ok we may proceed: we set up fname earlier */
+	if (!ch_link(dstp, (uint8_t *)"", lastname, srci))
+		goto nogood2;
 	/* A fail here is bad */
-	i_lock(srcp);
 	if (!ch_link(srcp, fname, (uint8_t *)"", NULLINODE)) {
-		i_unlock(srcp);
 		kputs("WARNING: rename: unlink fail\n");
 		goto nogood2;
 	}
 	/* get it onto disk - probably overkill */
-	i_unlock(srcp);
 	wr_inode(dstp);
 	wr_inode(srcp);
 	sync();
@@ -181,7 +171,7 @@ arg_t _mkdir(void)
 	ino->c_node.i_mode = ((mode & ~udata.u_mask) & MODE_MASK) | F_DIR;
 	i_deref(parent);
 	wr_inode(ino);
-	i_unlock_deref(ino);
+	i_deref(ino);
 	return (0);
 
 cleanup:
@@ -189,15 +179,14 @@ cleanup:
 	/* i_deref will put the blocks */
 	ino->c_node.i_nlink = 0;
 	wr_inode(ino);
-	i_unlock_deref(ino);
+	i_deref(ino);
 	/* In the error case it may be observed but it's consistently empty */
-	i_lock(parent);
 	if (!ch_link(parent, lastname, (uint8_t *)"", NULLINODE))
 		kprintf("_mkdir: bad rec\n");
-	i_unlock_deref(parent);
+	i_deref(parent);
 	return -1;
       nogood:
-	i_unlock_deref(ino);
+	i_deref(ino);
       nogood2:
 	i_deref(parent);
 	return (-1);
@@ -232,10 +221,6 @@ arg_t _rmdir(void)
 		i_deref(ino);
 		goto nogood_early;
 	}
-
-	i_lock(parent);
-	/* So nobody gets to access it while it's being dismantled */
-	i_lock(ino);
 
 	/* Make sure we don't remove a mount point */
 	if (ino->c_num == ROOTINODE) {
@@ -279,13 +264,13 @@ arg_t _rmdir(void)
 	f_trunc(ino);
 	wr_inode(parent);
 	wr_inode(ino);
-	i_unlock_deref(parent);
-	i_unlock_deref(ino);
+	i_deref(parent);
+	i_deref(ino);
 	return (0);
 
       nogood:
-	i_unlock_deref(parent);
-	i_unlock_deref(ino);
+	i_deref(parent);
+	i_deref(ino);
 	return (-1);
       nogood_early:
 	if (parent)	/* parent exist */
@@ -316,10 +301,10 @@ arg_t _mount(void)
 		return (-1);
 	}
 
-	if (!(sino = n_open(spec, NULLINOPTR)))
+	if (!(sino = n_open_argn()))
 		return (-1);
 
-	if (!(dino = n_open_lock(dir, NULLINOPTR))) {
+	if (!(dino = n_open(dir, NULLINOPTR))) {
 		i_deref(sino);
 		return (-1);
 	}
@@ -351,7 +336,7 @@ arg_t _mount(void)
 	if (!fmount(dev, dino, flags))
 		goto nogood;
 
-	i_unlock_deref(dino);
+	i_deref(dino);
 	i_deref(sino);
 	return (0);
 
@@ -454,7 +439,7 @@ arg_t _umount(void)
 	if (esuper())
 		return -1;
 
-	if (!(sino = n_open_lock(spec, NULLINOPTR)))
+	if (!(sino = n_open_argn()))
 		return -1;
 
 	if (getmode(sino) != MODE_R(F_BDEV)) {
@@ -469,7 +454,7 @@ arg_t _umount(void)
 	}
 	ret = do_umount(dev);
 nogood:
-	i_unlock_deref(sino);
+	i_deref(sino);
 	return ret;
 }
 

@@ -63,10 +63,10 @@ arg_t _execve(void)
 	kprintf("_execve(%s)\n", name);
 #endif
 
-	if (!(ino = n_open_lock(name, NULLINOPTR))) {
-		#ifdef DEBUG
-			kprintf("failed: file not found\n");
-		#endif
+	if (!(ino = n_open_argn())) {
+#ifdef DEBUG
+		kprintf("failed: file not found\n");
+#endif
 		return (-1);
 	}
 
@@ -263,7 +263,7 @@ arg_t _execve(void)
 #ifdef DEBUG
 	kprintf("found %d relocations at %p\n", relcount, rel);
 #endif
-		
+
 	/* Relocate, if a relocation table was found. */
 
 	while (relcount--)
@@ -377,7 +377,7 @@ error:
 		tmpfree(ebuf);
 	if (phdr)
 		tmpfree(phdr);
-	i_unlock_deref(ino);
+	i_deref(ino);
 	return -1;
 
 enomem:

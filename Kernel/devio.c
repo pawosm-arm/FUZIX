@@ -45,34 +45,12 @@ static uint16_t bufclock;		/* Time-stamp counter for LRU */
 
 #define bisbusy(x)	((x)->bf_busy == BF_BUSY)
 
-#ifndef CONFIG_BLOCK_SLEEP
 #define	block(x)	((x)->bf_busy = BF_BUSY)
 #define bunlock(x)	((x)->bf_busy = BF_FREE)
 #define bcheck(x)	bisbusy(x)
 #define block_s(x)
 #define bunlock_s(x)
-#else
 
-static void block(bufptr bp)
-{
-	while (bp->bf_busy == BF_BUSY)
-		psleep_nosig(bp);
-	bp->bf_busy = BF_BUSY;
-}
-
-static void bunlock(bufptr bp)
-{
-	if (bp->bf_busy == BF_FREE)
-		panic(BFREEFREE);
-	bp->bf_busy = BF_FREE;
-	pwake(bp);
-}
-
-#define block_s(x)	block(x)
-#define bunlock_s(x)	bunlock(x)
-#define bcheck(x)	0
-
-#endif
 
 /*
  *	Make an entry in the buffer cache and fill it. If rewrite is
@@ -635,7 +613,7 @@ void kputval(unsigned int n, unsigned *div, uint_fast8_t zp)
 	static char digit[] = "0123456789ABCDEF";
 	register unsigned i;
 	register uint_fast8_t c;
-	while(i = *div++) {
+	while((i = *div++) != 0) {
 		if (zp |= (c = n / i))
 			kputchar(digit[c & 15]);
 		n %= i;
