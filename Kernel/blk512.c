@@ -42,11 +42,11 @@ uint_fast8_t bwritei(inoptr ino)
  * the physical block number on a device given the inode and the
  * logical block number in a file.  The block is zeroed if created.
  */
-blkno_t bmap(inoptr ip, blkno_t bn, unsigned int rwflg)
+blkno_t bmap(register inoptr ip, blkno_t bn, unsigned int rwflg)
 {
     int i;
-    bufptr bp;
-    int j;
+    register bufptr bp;
+    register int j;
     blkno_t nb;
     int sh;
     uint16_t dev;
