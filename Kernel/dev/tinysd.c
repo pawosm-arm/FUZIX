@@ -61,7 +61,7 @@ static int sd_send_command(uint_fast8_t cmd, uint32_t arg)
 	sd_spi_tx_byte(arg);
 #endif
 	sd_spi_tx_byte(0x01);
-#ifndef CONFIG_TD_SD_EMUBUG        
+#ifndef CONFIG_TD_SD_EMUBUG
 	sd_spi_rx_byte();
 #endif
 	n = 20;
