@@ -109,8 +109,10 @@ int main(int c, const char *v[])
 	/* sh_getenv can call error handlers so initialize the
 	   subshell trap and if it fails (eg being passed a broken
 	   environment) just carry on instead of entering hyperspace */
-	if (setjmp(subshell) == 0)
+	flags = ttyflg;
+	if (setjmp(errshell) == 0)
 		sh_getenv();
+	flags = 0;
 
 	/* look for restricted */
 /*	if(c>0 && any('r', *v) ) { rflag=0 ;} */
