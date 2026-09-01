@@ -25,10 +25,9 @@ uint_fast8_t breadi(uint16_t dev, uint16_t ino, void *ptr)
 }
 
 /* Write an inode */
-uint_fast8_t bwritei(inoptr ino)
+uint_fast8_t bwritei(register inoptr ino)
 {
-    blkno_t blkno = (ino->c_num >> 3) + 2;
-    struct blkbuf *buf = bread(ino->c_dev, blkno, 0);
+    struct blkbuf *buf = bread(ino->c_dev, (ino->c_num >> 3) + 2, 0);
     if (buf == NULL)
         return 1;
     blkfromk(&ino->c_node, buf, sizeof(struct dinode) * (ino->c_num & 0x07),
@@ -37,85 +36,62 @@ uint_fast8_t bwritei(inoptr ino)
     return 0;
 }
 
-/*
- * Bmap defines the structure of file system storage by returning
- * the physical block number on a device given the inode and the
- * logical block number in a file.  The block is zeroed if created.
- */
-blkno_t bmap(register inoptr ip, blkno_t bn, unsigned int rwflg)
+static blkno_t ifetch(register inoptr ip, unsigned off, unsigned rwflg)
 {
-    int i;
-    register bufptr bp;
-    register int j;
-    blkno_t nb;
-    int sh;
-    uint16_t dev;
-
-    if(getmode(ip) == MODE_R(F_BDEV))
-        return(bn);
-
-    dev = ip->c_dev;
-
-    /* blocks 0..17 are direct blocks
-    */
-    if(bn < 18) {
-        nb = ip->c_node.i_addr[bn];
-        if(nb == 0) {
-            if(rwflg ||(nb = blk_alloc(dev))==0)
-                return(NULLBLK);
-            ip->c_node.i_addr[bn] = nb;
-            ip->c_flags |= CDIRTY;
-        }
-        return(nb);
-    }
-
-    /* addresses 18 and 19 have single and double indirect blocks.
-     * the first step is to determine how many levels of indirection.
-     */
-    bn -= 18;
-    sh = 0;
-    j = 2;
-    if(bn & 0xff00){       /* bn > 255  so double indirect */
-        sh = 8;
-        bn -= 256;
-        j = 1;
-    }
-
-    /* fetch the address from the inode
-     * Create the first indirect block if needed.
-     */
-    if(!(nb = ip->c_node.i_addr[20-j]))
-    {
-        if(rwflg || !(nb = blk_alloc(dev)))
-            return(NULLBLK);
-        ip->c_node.i_addr[20-j] = nb;
+    register blkno_t *nb = ip->c_node.i_addr  + off;
+    if (*nb == 0) {
+        if (rwflg || (*nb = blk_alloc(ip->c_dev)) == 0)
+            return NULLBLK;
         ip->c_flags |= CDIRTY;
     }
+    return *nb;
+}
 
-    /* fetch through the indirect blocks
-    */
-    for(; j<=2; j++) {
-        bp = bread(dev, nb, 0);
+static blkno_t bfetch(uint16_t dev, blkno_t blk, unsigned off, unsigned rwflg)
+{
+        register bufptr bp = bread(dev, blk, 0);
+        blkno_t nb;
+
         if (bp == NULL) {
-            corrupt_fs(ip->c_dev);
+            corrupt_fs(dev);
             return 0;
         }
-        i = (bn >> sh) & 0xff;
-        nb = *(blkno_t *)blkptr(bp, (sizeof(blkno_t)) * i, sizeof(blkno_t));
+        off *= sizeof(blkno_t);
+
+        /* Add a sensible blk sized helper that's just
+        nb = blknum(bp, off); and to set likewise so in main memory
+           code is compact */
+        nb = *(blkno_t *)blkptr(bp, off, sizeof(blkno_t));
         if (nb)
             brelse(bp);
-        else
-        {
-            if(rwflg || !(nb = blk_alloc(dev))) {
+        else {
+            if (rwflg || !(nb = blk_alloc(dev))) {
                 brelse(bp);
-                return(NULLBLK);
+                return NULLBLK;
             }
-            blkfromk(&nb, bp, i * sizeof(blkno_t), sizeof(blkno_t));
+            blkfromk(&nb, bp, off, sizeof(blkno_t));
             bawrite(bp);
         }
-        sh -= 8;
-    }
-    return(nb);
+        return nb;
+}
+
+blkno_t bmap(register inoptr ip, blkno_t bn, unsigned rwflg)
+{
+    blkno_t blk;
+    if (bn < 18)
+        return ifetch(ip, bn, rwflg);
+    bn -= 18;
+    if (bn & 0xFF00) {
+        blk = ifetch(ip, 19, rwflg);
+        if (blk == NULLBLK)
+            return blk;
+        blk = bfetch(ip->c_dev, blk, bn >> 8, rwflg);
+        bn &= 0xFF;
+    } else
+        blk = ifetch(ip, 18, rwflg);
+    if (blk == NULLBLK)
+        return blk;
+    return bfetch(ip->c_dev, blk, bn, rwflg);
 }
 
 #endif
