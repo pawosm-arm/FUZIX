@@ -801,7 +801,7 @@ void ssig(register ptptr proc, uint_fast8_t sig)
 	if (sig > 15)
 		m++;
 
-	sigm = 1 << (sig & 0x0F);
+	sigm = sigmask(sig);
 
 #ifdef DEBUG_SLEEP
 	kprintf("sig %d to %d(%d) %p %p\n",
