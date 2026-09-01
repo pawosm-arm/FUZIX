@@ -282,7 +282,7 @@ uint16_t incr;
 
 arg_t _sbrk(void)
 {
-	uaddr_t oldbrk;
+	register uaddr_t oldbrk;
 	ssize_t inc = incr;
 
 	udata.u_argn += (oldbrk = udata.u_break);
@@ -349,7 +349,7 @@ arg_t _waitpid(void)
 						return retval;
 					}
 					if (p->p_event && (options & WUNTRACED)) {
-						retval = (uint16_t)p->p_event << 8 | _WSTOPPED;
+						retval = (uint16_t)(p->p_event << 8) | _WSTOPPED;
 						p->p_event = 0;
 						return retval;
 					}
@@ -492,33 +492,48 @@ signal (sig, func)               Function 35        ?
 int16_t sig;
 int16_t (*func)();
 ********************************************/
+
+
 #define sig (int16_t)udata.u_argn
 #define func (int (*)(int))udata.u_argn1
 
-arg_t _signal(void)
+/* Helper that checks the signal is within range and returns
+   the correct sigbits and mask */
+struct sigbits *sigbits(uint16_t *m)
 {
-	int16_t retval;
-	irqflags_t irq;
 	register struct sigbits *sb = udata.u_ptab->p_sig;
-
-	if (sig < 1 || sig >= NSIGS) {
+	if (sig < 1 || sig > NSIGS) {
 		udata.u_error = EINVAL;
-		goto nogood;
+		return NULL;
 	}
 	if (sig > 15)
 		sb++;
+	*m = sigmask(sig);
+	return sb;
+}
+
+arg_t _signal(void)
+{
+	irqflags_t irq;
+	uint16_t m;
+	register struct sigbits *sb;
+	arg_t retval;
+
+	sb = sigbits(&m);
+	if (sb == NULL)
+		return -1;
 
 	irq = di();
 
 	if (func == SIG_IGN) {
 		if (sig != SIGKILL && sig != SIGSTOP)
-			sb->s_ignored |= sigmask(sig);
+			sb->s_ignored |= m;
 	} else {
 		if (func != SIG_DFL && !valaddr_r((uint8_t *) func, 1)) {
 			udata.u_error = EFAULT;
-			goto nogood;
+			return -1;
 		}
-		sb->s_ignored &= ~sigmask(sig);
+		sb->s_ignored &= ~m;
 	}
 	retval = (arg_t) udata.u_sigvec[sig];
 	if (sig != SIGKILL && sig != SIGSTOP)
@@ -526,11 +541,7 @@ arg_t _signal(void)
 	/* Force recalculation of signal pending in the syscall return path */
 	recalc_cursig();
 	irqrestore(irq);
-
-	return (retval);
-
-nogood:
-	return (-1);
+	return retval;
 }
 
 #undef sig
@@ -547,17 +558,18 @@ int16_t disp;
 /* Implement sighold/sigrelse */
 arg_t _sigdisp(void)
 {
-	register struct sigbits *sb = udata.u_ptab->p_sig;
-	if (sig < 1 || sig >= NSIGS || sig == SIGKILL || sig == SIGSTOP) {
+	register struct sigbits *sb;
+	uint16_t m;
+
+	sb = sigbits(&m);
+	if (sb == NULL || sig == SIGKILL || sig == SIGSTOP) {
 		udata.u_error = EINVAL;
 		return -1;
 	}
-	if (sig > 15)
-		sb++;
 	if (disp == 1)
-		sb->s_held |= sigmask(sig);
+		sb->s_held |= m;
 	else
-		sb->s_held &= ~sigmask(sig);
+		sb->s_held &= ~m;
 	/* Force recalculation of signal pending in the syscall return path */
 	recalc_cursig();
 	return 0;
