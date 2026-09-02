@@ -78,6 +78,10 @@ static blkno_t bfetch(uint16_t dev, blkno_t blk, unsigned off, unsigned rwflg)
 blkno_t bmap(register inoptr ip, blkno_t bn, unsigned rwflg)
 {
     blkno_t blk;
+
+    if(getmode(ip) == MODE_R(F_BDEV))
+        return(bn);
+
     if (bn < 18)
         return ifetch(ip, bn, rwflg);
     bn -= 18;
