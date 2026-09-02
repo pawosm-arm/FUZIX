@@ -152,6 +152,7 @@ extern void fatal(char *_s);
 extern int fixterm(void);
 extern void flash(void);
 extern void gettmode(void);
+extern void halfdelay(int _flag);
 extern void idlok(WINDOW *_win, bool _flag);
 extern WINDOW *initscr(void);
 extern void keypad(WINDOW *_win, bool _flag);
