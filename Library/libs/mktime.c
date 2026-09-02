@@ -4,7 +4,7 @@
 
 #include <time.h>
 
-static int try_mktime(time_t t, struct tm *want, struct tm *tm)
+static int try_mktime(time_t t, register struct tm *want, register struct tm *tm)
 {
     localtime_r(&t, tm);
     if (tm->tm_year < want->tm_year)
