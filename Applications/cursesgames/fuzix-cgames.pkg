@@ -6,3 +6,8 @@ f 0755 /usr/games/invaders      invaders
 if-file yuk
 
 f 0755 /usr/games/yuk      yuk
+
+if-file cent
+
+f 0755 /usr/games/cent      cent
+f 0644 /usr/lib/games/cent.txt cent.txt
