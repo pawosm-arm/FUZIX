@@ -57,7 +57,7 @@ static int is_clean(const char *path)
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
 		return 0;
-	if (read(fd, &fs, sizeof(fs)) != sizeof(fs)) {
+	if (lseek(fd, 512, 0L) == -1 || read(fd, &fs, sizeof(fs)) != sizeof(fs)) {
 		close(fd);
 		return 0;
 	}
@@ -130,6 +130,7 @@ int main(int argc, char *argv[])
 				exit(error);
 		}
 		endmntent(fp);
+		puts("Done.");
 	} else {
 		if (argc != 2) {
 			fputs("syntax: fsck [-a] [devfile]\n", stderr);
@@ -137,6 +138,5 @@ int main(int argc, char *argv[])
 		}
 		perform_fsck(argv[1], 1, 1);
 	}
-	puts("Done.");
 	exit(error);
 }
