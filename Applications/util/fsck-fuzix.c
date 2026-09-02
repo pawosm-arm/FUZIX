@@ -153,12 +153,12 @@ static int bittest(uint16_t b)
         return 0;
     /* GCC 68HC11 miscompiles the bitmask code we use for speed elsewhere. For
        now bodge around it until we can kick gcc out for the native compiler */
-#ifdef mc68hc11        
+#ifdef mc68hc11
     b &= 7;
     return !!(bitmap[n] & (1 << b));
-#else    
+#else
     return (bitmap[n] & bitmask[b & 7]) ? 1 : 0;
-#endif    
+#endif
 }
 
 static void panic(const char *s)
@@ -202,7 +202,7 @@ int perform_fsck(char *name)
     buf = daread(1);
     memcpy((char *) &superblock, buf, sizeof(struct filesys));
 
-    if (superblock.s_fmod == FMOD_DIRTY) {
+    if (superblock.s_fmod != FMOD_CLEAN) {
         puts("Filesystem was not cleanly unmounted.");
         error |= 1;
     }
@@ -352,7 +352,7 @@ static void pass1(void)
             /* Check singly indirect blocks */
 
             for (b = 18; b < 20; ++b) {
-                if (ino.i_addr[b] != 0 && 
+                if (ino.i_addr[b] != 0 &&
                     (ino.i_addr[b] < superblock.s_isize ||
                             ino.i_addr[b] >= superblock.s_fsize)) {
                     printf("Inode %u singly ind. blk %u out of range, val = %u. Zap? ",
@@ -816,7 +816,7 @@ static blkno_t getblkno(struct dinode *ino, blkno_t num)
 /*
  *  Setblkno sets the given block number of the given file to the given
  *  disk block number, possibly creating or modifiying the indirect blocks.
- *  A return of zero means there were no blocks available to create an 
+ *  A return of zero means there were no blocks available to create an
  *  indirect block. This should never happen in fsck.
  */
 static void setblkno(struct dinode *ino, blkno_t num, blkno_t dnum)
