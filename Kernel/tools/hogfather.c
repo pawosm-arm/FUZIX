@@ -63,7 +63,7 @@ static unsigned ignore_sym(const char *p)
 
 static unsigned symnum(char c)
 {
-    static char *p = "ACDBZXSLsb";
+    static char *p = "ACDBZXSLs89";
     char *x = strchr(p, c);
     if (x == NULL)
         return -1;
@@ -121,7 +121,7 @@ static void size_symbols(void)
             s = s->next;
         }
     }
-}   
+}
 
 static void dump_sizes(void)
 {
