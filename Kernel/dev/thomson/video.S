@@ -1,40 +1,33 @@
-	.module to8video
+	.module to9video
 
 	; Methods provided
-	.globl _plot_char
-	.globl _scroll_up
-	.globl _scroll_down
-	.globl _clear_across
-	.globl _clear_lines
-	.globl _cursor_on
-	.globl _cursor_off
-	.globl _cursor_disable
-	.globl _vtattr_notify
+	.export _plot_char
+	.export _scroll_up
+	.export _scroll_down
+	.export _clear_across
+	.export _clear_lines
+	.export _cursor_on
+	.export _cursor_off
+	.export _cursor_disable
+	.export _vtattr_notify
 
-	.globl video_init
-	.globl _fontbase
+	.export video_init
+	.export _fontbase
 
-	;
-	; Imports
-	;
-	.globl _fontdata_8x8
-	.globl _vidattr
-	.globl map_video
+#include "../../platform/kernel.def"
+#include "../../kernel09.def"
 
-	include "../../build/kernel.def"
-	include "../../cpu-6809/kernel09.def"
-
-	.area .video
+	.common
 
 ;
 ;	Compute the video base address
-;	A = X, B = Y, returns an address in X
+;	A = X, B = Y, returns an address in Y
+;
+;	40 column for now - 80 is dual bank interleaved so a bit more tricky
 ;
 ;	This is a simple bitmap, so chracters are just copied 8x8
 ;
 ;	x 320 wants optimizing
-;
-;	Video is at 4000-5FFF
 ;
 vidaddr:
 	sta	,-s
@@ -57,24 +50,21 @@ vidaddr:
 	lslb
 	rola
 	addb	,s+		; add in the X value
-	adda	#0x40		; Screen base 0x4000
+	;	D is now the offset
+	adda	#VIDEO_BASE/256
 	tfr	d,y
 	jmp	map_video
 ;
 ;	plot_char(int8_t y, int8_t x, uint16_t c)
 ;
 _plot_char:
-	pshs y,cc
-	orcc #$50
-	sts vsp_save
 	lda _vtattr		; this won't be mapped when we are in video space
 	sta vtattrcp
-	lda 5,s
-	lds #videostack
-	bsr vidaddr		; preserves X (holding the char)
-	tfr x,d
+	; B already olds Y
+	lda 2,s			; X
+	bsr vidaddr		; preserves X
+	ldb 4,s
 	andb #$7F		; no high font bits
-	clra
 	rolb			; multiply by 8
 	rola
 	rolb
@@ -146,7 +136,7 @@ plotnext:
 	inca
 	cmpa #8
 	bne plot_loop
-	bra unmapc
+	bra unmap_videoc
 ;
 ;	Fast path for normal attributes
 ;	Yes.. the ROM font really is stored upside down!
@@ -168,19 +158,12 @@ plot_fast:
 	sta 240,y
 	lda ,-x
 	sta 280,y
-unmapc:
-	jsr unmap_video
-	lds vsp_save
-	puls y,cc,pc
-
+unmap_videoc:
+	jmp map_kernel
 ;
 ;	void scroll_up(void)
 ;
 _scroll_up:
-	pshs y,cc
-	orcc #$50
-	sts vsp_save
-	lds #videostack
 	jsr map_video
 	ldy #VIDEO_BASE
 	leax 320,y
@@ -219,17 +202,13 @@ vscrolln:
 	ldd ,x++
 	std ,y++
 	cmpx video_endptr
-	lbne vscrolln
-	jmp unmap
+	bne vscrolln
+	bra unmap_video
 
 ;
 ;	void scroll_down(void)
 ;
 _scroll_down:
-	pshs y,cc
-	orcc #$50
-	sts vsp_save
-	lds #videostack
 	jsr map_video
 	ldy #VIDEO_END
 	leax -320,y
@@ -268,32 +247,24 @@ vscrolld:
 	ldd ,--x
 	std ,--y
 	cmpx video_startptr
-	lbne vscrolld
-unmap:
-	jsr unmap_video
-	lds vsp_save
-	puls y,cc,pc
+	bne vscrolld
+unmap_video:
+	jmp map_kernel
 
 video_startptr:
-	.dw	VIDEO_BASE
+	.word	VIDEO_BASE
 video_endptr:
-	.dw	VIDEO_END
+	.word	VIDEO_END
 
 ;
 ;	clear_across(int8_t y, int8_t x, uint16_t l)
 ;
 _clear_across:
-	pshs y,cc
-	orcc #$50
-	sts  vsp_save
-	lda 5,s		; x into A, B already has y
-	lds  #videostack
+	lda 2,s		; x into A, B already has y
 	jsr vidaddr	; Y now holds the address
 	tfr x,d		; Shuffle so we are writng to X and the counter
-	tfr y,x		; l is in d
+	ldy 3,s		; length
 	clra
-	incb
-	bra cleara
 clearnext:
 	sta ,x
 	sta 40,x
@@ -304,30 +275,21 @@ clearnext:
 	sta 240,x
 	sta 280,x
 	leax 1,x
-cleara:
 	decb
 	bne clearnext
-	bra unmap
+	bra unmap_video
 ;
 ;	clear_lines(int8_t y, int8_t ct)
 ;
 _clear_lines:
-	pshs y,cc
-	orcc #$50
-	sts  vsp_save
-	lda  5,s
-	sta  vid_work
-	lds  #videostack
 	clra			; b holds Y pos already
 	jsr vidaddr		; y now holds ptr to line start
 	tfr y,x
-	pshs a
 	clra
 	clrb
-	lsl vid_work
-	lsl vid_work
-	lsl vid_work
-	beq nolines
+	lsl 2,s
+	lsl 2,s
+	lsl 2,s
 wipel:
 	std ,x++
 	std ,x++
@@ -349,17 +311,12 @@ wipel:
 	std ,x++
 	std ,x++
 	std ,x++
-	dec vid_work		; count of lines
+	dec 2,s			; count of lines
 	bne wipel
-nolines:
-	jmp unmap
+	bra unmap_video
 
 _cursor_on:
-	pshs y,cc
-	orcc #$50
-	sts  vsp_save
-	lda  5,s
-	lds #videostack
+	lda  2,s
 	jsr vidaddr
 	tfr y,x
 	stx cursor_save
@@ -372,32 +329,22 @@ do_cursor:
 	com 200,x
 	com 240,x
 	com 280,x
-	jmp unmap
+	jmp unmap_video
 
 _cursor_off:
-	pshs y,cc
-	orcc #$50
-	sts  vsp_save
-	lds  #videostack
 	ldb _vtattr
 	bitb #0x80
 	bne nocursor
 	ldx cursor_save
-	cmpx #$FFFF
+	cmpx #0
 	beq nocursor
 	jsr map_video
 	bra do_cursor
 nocursor:
-	lds vsp_save
-	puls y,cc,pc
 _vtattr_notify:
 _cursor_disable:
 	rts
 
-;
-;	We are always on the kernel stack for this so no switch is
-;	needed, likewise ints are off.
-;
 video_init:
 	jsr	map_video
 	ldx	#VIDEO_BASE
@@ -406,25 +353,14 @@ vidwipe:
 	std	,x++
 	cmpx	#VIDEO_END
 	bne 	vidwipe
-	jmp	unmap_video
+	jmp	map_kernel
 
-;
-;	The TO9 memory map is tricky as we have to keep the video over
-;	some of our common space. Instead put the video data in high as
-;	the kernel will be mapped whenever we are doing video work
-;
-	.area .videodata
+	.commondata
 cursor_save:
-	.dw	$FFFF
+	.word	0
 _vtrow:
-	.db	0
+	.byte	0
 vtattrcp:
-	.db	0
-_fontbase:
-	.dw	0
-vid_work:
-	.db	0
-vsp_save:
-	.dw	0		; saved stack switch
-	.ds	64
-videostack:
+	.byte	0
+_fontbase
+	.word	0

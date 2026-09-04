@@ -16,6 +16,8 @@
 
 #define MAX_FD	4
 
+extern uint8_t fdbios_flop(void);
+
 uint8_t fd_map;
 
 static int fd_transfer(uint8_t minor, bool is_read, uint8_t rawflag)
