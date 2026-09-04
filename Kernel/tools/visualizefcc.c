@@ -108,7 +108,7 @@ void load_info(FILE *fp)
                 fprintf(stderr, "Unknown info line '%s'.\n", linebuf);
                 exit(1);
         }
-        insert_section(new_section(name, st, en - st + 1));
+        insert_section(new_section(name, st, en - st));
     }
 }
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < 10; i++)
 		sect[i].name = "ACDBXZSLsb??????"[i];
-		
+
 	memset(use, '#', sizeof(use));
 
 	while (fgets(buf, 511, stdin)) {
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < 10; i++)
 		if (sect[i].size)
 			insert_section(sect + i);
-			
+
 	mark_map();
 	for (r = 0; r < 4; r++) {
 		for (i = 0; i < 256; i += 4) {
