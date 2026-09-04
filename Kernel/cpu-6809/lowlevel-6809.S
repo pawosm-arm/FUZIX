@@ -65,7 +65,7 @@ unix_va_syscall:
 ;		X = syscall number, D = arg1
 ;
 unix_syscall_entry:
-	pshs u
+	pshs u,cc
 	ldu #_udata + U_DATA__U_ARGN
 	std ,u++
 	tfr x,d
@@ -122,7 +122,7 @@ not_error:
         ; no error to signal! return syscall return value instead of error code
         ldd _udata + U_DATA__U_RETVAL
 unix_return:
-	puls u,pc
+	puls u,cc,pc
 ;
 ;	We must rts on the right bank !
 ;
