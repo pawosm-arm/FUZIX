@@ -46,10 +46,10 @@
 ;		B = syscall no
 ;
 unix_va_syscall:
-	pshs u
+	pshs cc,u
 	ldu	#_udata + U_DATA__U_ARGN
 	stb	_udata + U_DATA__U_CALLNO
-	leax	6,s
+	leax	7,s
 	ldd	,x++
 	std	,u++
 	bra	syscall
@@ -70,7 +70,7 @@ unix_syscall_entry:
 	std ,u++
 	tfr x,d
 	stb _udata + U_DATA__U_CALLNO
-	leax 6,s	; skip return addresses
+	leax 7,s	; skip return addresses
 syscall:
 	ldd ,x++	; second argument from caller's stack
 	std ,u++
