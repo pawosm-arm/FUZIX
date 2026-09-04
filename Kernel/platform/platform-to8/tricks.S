@@ -1,4 +1,3 @@
-# 1 "tricks.S"
 ;
 ;	Bank switching for Thompson TO8 and TO9+
 ;
@@ -6,59 +5,9 @@
 ;	TODO: parent first mode would be a win due to the copier cost
 ;	TODO: assumes TO8/TO9+ mode
 ;
-# 1 "kernel.def"
-U_DATA__TOTALSIZE           equ 0x0200        ; 256+256
+#include "kernel.def"
+#include "../../cpu-6809/kernel09.def"
 
-VIDEO_BASE		    equ 0x0000	     ; 8K mapped in the video window
-VIDEO_END		    equ 0x2000	     ; for now
-VIDEO_OFF		    equ 0x00	     ; mapped at 0x00
-
-PROGBASE                    equ 0x6400       ; programs and data start here
-
-IOPAGE			    equ 0xE7	     ; I/O window
-# 1 "../../cpu-6809/kernel09.def"
-; Keep these in sync with struct u_data!!
-U_DATA__U_PTAB              equ 0   ; struct p_tab*
-U_DATA__U_PAGE              equ 2   ; uint16_t
-U_DATA__U_PAGE2             equ 4   ; uint16_t
-U_DATA__U_INSYS             equ 6   ; bool
-U_DATA__U_CALLNO            equ 7   ; uint8_t
-U_DATA__U_SYSCALL_SP        equ 8   ; void *
-U_DATA__U_RETVAL            equ 10  ; int16_t
-U_DATA__U_ERROR             equ 12  ; int16_t
-U_DATA__U_SP                equ 14  ; void *
-U_DATA__U_ININTERRUPT       equ 16  ; bool
-U_DATA__U_CURSIG            equ 17  ; int8_t
-U_DATA__U_ARGN              equ 18  ; uint16_t
-U_DATA__U_ARGN1             equ 20  ; uint16_t
-U_DATA__U_ARGN2             equ 22  ; uint16_t
-U_DATA__U_ARGN3             equ 24  ; uint16_t
-U_DATA__U_ISP               equ 26  ; void * (initial stack pointer when _exec()ing)
-U_DATA__U_TOP               equ 28  ; uint16_t
-U_DATA__U_BREAK             equ 30  ; uint16_t
-U_DATA__U_CODEBASE          equ 32  ; uint16_t
-U_DATA__U_SIGVEC            equ 34  ; table of function pointers (void *)
-
-; Keep these in sync with struct p_tab!!
-P_TAB__P_STATUS_OFFSET      equ 0
-P_TAB__P_FLAGS_OFFSET	    equ 1
-P_TAB__P_TTY_OFFSET         equ 2
-P_TAB__P_PID_OFFSET         equ 3
-P_TAB__P_PAGE_OFFSET        equ 15
-
-P_RUNNING                   equ 1            ; value from include/kernel.h
-P_READY                     equ 2            ; value from include/kernel.h
-
-PFL_BATCH		    equ 4            ; value from include/kernel.h
-
-OS_BANK                     equ 0            ; value from include/kernel.h
-
-EAGAIN                      equ 11           ; value from include/kernel.h
-
-
-; Keep in sync with struct blkbuf
-BUFSIZE 		    equ 520
-# 11 "tricks.S"
 	.export _plt_switchout
 	.export _switchin
 	.export _dofork
@@ -102,7 +51,7 @@ _plt_switchout:
         jsr _plt_monitor
 
 badswitchmsg: .ascii "_switchin: FAIL"
-.byte 13
+        .byte 13
 	.byte 10
 	.byte 0
 
@@ -318,3 +267,4 @@ save_hi2:				; copy the low 16K of user
 	bne save_hi2
 	
 	jmp map_kernel			; put the memory map back sane
+

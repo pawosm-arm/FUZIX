@@ -1,4 +1,3 @@
-# 1 "commonmem.S"
 ;
         ; exported symbols
         .export _ub

@@ -1,4 +1,3 @@
-# 1 "crt0.S"
 		; exported
 		.export start
 
@@ -37,3 +36,4 @@ bss_wipe:	sta ,x+
 		jsr _fuzix_main
 		orcc #0x10
 stop:		bra stop
+

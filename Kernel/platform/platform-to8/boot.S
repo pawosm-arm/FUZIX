@@ -2,15 +2,16 @@
 ;	Boot block - runs from 6200
 ;	Must be under 128 bytes (byte 127 is the sum)
 ;
-	org	$6200
+	.abs
+	org	0x6200
 
 start:	orcc	#$10		; ints off (FIR off to ?)
 	lds	#$61FF
-	clr	<$49		; drive 0
-	clr	<$4A		; track 0
-	clr	<$4B		; track 0
+	clr	@$49		; drive 0
+	clr	@$4A		; track 0
+	clr	@$4B		; track 0
 	lda	#2
-	sta	<$4C		; sector 2
+	sta	@$4C		; sector 2
 
 	;	Force on new style banking
 	;	This is ugly - we shouldn't be hard coding this but
@@ -49,20 +50,20 @@ load_seg:
 	ldy	#64
 loader:
 	; Load Y sectors starting at X
-	stx	<$4F
+	stx	@$4F
 load_loop:
 	ldb	#2
-	stb	<$48
+	stb	@$48
 	jsr	$E82A
 	bcs	failure
-	inc	<$4F		; move on 256 bytes
-	lda	<$4C
+	inc	@$4F		; move on 256 bytes
+	lda	@$4C
 	cmpa	#16		; sector on
 	bne	track_same
-	inc	<$4B		; track on, sector back to 1
-	clr	<$4C		; will drop through and inc to 1
+	inc	@$4B		; track on, sector back to 1
+	clr	@$4C		; will drop through and inc to 1
 track_same:
-	inc	<$4C
+	inc	@$4C
 	anda	#$0F
 	sta	$E7DD		; flash border to show progress
 	leay	-1,y
