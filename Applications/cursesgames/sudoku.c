@@ -53,7 +53,7 @@ I can be contacted at mail[at]tbmatuka[dot]com
 #include <getopt.h>
 
 #define CTRL(c) ((c) & 037)
-#define VERSION "1.3ac"
+#define VERSION "1.3ac2"
 
 int board[9][9], start[9][9];
 WINDOW *helpbox, *win;
@@ -61,9 +61,8 @@ WINDOW *helpbox, *win;
 int check(void);		// check if all numbers in board array match the rules
 void clear_grid(int i, int j);	// clear a grid(3x3) in row i and column j
 int count(void);		// count how many values are in board array
-int generate(int n);		// generate sudoku
+void generate(int n);		// generate sudoku
 int stdprint(void);		// stdout print board array
-int change(int x, int y, int num);	// change a value of an array field.
 int helpboxon(void);		// turn help box on
 int helpboxoff(void);		// turn help box off
 int restart(void);
@@ -152,6 +151,7 @@ int main(int argc, char *argv[])
 	int ch, hb = 1;
 	int posx = 0, posy = 0;
 	int opt;
+	unsigned over = 0;
 
 	srand(time(NULL));
 
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	if (argv[optind])
-		n = atoi(argv[optind]);
+		n = atoi(argv[optind++]);
 	if (argv[optind])
 		usage();
 
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 	helpboxon();
 	wmove(win, 1, 1);
 	wrefresh(win);
-	while ((ch = wgetch(win)) != 'q' && ch != 900 && ch != ERR) {
+	while (!over && (ch = wgetch(win)) != 'q' && ch != ERR) {
 		switch (ch) {
 		case 'r':
 			restart();
@@ -248,16 +248,14 @@ int main(int argc, char *argv[])
 		}
 		move_to_cell(posy, posx);
 		wrefresh(win);
-		/* FIXME: use a separate done flag */
 		if (check() == 1 && count() == 81)
-			ch = 900;
+			over = 1;
 	}
 	endwin();
-	if (ch == 900)
-		printf("Congratulations, you won the game!");
+	if (over)
+		puts("Congratulations, you won the game!");
 	if (print == 1)
 		stdprint();
-
 	return 0;
 }
 
@@ -276,18 +274,12 @@ int helpboxoff(void)
 	return 0;
 }
 
-int change(int x, int y, int num)
-{
-	board[x][y] = num;
-	draw_cell(y, x, num);
-	wrefresh(win);
-	return 0;
-}
-
 int check(void)
 {
 	int i, j, k, l, x, y;
 	int c1[10], c2[10];
+
+	/* Sweep horizontally and vertically in one pass */
 	for (i = 0; i < 9; i++) {
 		for (k = 1; k < 10; k++) {
 			c1[k] = 0;
@@ -295,14 +287,14 @@ int check(void)
 		}
 		for (j = 0; j < 9; j++) {
 			if (board[i][j] != 0)
-				c1[board[i][j]]++;
+				if (c1[board[i][j]]++)
+					return 0;
 			if (board[j][i] != 0)
-				c2[board[j][i]]++;
+				if (c2[board[j][i]]++)
+					return 0;
 		}
-		for (j = 1; j < 10; j++)
-			if (c1[j] > 1 || c2[j] > 1)
-				return 0;
 	}
+	/* And check the cubes */
 	for (i = 0; i < 3; i++) {
 		for (j = 0; j < 3; j++) {
 			for (x = 1; x < 10; x++) {
@@ -314,14 +306,13 @@ int check(void)
 					x = (i * 3) + k;
 					y = (j * 3) + l;
 					if (board[x][y] != 0)
-						c1[board[x][y]]++;
+						if (c1[board[x][y]]++)
+							return 0;
 					if (board[y][x] != 0)
-						c2[board[y][x]]++;
+						if (c2[board[y][x]]++)
+							return 0;
 				}
 			}
-			for (x = 1; x < 10; x++)
-				if (c1[x] > 1 || c2[x] > 1)
-					return 0;
 		}
 	}
 	return 1;
@@ -330,6 +321,7 @@ int check(void)
 void clear_grid(int i, int j)
 {
 	int k, l, x, y;
+
 	for (k = 0; k < 3; k++)
 		for (l = 0; l < 3; l++) {
 			x = (i * 3) + k;
@@ -384,12 +376,12 @@ int stdprint(void)
 	return 0;
 }
 
-int generate(int n)
+void generate(int n)
 {
 	int i, j, k, l, r1, r2, x, y, z, num;
-	for (i = 0; i < 9; i++)
-		for (j = 0; j < 9; j++)
-			start[i][j] = 0;
+
+	memset(&start[0][0], 0, sizeof(start));
+
 	while (check() == 0 || count() < 80) {
 		for (i = 0; i < 3; i++)
 			for (j = 0; j < 3; j++)
@@ -400,11 +392,8 @@ int generate(int n)
 					for (l = 0; l < 3; l++) {
 						x = (i * 3) + k;
 						y = (j * 3) + l;
-						num =
-						    (((int) rand()) % 9) +
-						    1;
-						for (z = 0; z < 9;
-						     z++, num++) {
+						num = (rand() >> 2) % 9 + 1;
+						for (z = 0; z < 9; z++, num++) {
 							if (num == 10)
 								num = 1;
 							board[x][y] = num;
@@ -428,6 +417,8 @@ int generate(int n)
 				i--;
 			}
 		}
+		putchar('.');
+		fflush(stdout);
 	}
 	for (i = 0; i < n; i++) {
 		z = 0;
@@ -440,26 +431,14 @@ int generate(int n)
 			}
 		}
 	}
-	for (i = 0; i < 9; i++)
-		for (j = 0; j < 9; j++)
-			board[i][j] = start[i][j];
-	return 0;
+	memcpy(&board[0][0], &start[0][0], sizeof(board));
+	putchar('\n');
 }
 
 int restart(void)
 {
-	int i, j;
-	for (i = 0; i < 9; i++)
-		for (j = 0; j < 9; j++) {
-			board[i][j] = start[i][j];
-			if (board[i][j] != 0) {
-				wattron(win, A_BOLD);
-				mvwprintw(win, i * 2 + 1, j * 4 + 2, "%d",
-					  board[i][j]);
-				wattroff(win, A_BOLD);
-			} else
-				mvwprintw(win, i * 2 + 1, j * 4 + 2, " ");
-		}
+	memcpy(&board[0][0], &start[0][0], sizeof(board));
+	show_cells();
 	wrefresh(win);
 	return 0;
 }
@@ -469,7 +448,6 @@ void printhelp(void)
 	printf("Usage: nsudoku [OPTION...] [SOLVED]\n\n");
 	printf
 	    (" SOLVED is the number of presolved cells. Default: 40\n\n");
-	printf("  -c, --no-color    don't use color\n");
 	printf("  -p, --no-print    don't print on exit\n");
 	printf("  -h, --help give   this help list\n");
 	printf("  -v, --version     print program version\n\n");
