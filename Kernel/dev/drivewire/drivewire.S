@@ -29,16 +29,16 @@
 ;;;   x=send cc y ret scnt recv rcnt
 ;;;  Brett M. Gordon
 _dw_transaction:
-	ldx	2,s
+	tfr	d,x		; X = send buffer
 	orcc	#0x50		; stop interrupts
-	tstb			; rawflag?
+	ldb	8,s		; rawflag?
 	beq	skip		; nope - then skip switching to process map
 	jsr	map_proc_always
-skip:	ldy	4,s		; Y = number of bytes to send
+skip:	ldy	2,s		; Y = number of bytes to send
 	beq	ok		; no byte to write - leave
 	jsr	DWWrite		; send to DW
-	ldx	6,s		; X is receive buffer
-	ldy	8,s		; Y = number of bytes to receive
+	ldx	4,s		; X is receive buffer
+	ldy	6,s		; Y = number of bytes to receive
 	beq	ok		; no bytes to send - leave
 	jsr	DWRead		; read in that many bytes
 	bcs	frame		; C set on framing error
@@ -59,7 +59,7 @@ _dw_reset:
 	rts
 
 _dw_operation:
-	ldx 2,s
+	tfr d,x
 	ldd 6,x	        ; test for kernel/usr mapping
 	beq kern       ; is zero, so must be a kernel xfer.
 	jsr map_proc_always
@@ -177,7 +177,6 @@ ReadEx: puls  d,x,y,pc
 ;	B holds the byte. Call with interrupts off
 ;
 _dw_lpr:
-	ldx 2,s
 	stb lprb2
 	ldx #lprb
 	ldy #2
@@ -190,7 +189,6 @@ _dw_lpr:
 ;	Close the printer device
 ;
 _dw_lpr_close:
-	ldx 2,s
 	ldx #lprb3
 	ldy #1
 	jsr DWWrite
@@ -200,12 +198,12 @@ _dw_lpr_close:
 ;	uint8_t dw_rtc_read(uint8_t *p)
 ;
 _dw_rtc_read:
-	ldx 2,s
+	pshs d
 	ldy #1
 	ldx #lprrtw
 	orcc #0x50
 	jsr DWWrite
-	ldx 1,s
+	puls x
 	ldy #6
 	jsr DWRead
 	bne err

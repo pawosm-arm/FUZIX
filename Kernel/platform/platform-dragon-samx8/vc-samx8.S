@@ -2,21 +2,20 @@
 ; low-level routines for VC handling
 ;
 
-	.module vc_asm
+	.export _set_vid_mode
+	.export _set_vc_mode
+	.export _vc_clear
+	.export _vc_write_char
+	.export _vc_read_char
+	.export _vc_memset
+	.export _vc_scroll_up
+	.export _vc_scroll_down
 
-	.globl _set_vid_mode
-	.globl _set_vc_mode
-	.globl _vc_clear
-	.globl _vc_write_char
-	.globl _vc_read_char
-	.globl _vc_memset
-	.globl _vc_scroll_up
-	.globl _vc_scroll_down
+#include "kernel.def"
 
-	include "kernel.def"
+	.common
 
-	.area .video
-
+; void set_vc_mode(uint8_t);
 _set_vc_mode:
 	; SAM V=0 (SG4)
 	sta 0xffc0
@@ -37,11 +36,13 @@ _set_vc_mode:
 	sta 0xff22
 	rts
 
+; void set_vid_mode(void);
 _set_vid_mode:
 	ldd #VIDEO_FREG
 	std 0xff38
 	jmp _vid256x192		; set resolution
 
+; void vc_clear(int8_t vc_num);
 _vc_clear:
 	tfr b,a
 	asla
@@ -58,12 +59,17 @@ cllp:	std ,x++
 	leas 2,s
 	jmp _unmap_video
 
+; void vc_write_char(unsigned char *, unsigned char);
 _vc_write_char:
+	tfr d,x
+	ldb 2,s
 	jsr _map_video
 	stb ,x
 	jmp _unmap_video
 
+; char vc_read_char(unsigned char *);
 _vc_read_char:
+	tfr d,x
 	jsr _map_video
 	ldb ,x
 	jmp _unmap_video
@@ -77,11 +83,11 @@ vtbase:	lda _curtty
 	;leay 512,x
 	rts
 
+; void vc_scroll_up(void);
 _vc_scroll_up:
-	pshs x,y		; x: make space for end address
 	bsr vtbase
 	leay 480,x
-	sty ,s
+	pshs y
 	leay 32,x
 	jsr _map_video
 scup:	ldd ,y++
@@ -89,10 +95,11 @@ scup:	ldd ,y++
 	cmpx ,s
 	blo scup
 	jsr _unmap_video
-	puls x,y,pc
+	puls d,pc
 
+; void vc_scroll_down(void);
 _vc_scroll_down:
-	pshs x,u
+	pshs u
 	bsr vtbase
 	leau 512,x
 	leax 32,x
@@ -104,15 +111,18 @@ scdn:	ldd ,--x
 	cmpx ,s
 	bhi scdn
 	jsr _unmap_video
-	puls x,y,pc
+	puls u,pc
 
+; memset(), but with video memory mapped
+; void vc_memset(unsigned char *, char, uint16_t);
 _vc_memset:
-	pshs y
-	ldy 4,s
+	tfr d,x
+	ldb 2,s
+	ldy 3,s
 	jsr _map_video
 vcms:	stb ,x+
 	leay -1,y
 	bne vcms
 	jsr _unmap_video
-	puls y,pc
+	rts
 

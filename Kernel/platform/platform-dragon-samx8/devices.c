@@ -14,8 +14,6 @@
 #include <devsdc.h>
 #include <device.h>
 
-#define DISC __attribute__((section(".discard")))
-
 /* Device drive switch table */
 struct devsw dev_tab[] =
 {
@@ -53,17 +51,4 @@ bool validdev(uint16_t dev)
 		return false;
 	else
 		return true;
-}
-
-DISC void device_init(void)
-{
-#ifdef CONFIG_COCOIDE
-	ide_probe();
-#endif
-#ifdef CONFIG_COCOSDC
-	devsdc_probe();
-#endif
-#ifdef CONFIG_DRIVEWIRE
-	dw_init();
-#endif
 }

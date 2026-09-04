@@ -3,7 +3,7 @@
 #include <vt.h>
 
 #include <devtty.h>
-#include "vc_asm.h"
+#include "vc-samx8.h"
 
 unsigned char vt_mangle_6847(unsigned char c);
 
