@@ -106,7 +106,7 @@ init_hardware:
     ; set system RAM size
     ld hl, 8192
     ld(_ramsize), hl
-    ld hl, 4032
+    ld hl, 7620
     ld(_procmem), hl
 
     ; Enable fixed region from 0xf000 in MMU
@@ -197,10 +197,10 @@ _program_vectors:
     ld (0x0001), hl
 
 ;
-;	Mapping set up for the SBCv2
+;	Mapping set up for the nano-z80
 ;
-;	The top 32K bank holds kernel code and pieces of common memory
-;	The lower 32K is switched between the various user banks.
+;	The top 4K bank holds kernel code and pieces of common memory
+;	The lower 60K is switched between the 127 user banks.
 ;
 ;	We know the ROM mapping is already off
 ;
@@ -217,13 +217,7 @@ map_kernel_restore:
 	push af
 	ld a,0x00
 	ld (mapreg),a
-	out (0x60), a
-    inc a
-    out (0x62), a
-	inc a
-    out (0x64), a
-    inc a
-    out (0x66), a
+	out (MPGSEL_A), a
     pop af
 	ret
 	
@@ -247,17 +241,7 @@ map_proc_a:			; used by bankfork
     jr z, map_kernel ; page 0 is kernel
     push af
     ld (mapreg), a	; bank
-	; Calculate physical page (a * 4)
-    add a,a
-    add a,a
-    ; Set page register
-    out (0x60), a
-    inc a
-    out (0x62), a
-    inc a
-    out (0x64), a
-    inc a
-    out (0x66), a
+	out (MPGSEL_A), a
 	pop af
     ret
 
