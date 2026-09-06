@@ -53,6 +53,7 @@ MPGSEL_1    .equ    0x62
 MPGSEL_2    .equ    0x64    
 MPGSEL_3    .equ    0x66
 MFIXED_TOP  .equ    0x68
+MPGSEL_A    .equ    0x69
 
 ; Global IO ports
 TTY_OUT     .equ    0x76

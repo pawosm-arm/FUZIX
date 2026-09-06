@@ -10,7 +10,7 @@
 /* Select a banked memory set up */
 #define CONFIG_BANK_FIXED
 /* This is the number of banks of user memory available (maximum) */
-#define MAX_MAPS	60		/* 64 x 64K pages - 4 for kernel? */
+#define MAX_MAPS	127		/* 128 x 64K pages - 1 for kernel */
 /* How many banks do we have in our address space */
 #define CONFIG_BANKS	1	/* 1 x 60K */
 #define MAP_SIZE 0xF000
