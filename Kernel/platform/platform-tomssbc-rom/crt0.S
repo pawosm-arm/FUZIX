@@ -1,26 +1,6 @@
-# 1 "crt0.S"
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-; We stick it straight after the tag
-U_DATA__TOTALSIZE	.equ 0x200        ; 256+256
-
-Z80_TYPE	.equ	1
-
-PROGBASE	.equ	0x0000
-PROGLOAD	.equ	0x0100
-
-NBUFS		.equ	5
-
-
-IDE_REG_DATA	.equ	0x10
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 4 "crt0.S"
 	.export _go
 
 	.discard
@@ -69,4 +49,4 @@ stub:
 stub_end:
 	.export _bufpool
 _bufpool:
-	.ds 520  * NBUFS
+	.ds BUFSIZE * NBUFS

@@ -1,4 +1,3 @@
-# 1 "start.S"
 ;	This chunk is placed into 0x0000-0x003F of all banks
 ;
 
@@ -25,3 +24,4 @@ next:		di
 		.org 0x38
 
 rst38:		jp interrupt_handler
+

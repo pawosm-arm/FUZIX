@@ -1,4 +1,3 @@
-# 1 "tom.S"
         ; exported symbols
         .export init_early
         .export init_hardware
@@ -50,28 +49,10 @@
 	.export __stub_1
 	.export __stub_2
 	.export __stub_3
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-; We stick it straight after the tag
-U_DATA__TOTALSIZE	.equ 0x200        ; 256+256
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-Z80_TYPE	.equ	1
-
-PROGBASE	.equ	0x0000
-PROGLOAD	.equ	0x0100
-
-NBUFS		.equ	5
-
-
-IDE_REG_DATA	.equ	0x10
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 56 "tom.S"
 ; Base address of SIO/2 chip 0x00
 
 SIOA_D		.equ	0x00
@@ -318,7 +299,7 @@ _tmpout:
 	.byte 1
 
 current_map:                ; place to store current page number. Is needed
-        .byte 0x00          ; as we can't detect what page is mapped currently 
+        .byte 0x00          ; as we can't detect what page is mapped currently
 map_store:
         .byte 0
 
@@ -451,7 +432,7 @@ __stub_0:
 	pop hl		; the return
 	ex (sp), hl	; write it over the discard
 	ld bc, (current_map)
-	jr stubc	
+	jr stubc
 __stub_1:
 	xor a
 stubop:

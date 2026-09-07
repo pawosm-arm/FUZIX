@@ -23,26 +23,13 @@ void plt_discard(void)
 	kprintf("Buffers available: %d\n", bufpool_end - bufpool);
 }
 
-
-void plt_idle(void)
-{
-  __asm
-   halt
-  __endasm;
-}
-
 void plt_interrupt(void)
 {
 	/* Will call timer_interrupt as needed */
 	tty_pollirq_sio0();
 }
 
-/*
- *	So that we don't suck in a library routine we can't use from
- *	the runtime
- */
-
-size_t strlen(const char *p)
+ssize_t strlen(const char *p)
 {
   size_t len = 0;
   while(*p++)
