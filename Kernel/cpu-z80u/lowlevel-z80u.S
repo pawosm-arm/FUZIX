@@ -282,7 +282,8 @@ _doexec:
         di
         call map_proc_always_di
 
-        pop bc ; return address
+        pop hl ; return address
+	pop hl ; old af
         pop de ; start address
 
         ld hl, (_udata + U_DATA__U_ISP)
