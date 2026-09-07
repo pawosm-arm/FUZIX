@@ -13,7 +13,8 @@ struct section {
 	uint16_t size;
 };
 
-struct section *sections;
+static unsigned has_overlay;
+static struct section *sections;
 
 /* The sections from the map we pre allocate */
 static struct section sect[10];
@@ -62,26 +63,50 @@ static void add_section(struct section *s)
 		s->name, (s->size + 255) >> 8);
 }
 
+static void wipe_map(void)
+{
+	memset(use, '#', sizeof(use));
+}
+
+static void mark_section(struct section *s)
+{
+	struct section *a;
+	if ((unsigned)s->base + s->size > 0xFFFF) {
+		fprintf(stderr, "Section %c runs over the top of memory.\n",
+			s->name, s->base + s->size - 1);
+	}
+	a = sections;
+	while(a) {
+		check_overlap(s, a);
+		a = a->next;
+	}
+	add_section(s);
+}
+
 static void mark_map(void)
 {
 	struct section *s = sections;
-	struct section *a;
 
 	while (s) {
-		if ((unsigned)s->base + s->size > 0xFFFF) {
-			fprintf(stderr, "Section %c runs over the top of memory.\n",
-				s->name, s->base + s->size - 1);
-		}
-		a = sections;
-		while(a) {
-			check_overlap(s, a);
-			a = a->next;
-		}
-		add_section(s);
+		mark_section(s);
 		s = s->next;
 	}
 }
 
+static void show_map(void)
+{
+	unsigned i,r;
+
+	for (r = 0; r < 4; r++) {
+		for (i = 0; i < 256; i += 4) {
+			putchar(use[i + r]);
+			if ((i & 0x3C) == 0x3C)
+				putchar(' ');
+		}
+		putchar('\n');
+	}
+	putchar('\n');
+}
 
 static char linebuf[128];
 
@@ -95,7 +120,8 @@ int get_line(FILE *fp)
         *p = 0;
     return 1;
 }
-void load_info(FILE *fp)
+
+static void load_info(FILE *fp)
 {
     unsigned int st, en;
     char name;
@@ -116,7 +142,7 @@ int main(int argc, char *argv[])
 {
 	char buf[512];
 	int i;
-	int r, b;
+	int b;
 	FILE *fp;
 
 	fp = fopen("map.info", "r");
@@ -125,10 +151,9 @@ int main(int argc, char *argv[])
 		fclose(fp);
 	}
 
-	for (i = 0; i < 10; i++)
-		sect[i].name = "ACDBXZSLsb??????"[i];
+	for (i = 0; i < 14; i++)
+		sect[i].name = "ACDBZXSLsb1234PU"[i];
 
-	memset(use, '#', sizeof(use));
 
 	while (fgets(buf, 511, stdin)) {
 		char *val = strtok(buf, " ");
@@ -148,10 +173,10 @@ int main(int argc, char *argv[])
 		if (strcmp(name, "__bss_size") == 0)
 			sect[3].size = addr;
 
-		if (strcmp(name, "__discard_size") == 0)
+		if (strcmp(name, "__zp_size") == 0)
 			sect[4].size = addr;
 
-		if (strcmp(name, "__zp_size") == 0)
+		if (strcmp(name, "__discard_size") == 0)
 			sect[5].size = addr;
 
 		if (strcmp(name, "__common_size") == 0)
@@ -166,6 +191,18 @@ int main(int argc, char *argv[])
 		if (strcmp(name, "__buffers_size") == 0)
 			sect[9].size = addr;
 
+		if (strcmp(name, "__overlay1_size") == 0)
+			sect[10].size = addr;
+
+		if (strcmp(name, "__overlay2_size") == 0)
+			sect[11].size = addr;
+
+		if (strcmp(name, "__overlay3_size") == 0)
+			sect[12].size = addr;
+
+		if (strcmp(name, "__overlay4_size") == 0)
+			sect[13].size = addr;
+
 		if (strcmp(name, "__code") == 0)
 			sect[1].base = addr;
 
@@ -175,10 +212,10 @@ int main(int argc, char *argv[])
 		if (strcmp(name, "__bss") == 0)
 			sect[3].base = addr;
 
-		if (strcmp(name, "__discard") == 0)
+		if (strcmp(name, "__zp") == 0)
 			sect[4].base = addr;
 
-		if (strcmp(name, "__zp") == 0)
+		if (strcmp(name, "__discard") == 0)
 			sect[5].base = addr;
 
 		if (strcmp(name, "__common") == 0)
@@ -192,21 +229,34 @@ int main(int argc, char *argv[])
 
                 if (strcmp(name, "__buffers") == 0)
 			sect[9].base = addr;
+
+                if (strcmp(name, "__overlay") == 0) {
+			sect[10].base = addr;
+			sect[11].base = addr;
+			sect[12].base = addr;
+			sect[13].base = addr;
+			has_overlay = 1;
+		}
 	}
+
 	/* Add any present sections to the map */
 	for (i = 0; i < 10; i++)
 		if (sect[i].size)
 			insert_section(sect + i);
-
+	wipe_map();
 	mark_map();
-	for (r = 0; r < 4; r++) {
-		for (i = 0; i < 256; i += 4) {
-			putchar(use[i + r]);
-			if ((i & 0x3C) == 0x3C)
-				putchar(' ');
+	show_map();
+
+	if (has_overlay) {
+		for (i = 10; i < 14; i++) {
+			if (sect[i].size) {
+				sections = NULL;
+				insert_section(sect + i);
+				wipe_map();
+				mark_map();
+				show_map();
+			}
 		}
-		putchar('\n');
 	}
-	putchar('\n');
 	exit(0);
 }
