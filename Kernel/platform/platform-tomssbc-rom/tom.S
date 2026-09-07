@@ -150,14 +150,14 @@ sio_setup:
 	.export _sio2_otir
 
 _sio2_otir:
-	pop de
-	pop hl
-	push hl
-	push de
+	ld hl,4
+	add hl,sp
+	push bc
+	ld c,(hl)
 	ld b,0x06
-	ld c,l
 	ld hl,_sio_r
 	otir
+	pop bc
 	ret
 
 
@@ -423,10 +423,10 @@ __bank_3_4:
 	jr bankina3
 
 __stub_2:
-	ld a,2
+	ld a,1
 	jr stubop
 __stub_3:
-	ld a,3
+	ld a,2
 	jr stubop
 __stub_0:
 	pop hl		; the return
@@ -608,6 +608,12 @@ __uzero:
 	.export _devide_read_data
 
 map:
+	ld	hl,8	; 4 for the C call offset, 2 for B 2 for the map call
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)
+	ex	de,hl
 	ld	bc,IDE_REG_DATA
 	ld	a,(_td_raw)
 	or	a
@@ -618,27 +624,18 @@ map:
 	jp	map_for_swap
 
 _devide_write_data:
-	pop	bc
-	pop	de
-	pop	hl
-	push	hl
-	push	de
 	push	bc
 	call	map
 	otir
 	otir
 	jr	ide_out
 _devide_read_data:
-	pop	bc
-	pop	de
-	pop	hl
-	push	hl
-	push	de
 	push	bc
 	call	map
 	inir
 	inir
 ide_out:
+	pop	bc
 	ld	a,(_td_raw)
 	or	a
 	ret	z

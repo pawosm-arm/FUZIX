@@ -67,6 +67,9 @@ stop:   halt
 stub:
 	.ds 550
 stub_end:
+
+	.buffers
+
 	.export _bufpool
 _bufpool:
 	.ds 520  * NBUFS

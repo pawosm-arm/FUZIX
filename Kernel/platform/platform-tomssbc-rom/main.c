@@ -10,9 +10,9 @@ uint16_t swap_dev = 0xFFFF;
 
 void plt_discard(void)
 {
-        uint8_t *end = (uint8_t *)0xF000;
+        uint8_t *end = (uint8_t *)0xFFFF;
         end -= sizeof(struct blkbuf);
-	while (bufpool_end < (struct blkbuf *)end) {
+	while (bufpool_end <= (struct blkbuf *)end) {
 		memset(bufpool_end, 0, sizeof(struct blkbuf));
 #if BF_FREE != 0
 		bufpool_end->bf_busy = BF_FREE;	/* redundant when BF_FREE == 0 */
