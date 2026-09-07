@@ -18,7 +18,7 @@ CROSS_CC_SEG3 = -Toverlay3
 all:	$(OBJS)
 
 $(COBJS): %.o: %.c
-	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG3) -c $<
+	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG1) -c $<
 
 $(CDOBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
