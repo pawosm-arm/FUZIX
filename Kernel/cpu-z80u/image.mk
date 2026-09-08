@@ -9,5 +9,5 @@ cpm-loader-fcc/cpmload.bin: cpm-loader-fcc/cpmload.S cpm-loader-fcc/fuzixload.S 
 
 fuzix.bin: target $(OBJS) tools/pack85 tools/visualizefcc tools/doubleup cpm-loader-fcc/cpmload.bin
 	+$(MAKE) -C platform/platform-$(TARGET) image
-	tools/visualizefcc <fuzix.map
+	(cd platform/platform-$(TARGET); ../../tools/visualizefcc <../../fuzix.map)
 	tools/hogfather fuzix.map | sort -nr >fuzix.hogs
