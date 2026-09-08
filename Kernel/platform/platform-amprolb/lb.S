@@ -15,6 +15,7 @@
 	.export plt_interrupt_all
 	.export _plt_reboot
 	.export _plt_monitor
+	.export _plt_idle
 	.export _bufpool
 	.export _int_disabled
 
@@ -324,7 +325,6 @@ map_save_kernel:
 ;
 ;	A little SIO helper
 ;
-	.export _dart_r
 	.export _dart_otir
 
 _dart_otir:

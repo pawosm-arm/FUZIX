@@ -251,9 +251,9 @@ init:
 	ld sp,kstack_top
 
         ; Zero the data area
-        ld hl, s__DATA
-        ld de, s__DATA + 1
-        ld bc, l__DATA - 1
+        ld hl, __bss
+        ld de, __bss + 1
+        ld bc, __bss_size - 1
         ld (hl), 0
         ldir
 

@@ -299,6 +299,8 @@ waiter:
 	pop	bc
 	djnz	waiter
 	ret
+
+	.export _wd_map
 	
 _wd_map:
 	.byte	0

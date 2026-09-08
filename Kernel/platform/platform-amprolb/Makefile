@@ -8,14 +8,14 @@ DSRCS +=
 DASRCS = 
 NSRCS = 
 
-AOBJS = $(ASRCS:.S=.rel)
-COBJS = $(CSRCS:.c=.rel)
-DISCARD_COBJS = $(DISCARD_CSRCS:.c=.rel)
-DISCARD_DOBJS = $(patsubst ../../dev/%.c,%.rel, $(DISCARD_DSRCS))
-DOBJS = $(patsubst ../../dev/%.c,%.rel, $(DSRCS))
-DHOBJS = $(patsubst ../../dev/%.c,%.rel, $(DHSRCS))
-DAOBJS = $(patsubst ../../dev/%.S,%.rel, $(DASRCS))
-NOBJS = $(patsubst ../../dev/net/%.c,%.rel, $(NSRCS))
+AOBJS = $(ASRCS:.S=.o)
+COBJS = $(CSRCS:.c=.o)
+DISCARD_COBJS = $(DISCARD_CSRCS:.c=.o)
+DISCARD_DOBJS = $(patsubst ../../dev/%.c,%.o, $(DISCARD_DSRCS))
+DOBJS = $(patsubst ../../dev/%.c,%.o, $(DSRCS))
+DHOBJS = $(patsubst ../../dev/%.c,%.o, $(DHSRCS))
+DAOBJS = $(patsubst ../../dev/%.S,%.o, $(DASRCS))
+NOBJS = $(patsubst ../../dev/net/%.c,%.o, $(NSRCS))
 
 OBJS  = $(AOBJS) $(COBJS) $(DOBJS) $(DHOBJS) $(DAOBJS) $(DISCARD_DOBJS) $(DISCARD_COBJS) $(NOBJS)
 
@@ -23,37 +23,40 @@ CROSS_CCOPTS += -I../../dev/ -I../../dev/net/
 
 CROSS_CC_HIGH = -Tcommon
 
-JUNK = *.rel *.lst *.asm *.sym *.rst *.map *.ihx *.bin
+JUNK = *.o *.map *.bin fuzix.tmpmap cpmboot
 
 all:	$(OBJS)
 
-$(AOBJS): %.rel: %.S
+dart.S: dartgen
+	./dartgen >dart.S
+
+$(AOBJS): %.o: %.S
 	$(CROSS_AS) $(ASOPTS) $<
 
-$(COBJS): %.rel: %.c
+$(COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_HIGH) -c $<
 
-$(DOBJS): %.rel: ../../dev/%.c
+$(DOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_HIGH) -c $<
 
-$(DHOBJS): %.rel: ../../dev/%.c
+$(DHOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_HIGH) -c $<
 
-$(DAOBJS): %.rel: ../../dev/%.S
+$(DAOBJS): %.o: ../../dev/%.S
 	$(CROSS_AS) $(ASOPTS) $@ $<
 
-$(DISCARD_COBJS): %.rel: %.c
+$(DISCARD_COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
 
-$(DISCARD_DOBJS): %.rel: ../../dev/%.c
+$(DISCARD_DOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
 
-$(NOBJS): %.rel: ../../dev/net/%.c
+$(NOBJS): %.o: ../../dev/net/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
 
 clean:
-	rm -f $(OBJS) $(JUNK)  core *~ diskstrap fuzix.rom
-	rm -f cpmboot.tmp cpmboot.com
+	rm -f $(OBJS) $(JUNK)  core *~ diskstrap fuzix.rom *.s
+	rm -f cpmboot.tmp cpmboot.com diskstrap
 
 cpmboot.com: cpmboot.S
 	fcc -mz80 -c cpmboot.S
@@ -61,6 +64,21 @@ cpmboot.com: cpmboot.S
 	dd if=cpmboot.tmp of=cmpboot.com bs=256 skip=1
 
 image: cpmboot.com
+	$(CROSS_LD) -b -C 0x500 -S 0xB000 -X0xA000 -f CXSsLDBb -o ../../fuzix.bin \
+	crt0.o commonmem.o lb.o ../../start.o \
+	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
+	../../usermem.o tricks.o main.o discard.o \
+	../../timer.o ../../kdata.o devices.o ../../devio.o \
+	../../filesys.o ../../blk512.o ../../process.o \
+	../../inode.o ../../syscall_exec.o ../../syscall_exec16.o \
+	../../syscall_fs.o ../../syscall_fs2.o ../../syscall_fs3.o \
+	../../syscall_proc.o ../../syscall_other.o ../../syscall_net.o \
+	../../network.o ../../tty.o ../../mm.o ../../mm/memalloc_none.o \
+	../../swap.o ../../mm/simple.o ../../devsys.o devlpr.o devfd.o floppy.o \
+	devtty.o dart.o  ../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
+	../../dev/tinyscsi.o ../../dev/tinyscsi_discard.o devscsi.o ncr5380.o \
+	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
+	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
 	dd if=../../fuzix.bin of=fuzix.rom bs=32768 count=1
 	# We have a 512 byte hole we leave for the loader
 	dd if=../../fuzix.bin of=diskstrap bs=33280 count=1 skip=1

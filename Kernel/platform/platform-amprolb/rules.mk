@@ -1,0 +1,2 @@
+CROSS_CCOPTS += -Os
+CROSS_CC_SYS5 = -Tcommon
