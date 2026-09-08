@@ -935,3 +935,25 @@ loopin:
 		pop	hl		; Address passed in
 		pop	bc		; Restore BC
 		ret
+
+		.export _strlen
+		.code
+_strlen:
+#ifdef BANKED_Z80
+		ld	hl,4		; Allow for the push of BC
+#else
+		ld	hl,2		; Allow for the push of BC
+#endif
+		add	hl,sp
+		ld	e,(hl)
+		inc	hl
+		ld	d,(hl)		; Pointer
+		ex	de,hl
+		xor	a
+		ld	de, 0xFFFF
+sloop:		inc	de
+		cp	(hl)
+		inc	hl
+		jr	nz, sloop
+		ex	de,hl
+		ret
