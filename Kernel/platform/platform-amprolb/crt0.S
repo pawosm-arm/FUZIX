@@ -1,60 +1,10 @@
-# 1 "crt0.S"
         .export init
 
 	.abs
 	.org 0
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ 0xC000
-Z80_TYPE		.equ	0	; CMOS
+#include "kernelu.def"
 
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	9600
-
-CPU_CLOCK_KHZ		.equ	4000
-
-B_RST	.equ	0x80
-B_AACK	.equ	0x10
-B_ASEL	.equ	0x04
-B_ABUS	.equ	0x01
-
-B_BUSY	.equ	0x40
-B_MSG	.equ	0x10
-B_CD	.equ	0x08
-B_IO	.equ	0x04
-
-B_PHAS	.equ	0x08
-
-ncr_base	.equ	0x20
-ncr_data	.equ	ncr_base
-ncr_cmd		.equ	ncr_base + 1
-ncr_mod		.equ	ncr_base + 2
-ncr_tgt		.equ	ncr_base + 3
-ncr_bus		.equ	ncr_base + 4
-ncr_st		.equ	ncr_base + 5
-ncr_dma_w	.equ	ncr_base + 5
-ncr_int		.equ	ncr_base + 7
-ncr_dma_r	.equ	ncr_base + 7
-ncr_dack	.equ	ncr_base + 8
-DARTA_D		.equ	0x80
-DARTA_C		.equ	0x84
-DARTB_D		.equ	0x88
-DARTB_C		.equ	0x8C
-
-CTC_CH0		.equ	0x40
-CTC_CH1		.equ	0x50
-CTC_CH2		.equ	0x60
-CTC_CH3		.equ	0x70
-# 8 "crt0.S"
 ;
 ;	TODO Put a mini loader here so you can pick between the
 ;	standard boot and a Fuzix ROM boot
@@ -67,9 +17,9 @@ bootstrap:
 	call	init_hardware
 	call	outs
 	.ascii	"Ampro LittleBoard"
-.byte	13,10
+	.byte	13,10
 	.ascii	"FUZIX Loader"
-.byte	13,10,13,10
+	.byte	13,10,13,10
 	.byte	0
 	;	Now load the image. We can't use the main SCSI code as it
 	;	has to be in the image as it drives usermem via common space
@@ -80,7 +30,7 @@ bootstrap:
 	jr	nz, no_reset
 	call	outs
 	.ascii	"Resetting SCSI bus ... "
-.byte	0
+	.byte	0
 	ld	a, B_RST
 	out	(ncr_cmd),a
 	ld	b,0
@@ -97,7 +47,7 @@ re_wait:
 	; Hopefully all settled
 	call	outs
 	.ascii	"OK"
-.byte	13,10
+	.byte	13,10
 	.byte	0
 no_reset:
 retry:
@@ -128,7 +78,7 @@ dev0:
 
 	call	outs
 	.ascii	"Drive 0"
-.byte	0
+	.byte	0
 ;
 ;	Wait for selection
 ;
@@ -144,7 +94,7 @@ selwait:
 fail:
 	call	outs
 	.ascii	" not responding.. retrying."
-.byte	13,10,0
+	.byte	13,10,0
 	jp	retry
 
 scsi_read6:
@@ -164,7 +114,7 @@ selected:
 	out	(ncr_cmd),a
  	call	outs
 	.ascii	": loading image "
-.byte	0
+	.byte	0
 	ld	hl,0x8200	; Start of load
 	ld	de,scsi_read6	; Read command for lots of blocks
 	ld	bc,ncr_data	; Force a print of the hex, set port
@@ -183,7 +133,7 @@ phase:
 	call	outs
 	.byte	13,10
 	.ascii	"Drive 0 in unexpected state - retrying."
-.byte	13,10,0
+	.byte	13,10,0
 	jp	retry
 
 statusin:
@@ -243,7 +193,7 @@ complete:
 	call	outs
 	.byte	13,10
 	.ascii  "Starting FUZIX"
-.byte	13,10,0
+	.byte	13,10,0
 	jp	0x0500
 
 outh:
