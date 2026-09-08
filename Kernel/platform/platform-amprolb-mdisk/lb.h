@@ -3,39 +3,36 @@
 
 #include "config.h"
 
-#define DART0_BASE 0x80
-__sfr __at (DART0_BASE + 0x00) DARTA_D;
-__sfr __at (DART0_BASE + 0x04) DARTA_C;
-__sfr __at (DART0_BASE + 0x08) DARTB_D;
-__sfr __at (DART0_BASE + 0x0C) DARTB_C;
+#define DART0_BASE	0x80
+#define DARTA_D		0x80
+#define DARTA_C 	0x84
+#define DARTB_D 	0x88
+#define DARTB_C 	0x8C
 
-__sfr __at 0x40 CTC_CH0;
-__sfr __at 0x50 CTC_CH1;
-__sfr __at 0x60 CTC_CH2;
-__sfr __at 0x70 CTC_CH3;
+#define CTC_CH(n)	(0x40 + 0x10 * (n))
 
-__sfr __at 0x00 BCR;
+#define BCR 		0x00
 #define BCR_FDC16	0x80
 #define BCR_ROMOUT	0x40
 #define BCR_SDEN	0x20
 #define BCR_SIDE1	0x10
 #define BCR_DS		0x0F
 
-__sfr __at 0x01 LPDATA;
-__sfr __at 0x02 LPSTON;
-__sfr __at 0x03 LPSTROFF;
+#define	LPDATA		0x01
+#define LPSTON		0x02
+#define LPSTROFF	0x03
 
-__sfr __at 0xC0 FD_WCR;
-__sfr __at 0xC1 FD_WTR;
-__sfr __at 0xC2 FD_WSR;
-__sfr __at 0xC3 FD_WDR;
-__sfr __at 0xC4 FD_RCR;
-__sfr __at 0xC5 FD_RTR;
-__sfr __at 0xC6 FD_RSR;
-__sfr __at 0xC7 FD_RDR;
+#define	FD_WCR		0xC0
+#define FD_WTR		0xC1
+#define FD_WSR		0xC2
+#define FD_WDR		0xC3
+#define FD_RCR		0xC4
+#define FD_RTR		0xC5
+#define	FD_RSR		0xC6
+#define FD_RDR		0xC7
 
 #define NCR5380_BASE	0x20
 
-extern void dart_otir(uint8_t port) __z88dk_fastcall;
+extern void dart_otir(uint8_t port);
 
 #endif

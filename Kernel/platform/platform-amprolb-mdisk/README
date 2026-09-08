@@ -15,8 +15,10 @@ Memory Map
 Kernel
 
 0000-7FFF	Kernel
-8000-FFFF	Kernel, Data, Buffers, Common
-		IM2 page is start of common
+8000-FCFF	Kernel, Data, Buffers, Common
+FD00-FDFF	Vector page
+FE00-FEFF	Serial A buffer
+FF00-FFFF	Serial B buffer
 
 User
 
@@ -34,7 +36,6 @@ Hardware
 
 
 TODO
--	SCSI pseudo DMA
 -	Floppy formatting, floppy disk media setting ioctls 
 -	In general needs soft interrupts implementing so
 	that our entry for timer is something like

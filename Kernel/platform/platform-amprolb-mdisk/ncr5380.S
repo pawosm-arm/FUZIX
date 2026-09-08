@@ -1,4 +1,3 @@
-# 1 "ncr5380.S"
 ;
 ;	NCR5380 low level. Easier to do this in Z80
 ;	Design based on the GPL B/P BIOS
@@ -25,59 +24,11 @@
 	.export	_scsi_target
 	.export	_scsi_status
 	.export  _scsi_burst
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ 0xC000
-U_DATA_STASH		.equ	0x7E00	; 512 bytes at top of pageable
-Z80_TYPE		.equ	0	; CMOS
+#include "kernelu.def"
 
-Z80_MMU_HOOKS		.equ 0
+#define PDMA
 
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	9600
-
-CPU_CLOCK_KHZ		.equ	4000
-
-B_RST	.equ	0x80
-B_AACK	.equ	0x10
-B_ASEL	.equ	0x04
-B_ABUS	.equ	0x01
-
-B_BUSY	.equ	0x40
-B_MSG	.equ	0x10
-B_CD	.equ	0x08
-B_IO	.equ	0x04
-
-B_PHAS	.equ	0x08
-
-ncr_base	.equ	0x20
-ncr_data	.equ	ncr_base
-ncr_cmd		.equ	ncr_base + 1
-ncr_mod		.equ	ncr_base + 2
-ncr_tgt		.equ	ncr_base + 3
-ncr_bus		.equ	ncr_base + 4
-ncr_st		.equ	ncr_base + 5
-ncr_dma_w	.equ	ncr_base + 5
-ncr_int		.equ	ncr_base + 7
-ncr_dma_r	.equ	ncr_base + 7
-ncr_dack	.equ	ncr_base + 8
-DARTA_D		.equ	0x80
-DARTA_C		.equ	0x84
-DARTB_D		.equ	0x88
-DARTB_C		.equ	0x8C
-
-CTC_CH0		.equ	0x40
-CTC_CH1		.equ	0x50
-CTC_CH2		.equ	0x60
-CTC_CH3		.equ	0x70
-# 32 "ncr5380.S"
 ;	FIXME: tune this
 TIMEOUT		.equ	0x8000
 
@@ -139,14 +90,14 @@ ncr5380_phase:
 	out	(ncr_mod),a
 	; Clear interrupt
 	in	a,(ncr_int)
-
+#ifdef PDMA
 	; DMA on
 	ld	a,#6
 	out	(ncr_mod),a
 	ld	c,#ncr_dack
-
-
-
+#else
+	ld	c,#ncr_data
+#endif
 	in	a,(ncr_bus)
 	and	#B_MSG|B_CD|B_IO
 	rra
@@ -183,9 +134,9 @@ ncr5380_timeout:
 	ld	l,#1
 	ret
 
-
+#ifdef PDMA
 ;
-;	 mode
+;	PDMA mode
 ;
 	; Busy dropped
 
@@ -242,7 +193,67 @@ ncr5380_hdout2:
 	bit	4,b
 	jr	z, ncr5380_hdout1
 	jp	ncr5380_phase
-# 257
+
+
+#else
+;
+;	PIO mode
+;
+
+	; Things are coming off the bus for us to store
+
+ncr5380_hdin_block:
+ncr5380_hdin:
+	in	a,(ncr_bus)
+	bit	5,a		; Wait for REQ
+	jr	nz, ncr5380_hdin1
+	and	#B_BUSY
+	jr	nz, ncr5380_hdin
+
+	; Busy dropped
+
+ncr5380_exit:
+	xor	a
+	out	(ncr_cmd),a
+	out	(ncr_tgt),a
+	ld	l,a
+	ret
+
+ncr5380_hdin1:
+	in	a,(ncr_st)
+	and	#B_PHAS
+	jr	z, ncr5380_phase
+	ini
+	ld	a,#B_AACK	; Ack pulse
+	out	(ncr_cmd),a
+	xor	a
+	out	(ncr_cmd),a
+	jr	ncr5380_hdin
+
+ncr5380_hdout_block:
+ncr5380_hdout:
+	ld	a,#B_ABUS
+	out	(ncr_cmd),a
+	in	a,(ncr_bus)
+	bit	5,a		; Wait for REQ
+	jr	nz, ncr5380_hdout1
+	and	#B_BUSY
+	jr	nz, ncr5380_hdout
+	jr	ncr5380_exit
+
+ncr5380_hdout1:
+	in	a,(ncr_st)
+	and	#B_PHAS
+	jr	z, ncr5380_phase
+	outi
+	ld	a,#B_AACK|B_ABUS
+	out	(ncr_cmd),a
+	xor	a
+	out	(ncr_cmd),a
+	jr	ncr5380_hdout
+
+#endif
+
 ;
 ;	Perform a SCSI command. The caller loaded the command block
 ;	into scsicmd, loaded the data pointer into _scsi_dbuf. We will

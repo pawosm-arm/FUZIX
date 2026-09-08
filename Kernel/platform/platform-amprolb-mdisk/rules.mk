@@ -1,1 +1,1 @@
-export CROSS_CC_SEGDISC=--codeseg DISCARD
+#CROSS_CCOPTS += -Os

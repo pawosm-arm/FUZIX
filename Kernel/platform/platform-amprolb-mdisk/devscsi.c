@@ -28,15 +28,13 @@ void scsi_reset(void)
     unsigned t = set_timer_ms(3000);
     scsi_idbits =  1 << scsi_id;
     kputs("Resetting SCSI bus... ");
-    ncr5380_reset_on();
-    ncr5380_reset_off();
+    ncr5380_reset();
+    ncr5380_endreset();
     while(!timer_expired(t));
     kputs("OK\n");
 }
 
-__sfr __at 0x29	id;
-
 void scsi_init(void)
 {
-    scsi_probe(id & 7);
+    scsi_probe(in(0x29) & 7);	/* ID */
 }

@@ -1,4 +1,3 @@
-# 1 "lb.S"
         ; exported symbols
         .export init_hardware
 	.export _program_vectors
@@ -24,65 +23,10 @@
 	; exported debugging tools
 	.export inchar
 	.export outchar
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ 0xC000
-U_DATA_STASH		.equ	0x7E00	; 512 bytes at top of pageable
-Z80_TYPE		.equ	0	; CMOS
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	9600
-
-CPU_CLOCK_KHZ		.equ	4000
-
-B_RST	.equ	0x80
-B_AACK	.equ	0x10
-B_ASEL	.equ	0x04
-B_ABUS	.equ	0x01
-
-B_BUSY	.equ	0x40
-B_MSG	.equ	0x10
-B_CD	.equ	0x08
-B_IO	.equ	0x04
-
-B_PHAS	.equ	0x08
-
-ncr_base	.equ	0x20
-ncr_data	.equ	ncr_base
-ncr_cmd		.equ	ncr_base + 1
-ncr_mod		.equ	ncr_base + 2
-ncr_tgt		.equ	ncr_base + 3
-ncr_bus		.equ	ncr_base + 4
-ncr_st		.equ	ncr_base + 5
-ncr_dma_w	.equ	ncr_base + 5
-ncr_int		.equ	ncr_base + 7
-ncr_dma_r	.equ	ncr_base + 7
-ncr_dack	.equ	ncr_base + 8
-DARTA_D		.equ	0x80
-DARTA_C		.equ	0x84
-DARTB_D		.equ	0x88
-DARTB_C		.equ	0x8C
-
-CTC_CH0		.equ	0x40
-CTC_CH1		.equ	0x50
-CTC_CH2		.equ	0x60
-CTC_CH3		.equ	0x70
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 30 "lb.S"
 ;=========================================================================
 ; Buffers
 ;=========================================================================
@@ -91,7 +35,7 @@ CTC_CH3		.equ	0x70
 	.export kernel_endmark
 
 _bufpool:
-        .ds 520  * 4 ; adjust NBUFS in config.h in line with this
+        .ds BUFSIZE * 4 ; adjust NBUFS in config.h in line with this
 ;
 ;	So we can check for overflow
 ;
@@ -276,7 +220,7 @@ invalid_irq:
 	reti
 badirq:
 	.ascii "Bad IRQ vector"
-.byte 13,10,0
+	.byte 13,10,0
 
 
 ;=========================================================================
@@ -379,7 +323,7 @@ map_proc_di:
 
 ;=========================================================================
 ; map_proc_always - map process pages
-; Inputs: page table address in 2     
+; Inputs: page table address in U_DATA__U_PAGE
 ; Outputs: none; all registers preserved
 ;=========================================================================
 
@@ -388,7 +332,7 @@ map_proc_di:
 map_proc_always:
 map_proc_always_di:
 	push	af
-	ld	a,(_udata + 2     )
+	ld	a,(_udata + U_DATA__U_PAGE)
 	ld	(page),a
 	out 	(0x30),a
 	pop	af
@@ -504,3 +448,4 @@ inchar_s:
 	jr z,inchar_s			; no data, wait
 	in a,(DARTA_D)   		; read the character from the UART
 	ret
+

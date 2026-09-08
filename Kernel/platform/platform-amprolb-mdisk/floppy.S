@@ -1,4 +1,3 @@
-# 1 "floppy.S"
 ;
 ;	WD1772 floppy controller routines for the 1772 on the Ampro
 ;

@@ -6,14 +6,14 @@
 ;	figure out some kind of HGEN compatible installation that somewhere
 ;	still has partition info
 ;
-;	TODO: Would actually probably be better load a packed image from CP/M
-;	in the MDISK case
+;	Alternatively this can run as a .COM file to load the image off the
+;	boot area, or the Fuzix image can be run as a .COM file to boot from
+;	CP/M
 ;
-	.area _MAIN(ABS)
-
+	.abs
 	.org 0xFE00
 
-        .include "kernel.def"
+#include "kernelu.def"
 
 ;	We actually get loaded as a CP/M file at 0x0100 then blow up CP/M
 
@@ -21,10 +21,10 @@ bootstrap:
 	; Move to the top of RAM from 0x9000 so we have an easy memory
 	; load.
 	di
-	ld	sp,#0xFFFF	; Out of the way
-	ld	hl,#0x0100	; CP/M load address
-	ld	de,#0xFE00
-	ld	bc,#0x01F0
+	ld	sp,0xFFFF	; Out of the way
+	ld	hl,0x0100	; CP/M load address
+	ld	de,0xFE00
+	ld	bc,0x01F0
 	ldir
 
 	jp	go		; into the copied version
@@ -32,16 +32,16 @@ bootstrap:
 go:
 	; Configure serial first of all
 
-	ld hl,#dart_setup
-	ld bc,#0xA00 + DARTA_C		; 10 bytes to SIOA_C
+	ld hl,dart_setup
+	ld bc,0xA00 + DARTA_C		; 10 bytes to SIOA_C
 	otir
-	ld hl,#dart_setup
-	ld bc,#0x0C00 + DARTB_C		; and to SIOB_C
+	ld hl,dart_setup
+	ld bc,0x0C00 + DARTB_C		; and to SIOB_C
 	otir
 
 	; Shut the CTC up just in case
 
-	ld a,#0x03
+	ld a,0x03
 	out (CTC_CH0),a
 	out (CTC_CH1),a
 	out (CTC_CH2),a
@@ -49,13 +49,13 @@ go:
 
 	; Set for 9600 baud serial
 
-	ld a,#0x47
+	ld a,0x47
 	out (CTC_CH0),a
-	ld a,#0x13
+	ld a,0x13
 	out (CTC_CH0),a
-	ld a,#0x47
+	ld a,0x47
 	out (CTC_CH1),a
-	ld a,#0x13
+	ld a,0x13
 	out (CTC_CH1),a
 
 	call	outs
@@ -63,23 +63,31 @@ go:
 	.byte	13,10
 	.byte	0
 
+	;	Check the ROM is out
+
+	ld	a,0x40
+	out	(0x00),a
+	;	Expected MDISK page
+	xor	a
+	out	(0x30),a
+
 	;	Now load the image.
 
 	in	a,(0x29)
-	and	#7
-	cp	#7
+	and	7
+	cp	7
 	jr	nz, no_reset
 	call	outs
 	.ascii	"Resetting SCSI bus ... "
 	.byte	0
-	ld	a, #B_RST
+	ld	a, B_RST
 	out	(ncr_cmd),a
-	ld	b,#0
+	ld	b,0
 r_wait:
 	djnz	r_wait
 	xor	a
 	out	(B_RST),a
-	ld	hl,#0
+	ld	hl,0
 re_wait:
 	dec	hl
 	ld	a,h
@@ -98,9 +106,9 @@ retry:
 	out	(ncr_tgt),a
 
 	in	a,(0x29)
-	and	#7
+	and	7
 	ld	b,a
-	ld	a,#1
+	ld	a,1
 	jr	z, dev0
 self_bit:
 	rlca
@@ -110,11 +118,11 @@ self_bit:
 ;
 dev0:
 	ld	c,a
-	or	#1		; target 0
+	or	1		; target 0
 	out	(ncr_data),a
-	ld	a,#B_ABUS
+	ld	a,B_ABUS
 	out	(ncr_cmd),a
-	ld	a,#B_ASEL|B_ABUS
+	ld	a,B_ASEL|B_ABUS
 	out	(ncr_cmd),a
 
 	call	outs
@@ -123,10 +131,10 @@ dev0:
 ;
 ;	Wait for selection
 ;
-	ld	hl,#0
+	ld	hl,0
 selwait:
 	in	a,(ncr_bus)
-	and	#B_BUSY
+	and	B_BUSY
 	jr	nz, selected
 	dec	hl
 	ld	a,h
@@ -148,7 +156,7 @@ scsi_read6:
 
 selected:	
 	;	Drop SEL keep data on bus
-	ld	a,#B_ABUS
+	ld	a,B_ABUS
 	out	(ncr_cmd),a
 	xor	a
 	;	and then drop bus
@@ -156,20 +164,20 @@ selected:
  	call	outs
 	.ascii	": loading "
 	.byte	0
-	ld	hl,#0x0100	; Start of load (0100-FCFF)
-	ld	de,#scsi_read6	; Read command for lots of blocks
-	ld	bc,#ncr_data	; Force a print of the hex, set port
+	ld	hl,0x0100	; Start of load (0100-FCFF)
+	ld	de,scsi_read6	; Read command for lots of blocks
+	ld	bc,ncr_data	; Force a print of the hex, set port
 phase:
 	in	a,(ncr_bus)
-	and	#B_MSG|B_CD|B_IO
+	and	B_MSG|B_CD|B_IO
 	rra
 	rra
 	out	(ncr_tgt),a
-	cp	#1
+	cp	1
 	jr	z,data_in
-	cp	#2
+	cp	2
 	jr	z,cmdout
-	cp	#3
+	cp	3
 	jr	z, statusin
 	call	outs
 	.byte	13,10
@@ -178,17 +186,17 @@ phase:
 	jp	retry
 
 statusin:
-	ld	hl,#0		; throw status away
+	ld	hl,0		; throw status away
 data_in:
 	in	a,(ncr_bus)
 	bit	5,a		; REQ ?
 	jr	nz, data_r
-	and	#B_BUSY
+	and	B_BUSY
 	jr	z, complete	; Busy dropped = end of command
 	jr	data_in		; spin our wheels waiting
 data_r:
 	in	a,(ncr_st)	; Did the phase change ?
-	and	#B_PHAS
+	and	B_PHAS
 	jr	z, phase	; Yes - go to new phase
 	ini			; Get data
 	ld	a,h
@@ -196,33 +204,33 @@ data_r:
 	jr	nz, noout
 	ld	b,a		; Remember new page
 	call	outh
-	ld	a,#8		; Backspace over it
+	ld	a,8		; Backspace over it
 	call	outc
-	ld	a,#8
+	ld	a,8
 	call	outc
 noout:
-	ld	a,#B_AACK	; Ack pulse
+	ld	a,B_AACK	; Ack pulse
 	out	(ncr_cmd),a
 	xor	a
 	out	(ncr_cmd),a
 	jr	data_in
 cmdout:
-	ld	a,#B_ABUS
+	ld	a,B_ABUS
 	out	(ncr_cmd),a
 	in	a,(ncr_bus)
 	bit	5,a		; Wait for REQ
 	jr	nz, data_w
-	and	#B_BUSY		; Dropped busy means the game is up
+	and	B_BUSY		; Dropped busy means the game is up
 	jr	z, complete
 	jr	cmdout		; Keep waiting for REQ
 data_w:
 	in	a,(ncr_st)	; Check we didn't change phase
-	and	#B_PHAS
+	and	B_PHAS
 	jp	z,phase
 	ld	a,(de)
 	out	(c),a		; Put command byte on the bus
 	inc	de
-	ld	a,#B_AACK|B_ABUS	; Waggle ACK
+	ld	a,B_AACK|B_ABUS	; Waggle ACK
 	out	(ncr_cmd),a
 	xor	a
 	out	(ncr_cmd),a
@@ -233,7 +241,7 @@ complete:
 	.byte	13,10
 	.ascii  "Starting FUZIX"
 	.byte	13,10,0
-	jp	0x0100		; TODO put discardable bootstrap code lower
+	jp	0x0100
 
 outh:
 	push	af
@@ -244,18 +252,18 @@ outh:
 	call	outhd
 	pop	af
 outhd:
-	and	#0x0F
-	add	#'0'
-	cp	#'9' + 1
+	and	0x0F
+	add	a, '0'
+	cp	'9' + 1
 	jr	c, outc
-	add	#7
+	add	a, 7
 outc:
 	push	af
 twait:
 	xor	a
 	out	(DARTA_C),a
 	in	a,(DARTA_C)
-	and	#0x04
+	and	0x04
 	jr	z, twait
 	pop	af
 	out	(DARTA_D),a
