@@ -283,7 +283,9 @@ _doexec:
         call map_proc_always_di
 
         pop hl ; return address
+#ifdef BANKED_Z80
 	pop hl ; old af
+#endif
         pop de ; start address
 
         ld hl, (_udata + U_DATA__U_ISP)
