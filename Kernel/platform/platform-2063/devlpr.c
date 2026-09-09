@@ -5,9 +5,9 @@
 #include <devlpr.h>
 #include <2063.h>
 
-__sfr __at 0x20	lp;
-__sfr __at 0x00 gpio_in;
-__sfr __at 0x10 gpio_out;
+#define LP		0x20
+#define GPIO_IN		0x00
+#define GPIO_OUT	0x10
 
 int lpr_open(uint_fast8_t minor, uint16_t flag)
 {
@@ -40,19 +40,22 @@ int lpr_write(uint_fast8_t minor, uint_fast8_t rawflag, uint_fast8_t flag)
 
 	while (p < pe) {
 		/* Printer busy ? */
-		while (gpio_in & 0x08) {
+		while (in(GPIO_IN) & 0x08) {
 			if ((n = iopoll(pe - p)) != 0)
 				return n;
 		}
-		lp = ugetc(p++);
+		out(LP, ugetc(p++));
 		irq = di();
 		/* Strobe low for 1us */
+		lp_strobe();
+#if 0
 		gpio_out = gpio & ~8;
 		__asm
 			nop
 			nop
 		__endasm;
 		gpio_out = gpio;
+#endif
 		irqrestore(irq);
 	}
 	return pe - p;
@@ -66,7 +69,7 @@ int lpr_ioctl(uint_fast8_t minor, uarg_t arg, char *ptr)
 
 	/* TODO : check polarity versus IBM - esp BUSY */
 	if (arg == LPIOCSTAT) {
-	        s = gpio_in;
+	        s = in(GPIO_IN);
 		if (s & 0x01)
 			r |= LP_ERROR;
 		if (s & 0x02)

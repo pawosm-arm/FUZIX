@@ -1,4 +1,3 @@
-# 1 "2063.S"
 ;
 ;	2063 specific hardware implementation/ Mostly
 ;	memory banking
@@ -28,45 +27,10 @@
 	.export _gpio
 	.export _sd_busy
 	.export _sd_count
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes.
-Z80_TYPE		.equ	0	; CMOS
-U_DATA_STASH		.equ	0x7E00
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 0
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	9600
-
-CPU_CLOCK_KHZ		.equ	10000
-
-; Base address of SIO/2 chip 0x30
-
-SIOA_D		.equ	0x30
-SIOB_D		.equ	0x31
-SIOA_C		.equ	0x32
-SIOB_C		.equ	0x33
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x40	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x41	; CTC channel 1
-CTC_CH2		.equ	0x42	; CTC channel 2
-CTC_CH3		.equ	0x43	; CTC channel 3
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 34 "2063.S"
 ;=========================================================================
 ; Buffers
 ;=========================================================================
@@ -75,7 +39,7 @@ CTC_CH3		.equ	0x43	; CTC channel 3
 	.export	kernel_endmark
 
 _bufpool:
-        .ds	520  * 4 ; adjust NBUFS in config.h in line with this
+        .ds	BUFSIZE * 4 ; adjust NBUFS in config.h in line with this
 ;
 ;	So we can check for overflow
 ;
@@ -258,7 +222,7 @@ map_proc_a:
 map_proc_always:
 map_proc_always_di:
 	push	af
-	ld	a,(_udata + 2     )
+	ld	a,(_udata + U_DATA__U_PAGE)
 	call	map_proc_a
 	pop	af
 	ret

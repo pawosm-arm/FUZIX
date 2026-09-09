@@ -1,4 +1,3 @@
-# 1 "sd.S"
 ;
 ;	SD card interface
 ;

@@ -1,41 +1,9 @@
-# 1 "serial.S"
 ;
 ;	Dual SIO serial driver. For latency reasons this all
 ;	lives in the fixed bank space
 ;
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
+#include "kernelu.def"
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes.
-Z80_TYPE		.equ	0	; CMOS
-U_DATA_STASH		.equ	0x7E00
-
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 0
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	9600
-
-CPU_CLOCK_KHZ		.equ	10000
-
-; Base address of SIO/2 chip 0x30
-
-SIOA_D		.equ	0x30
-SIOB_D		.equ	0x31
-SIOA_C		.equ	0x32
-SIOB_C		.equ	0x33
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x40	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x41	; CTC channel 1
-CTC_CH2		.equ	0x42	; CTC channel 2
-CTC_CH3		.equ	0x43	; CTC channel 3
-# 7 "serial.S"
 	.export _sio_state
 	.export _sio_dropdcd
 	.export _sio_rxl

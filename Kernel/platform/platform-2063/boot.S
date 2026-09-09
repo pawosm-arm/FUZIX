@@ -6,24 +6,23 @@
 ;	do our own job.
 ;
 ;
-	.area _BOOT(ABS)
-
+	.abs
 	.org	0xFE00
 
 ; We load at C000 - relocate
 start:
 	di
-	ld	hl,#0xC000
-	ld	de,#0xFE00
-	ld	bc,#0x0200
+	ld	hl,0xC000
+	ld	de,0xFE00
+	ld	bc,0x0200
 	ldir
 	jp	go
 go:
-	ld	sp,#0x0000
+	ld	sp,0x0000
 	xor	a
 	out	(0),a		;	Get the low page in low memory
-	ld	ix,#0x0000
-	ld	de,#0x7F01	;	load from the proper boot area
+	ld	ix,0x0000
+	ld	de,0x7F01	;	load from the proper boot area
 	jp	run		;	7F blocks 0000 to FDFF
 
 _gpio:
@@ -33,7 +32,7 @@ run:
 next_block:
 	push	de
 	call	load_block	;	D is down count for done
-	ld	a,#'.'
+	ld	a,'.'
 	call	outchar
 	pop	de
 	inc	e
@@ -41,27 +40,27 @@ next_block:
 	jr	nz, next_block
 	call	outnl
 	ld	hl,(0x0103)
-	ld	de,#0x10AE
+	ld	de,0x10AE
 	or	a
 	sbc	hl,de
 	jp	z, 0x0100
-	ld	a,#'X'
+	ld	a,'X'
 	call	outchar
 fail:
 	di
 	halt
 
 outnl:
-	ld	a,#13
+	ld	a,13
 	call	outchar
-	ld	a,#10
+	ld	a,10
 outchar:
 	ex	af,af'
 outcharw:
 	xor	a
 	out	(0x32),a
 	in	a,(0x32)
-	and	#0x04
+	and	0x04
 	jr	z,outcharw
 	ex	af,af'
 	out	(0x30),a
@@ -76,18 +75,18 @@ load_block:
 	call	sd_spi_receive_byte
 	call	sd_spi_lower_cs
 	call	waitff
-	ld	l,#81		; Read block
+	ld	l,81		; Read block
 	call	sd_spi_transmit_byte
 	pop	de
-	ld	l,#0
+	ld	l,0
 	call	sd_spi_transmit_byte
-	ld	l,#0
+	ld	l,0
 	call	sd_spi_transmit_byte
-	ld	l,#0
+	ld	l,0
 	call	sd_spi_transmit_byte
 	ld	l,e		; block number (we look from the boot area)
 	call	sd_spi_transmit_byte
-	ld	l,#1
+	ld	l,1
 	call	sd_spi_transmit_byte
 waitok:
 	call	sd_spi_receive_byte
@@ -101,13 +100,13 @@ waitnotff:
 	; should be FE
 	inc	l
 	jr	nz, fail
-	ld	b,#0
+	ld	b,0
 data:
 	call	sd_spi_receive_byte
-	ld	(ix),l
+	ld	(ix + 0),l
 	inc	ix
 	call	sd_spi_receive_byte
-	ld	(ix),l
+	ld	(ix + 0),l
 	inc	ix
 	djnz	data
 	ret
@@ -119,29 +118,29 @@ waitff:	call	sd_spi_receive_byte
 
 sd_spi_lower_cs:
 	ld	a,(_gpio)
-	and	#0xFD
-	or	#0x01
+	and	0xFD
+	or	0x01
 	out	(0x10),a
-	and	#0xFB
+	and	0xFB
 	ld	(_gpio),a
 	out	(0x10),a
 	ret
 sd_spi_raise_cs:
 	ld	a,(_gpio)
-	and	#0xFE
+	and	0xFE
 	out	(0x10),a
-	or	#0x05
+	or	0x05
 	ld	(_gpio),a
 	out	(0x10),a
 	; Fall through
 sd_spi_receive_byte:
 	ld	a,(_gpio)
-	or	#0x01		; data high
-	and	#0xFD		; clock
+	or	0x01		; data high
+	and	0xFD		; clock
 	ld	d,a
-	add	#2
+	add	a,2
 	ld	e,a		; D is clock low E is high
-	ld	c,#0x10
+	ld	c,0x10
 	; Entry point with registers set up
 sd_rx:
 	;	Clock the bits	(47 clocks a bit) or about 25K/second minus
@@ -206,7 +205,7 @@ sd_rx:
 ;
 sd_spi_transmit_byte:
 	ld	a,(_gpio)
-	and	#0xFD		; clock high
+	and	0xFD		; clock high
 	;	Clock the bits out. Ignore reply
 	;	54 clocks a bit
 	;	
@@ -216,63 +215,63 @@ sd_spi_transmit_byte:
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a, 2
 	out	(0x10),a
-	sub	#2
+	sub	2
 	;	Bit 1
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
-	sub 	#2
+	sub 	2
 	;	Bit 2
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
-	sub	#2
+	sub	2
 	;	Bit 3
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
-	sub	#2
+	sub	2
 	;	Bit 4
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
-	sub	#2
+	sub	2
 	;	Bit 5
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
-	sub	#2
+	sub	2
 	;	Bit 6
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
-	sub	#2
+	sub	2
 	;	Bit 7
 	rra
 	rl	l
 	rla
 	out	(0x10),a
-	add	#2
+	add	a,2
 	out	(0x10),a
 
 	ret
