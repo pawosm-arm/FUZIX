@@ -25,8 +25,8 @@
 
 /* 16K flexible banking */
 #define CONFIG_BANK16
-#define CONFIG_BANKS    4       /* 4 * 16K banks in CPU address space */
-#define MAX_MAPS        27      /* 32 - kernel (4) - video & COMMON (1) */
+#define CONFIG_BANKS    3       /* 3 * 16K banks in CPU address space */
+#define MAX_MAPS        (32-CONFIG_BANKS-1)     /* 32 - kernel (3) - video & COMMON (1) */
 #define MAPBASE         0x0000
 
 /* Standard virtual terminal core based upon VT52 emulation. */

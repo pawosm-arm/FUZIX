@@ -23,7 +23,11 @@ void do_beep(void)
  */
 void plt_discard(void)
 {
+#if CONFIG_BANKS < 4
+  uint16_t discard_size = 0xC000 - (uint16_t)bufpool_end;
+#else
   uint16_t discard_size = 0xF000 - (uint16_t)bufpool_end;
+#endif
   bufptr bp = bufpool_end;
 
   discard_size /= sizeof(struct blkbuf);
@@ -38,4 +42,8 @@ void plt_discard(void)
     bp->bf_dev = NO_DEVICE;
     bp->bf_busy = BF_FREE;
   }
+
+#if CONFIG_BANKS < 4
+  pagemap_add(3);
+#endif
 }
