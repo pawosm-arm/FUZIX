@@ -52,6 +52,8 @@ kernel_endmark:
 	.discard
 
 init_hardware:
+	ld	a,0x10
+	out	(0xFD),a	; trace on
 	ld	hl,512
 	ld	(_ramsize), hl
 	ld	hl,512-64
@@ -154,6 +156,7 @@ _program_vectors:
 	ld	bc,0x007f		; program first 0x80 bytes only
 	ld	(hl),0x00
 	ldir
+	pop	bc
 
 program_kvectors:
 	ld	a,0xC3			; JP instruction
@@ -168,7 +171,6 @@ program_kvectors:
 	ld	hl,nmi_handler
 	ld	(0x0067),hl
 
-	pop	bc
 	jr	map_kernel
 
 ;

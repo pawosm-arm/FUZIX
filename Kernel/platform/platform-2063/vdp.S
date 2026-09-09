@@ -15,8 +15,10 @@ VDP_ROP		.equ	1
 ;	These will only work on the TMS9918A text mode but fail on the
 ;	later chips. There is no 9938/58 for the 2063 however
 ;
-#define VDP_DELAY	jr 0
-#define VDP_DELAY2	jr 0
+;	word 0x0018 is 1800 or JR relative 0. 12 clocks 2bytes
+;
+#define VDP_DELAY	.word 0x0018
+#define VDP_DELAY2	.word 0x0018
 ; The 2063 doesn't waitstate the I/O so back to back outs go funny
 #define VDP_DELAY3	nop
 

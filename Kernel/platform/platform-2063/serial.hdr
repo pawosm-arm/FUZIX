@@ -9,8 +9,6 @@
 	.export _sio_rxl
 	.export _sio_txl
 
-	.export _vectors
-
 ; These are laid out and exposed as arrays to C
 _sio_wr5:
 _sioa_wr5:
@@ -47,7 +45,6 @@ _siob_txl:
 ;
 ;	A little SIO helper
 ;
-	.export _sio_r
 	.export _sio2_otir
 
 _sio2_otir:
@@ -56,9 +53,9 @@ _sio2_otir:
 	push	hl
 	push	de
 	push	bc
-	ld	b,#0x06
+	ld	b,0x06
 	ld	c,l
-	ld	hl,#_sio_r
+	ld	hl,_sio_r
 	otir
 	pop	bc
 	ret
@@ -72,7 +69,7 @@ ocloop_sio:
         xor	a                   ; read register 0
         out	(SIOA_C), a
 	in	a,(SIOA_C)		; read Line Status Register
-	and	#0x04			; get THRE bit
+	and	0x04			; get THRE bit
 	jr	z,ocloop_sio
 	; now output the char to serial port
 	pop	af
@@ -85,16 +82,16 @@ ocloop_sio:
 	.export outchar
 
 sio_install:
-	ld	hl,#sio_setup
-	ld	bc,#0x0A00 + SIOA_C	; 10 bytes to SIOA_C
+	ld	hl,sio_setup
+	ld	bc,0x0A00 + SIOA_C	; 10 bytes to SIOA_C
 	otir
-	ld	hl,#sio_setup
-	ld	bc,#0x0C00 + SIOB_C	; and 12 to SIOB_C (vector)
+	ld	hl,sio_setup
+	ld	bc,0x0C00 + SIOB_C	; and 12 to SIOB_C (vector)
 	otir
 
-        ld	hl,#siovec
-        ld	de,#_vectors+0x10
-        ld	bc,#16
+        ld	hl,siovec
+        ld	de,_vectors+0x10
+        ld	bc,16
         ldir
         ret
 
