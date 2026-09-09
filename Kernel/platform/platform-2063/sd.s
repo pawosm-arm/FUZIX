@@ -59,8 +59,10 @@ _sd_spi_rx_byte:
 	ld	d,a
 	add	a,2
 	ld	e,a		; D is clock low E is high
+	push	bc
 	ld	c,0x10
 	call	sd_rx
+	pop	bc
 	jr	sd_spi_idle
 
 	; Entry point with registers set up
@@ -126,6 +128,11 @@ sd_rx:
 ;	Byte to send is in L
 ;
 _sd_spi_tx_byte:
+	pop	de
+	pop	hl
+	push	hl
+	push	de
+sd_spi_tx_byte:
 	ld	a,1
 	ld	(_sd_busy),a
 
@@ -226,6 +233,7 @@ rx_user:
 	call	map_proc_always
 rx_byte:
 	call	_sd_spi_rx_byte
+	ld	c,0x10		; I/O port
 	;	Mark the SD busy (sd_spi_rx_byte marked it idle
 	;	and keep it busy while we burst the block. It's a trade
 	;	off versus slower I/O
@@ -274,10 +282,11 @@ tx_user:
 tx_byte:
 	ld	l,(ix+0)
 	inc	ix
-	call	_sd_spi_tx_byte
+	call	sd_spi_tx_byte
+	ld	c,0x10		; I/O port
 	ld	l,(ix+0)
 	inc	ix
-	call	_sd_spi_tx_byte
+	call	sd_spi_tx_byte
 	djnz	tx_byte
 	pop	bc
 	pop	ix

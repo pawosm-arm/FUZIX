@@ -52,8 +52,6 @@ kernel_endmark:
 	.discard
 
 init_hardware:
-	ld	a,0x10
-	out	(0xFD),a	; trace on
 	ld	hl,512
 	ld	(_ramsize), hl
 	ld	hl,512-64
