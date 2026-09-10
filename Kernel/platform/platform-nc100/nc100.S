@@ -94,11 +94,8 @@ pcmciabootable:
 to_setup:
 	; 100Hz timer on
 
-	; set up interrupt vectors for the kernel (also sets up common memory in page 0x000F which is unused)
-	ld hl, 0
-	push hl
-	call _program_vectors
-	pop hl
+	; set up interrupt vectors for the kernel
+	call program_vectors
 
 	ld a, 0x08			; keyboard IRQ only
 	out (0x60), a		; set up
@@ -127,10 +124,6 @@ probe_pcmcia:
 	ret
 
 _program_vectors:
-	;
-	; Note: we must install an NMI handler on the NC100 FIXME
-	;
-
 	; we are called, with interrupts disabled, by both newproc() and crt0
 	; will exit with interrupts off
 	di ; just to be sure
@@ -141,7 +134,8 @@ _program_vectors:
 
 	; At this point the common block has already been copied
 	call map_proc
-
+program_vectors:
+	push bc
 	; write zeroes across all vectors
 	ld hl, 0
 	ld de, 1
@@ -155,11 +149,6 @@ _program_vectors:
 	ld hl, interrupt_handler
 	ld (0x0039), hl
 
-	; set restart vector for UZI system calls
-	ld (0x0030), a   ;  (rst 30h is unix function call vector)
-	ld hl, unix_syscall_entry
-	ld (0x0031), hl
-
 	ld (0x0000), a   
 	ld hl, null_handler   ;   to Our Trap Handler
 	ld (0x0001), hl
@@ -167,6 +156,7 @@ _program_vectors:
 	ld (0x0066), a  ; Set vector for NMI
 	ld hl, my_nmi_handler
 	ld (0x0067), hl
+	pop bc
 	jp map_kernel
 
 ;
@@ -688,11 +678,13 @@ render2_l:
 	jp vtdone
 
 _clear_lines:
-	pop hl
-	pop de		; E = y, D = count
-	push de
-	push hl
 	push bc
+	ld hl,4
+	add hl,sp
+	ld e,(hl)
+	inc hl
+	inc hl
+	ld d,(hl)
 	ld a, (_int_disabled)
 	push af
 	di
@@ -721,7 +713,9 @@ _clear_across:
 	add hl,sp
 	ld e,(hl)
 	inc hl
+	inc hl
 	ld d,(hl)
+	inc hl
 	inc hl
 	ld c,(hl)
 	ld a, (_int_disabled)
