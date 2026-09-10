@@ -409,43 +409,47 @@ outcharw:
 ; Disk helper - FIXME - do we need the di/ei still
 ;
 _rd_memcpy:  push ix
-	ld ix, 0
+	ld ix, 4
 	add ix, sp
 	push bc
+	; 0-1(ix) = is_read, 2-3(ix) = dptr page 4-5(ix) = dptr, 6-7(ix) = block
+	; 8-9(ix) = len, 10-11(ix) = map2, 12-13(ix) = len2
+
+
 	; 4(ix) = is_read, 5(ix) = dptr page 6-7(ix) = dptr, 8-9(ix) = block
 	; 10-11(ix) = len, 12(ix) = map2, 13-14(ix) = len2
-	ld l, (ix + 6)
-	ld h, (ix + 7)
-	ld c, (ix + 5)
-	ld e, (ix + 8)
-	ld d, (ix + 9)
+	ld l, (ix + 4)		; dptr
+	ld h, (ix + 5)
+	ld c, (ix + 2)		; dptr page
+	ld e, (ix + 6)		; block
+	ld d, (ix + 7)
 	ld a, h
 	and 0x3F		; Remove bank bits from H
-	or 0x80            ; Will be at 0x8000
-	ld h, a		; HL is now ready
+	or 0x80      		; Will be at 0x8000
+	ld h, a			; HL is now ready
 	; DE is the block, but we need to work out where that block
 	; lives in terms of 16K chunks
-	sla e               ; e = e * 2 (will be 512 in a bit)
-	rl d		; this is OK we won't overflow on a 1MB device
-	ld a, e		; save a copy
+	sla e			; e = e * 2 (will be 512 in a bit)
+	rl d			; this is OK we won't overflow on a 1MB device
+	ld a, e			; save a copy
 	sla e
 	rl d
 	sla e
-	rl d		; D now holds the bank
+	rl d			; D now holds the bank
 	push af
 	ld a, d
 	add a,0x80
 	di
-	out (0x11), a	; 0x4000 is now the ramdisc bank
+	out (0x11), a		; 0x4000 is now the ramdisc bank
 	pop af
-	and 0x3F		; Mask bank
-	or 0x40		; bank is at 0x4000
-	ld d, a		; e = e * 256 (so now in byte terms)
-	ld e, 0		; always aligned
+	and 0x3F		; mask bank
+	or 0x40			; bank is at 0x4000
+	ld d, a			; e = e * 256 (so now in byte terms)
+	ld e, 0			; always aligned
 
 	ld a, c
-	out (0x12), a	; bank 0x8000 is now the user/kernel buffer
-	bit 0, (ix + 4)	; read or write ?
+	out (0x12), a		; bank 0x8000 is now the user/kernel buffer
+	bit 0, (ix + 0)		; read or write ?
 	jr z, rd_write
 
 	ex de, hl
@@ -453,25 +457,27 @@ _rd_memcpy:  push ix
 	;	All mapped, and then its simple
 	;
 rd_write:
-	ld c, (ix + 10)
-	ld b, (ix + 11)
-	ldir
+	ld c, (ix + 8)		; length
+	ld b, (ix + 9)
+	ldir			; copy
 
-	ld a, (ix + 12)		; second page map or 0 = none
+	ld a, (ix + 10)		; second page map or 0 = none
 	or a
-	jr z, rd_done	; usual case
+	jr z, rd_done		; usual case
 	out (0x12) ,a
-	ld c, (ix + 13)
-	ld b, (ix + 14)
-	ld a, (ix + 4)
+	ld c, (ix + 12)		; second length
+	ld b, (ix + 13)
+	ld a, (ix + 0)		; read or write ?
 	or a
 	jr nz, rd_part2
-	ld hl, 0x8000
+	ld hl, 0x8000		; boundary
 	jr copy_part2
-rd_part2:   ld de, 0x8000
-copy_part2: ldir
+rd_part2:
+	ld de, 0x8000
+copy_part2:
+	ldir			; copy block
 rd_done:
-	call map_kernel	; map the kernel and return
+	call map_kernel		; map the kernel and return
 	ei
 	pop bc
 	pop ix
@@ -780,10 +786,12 @@ clear_2:
 	jr nextrow
 	
 _cursor_on:
-	pop hl
-	pop de
-	push de
-	push hl
+	ld hl,2
+	add hl,sp
+	ld e,(hl)
+	inc hl
+	inc hl
+	ld d,(hl)
 cursor_do:
 	push bc
 	ld a, (_int_disabled)
