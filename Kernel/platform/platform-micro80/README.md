@@ -1,11 +1,13 @@
-Prototype Fuzix port for the Micro80 platform under design
+# Bill Shen's Micro80
+
+## Description
 
 This is based around a single chip Z84C15 which has an integrated CTC, SIO and
 PIO as well as a pair of chip selects that allow limited banked use of the
 memory. The low 4K is fixed to the upper 64K bank of the two, the rest can be
 switched either way on 4K boundaries.
 
-Memory map
+## Memory map
 
 Kernel
 0000-0FFF	Common and serial buffers
@@ -16,7 +18,7 @@ User
 1000-FFFF	User space
 
 
-Stuff To Do
+## Stuff To Do
 
 o	Use PIO properly (and in emulator)
 	(joysticks and SD card etc)
@@ -25,11 +27,10 @@ o	Would kernel from 0x1000-EFFF only with a common at F000 and
 	0000-0FFF whilst common kept user only make more sense. We get
 	the same sized user space but gain the ability to run CP/M emulation.
 
-Emulation
+## Emulation
 
-Write the bootloader once to block 0x00 with partitions 
-Write kernel images to block 0x01-0x7F
-Make it into a disk image
+make TARGET=micro80 diskimage
+micro80 -r micro80.rom -i Images/micro80/emu-ide.img
 
 Real Hardware
 
@@ -45,3 +46,5 @@ You can partition the rest of the card however you want.
 Boot the machine with the card present and the ROM will see a bootable CF
 card and boot from it.
 
+There Images directory for the target contains a raw disk image that can be used for testing
+but will have the wrong sized partitions for your CF card probably
