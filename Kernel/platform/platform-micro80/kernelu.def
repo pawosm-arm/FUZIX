@@ -19,14 +19,14 @@ CTC_CH2		.equ	0x12	; CTC channel 2
 CTC_CH3		.equ	0x13	; CTC channel 3
 
 
-SIOA_D		.EQU	0x18
-SIOA_C		.EQU	0x19
-SIOB_D		.EQU	0x1A
-SIOB_C		.EQU	0x1B
-RTS_LOW		.EQU	0xEA
+SIOA_D		.equ	0x18
+SIOA_C		.equ	0x19
+SIOB_D		.equ	0x1A
+SIOB_C		.equ	0x1B
+RTS_LOW		.equ	0xEA
 
-PIOA_D		.EQU	0x1C
-PIOA_C		.EQU	0x1D
-PIOB_D		.EQU	0x1E
-PIOB_C		.EQU	0x1F
+PIOA_D		.equ	0x1C
+PIOA_C		.equ	0x1D
+PIOB_D		.equ	0x1E
+PIOB_C		.equ	0x1F
 

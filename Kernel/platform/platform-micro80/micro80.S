@@ -1,4 +1,3 @@
-# 1 "micro80.S"
         ; exported symbols
         .export init_hardware
 	.export _program_vectors
@@ -23,52 +22,18 @@
 	; exported debugging tools
 	.export inchar
 	.export outchar
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ 0xC000
-Z80_TYPE		.equ	0	; CMOS
-
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x1000
-PROGLOAD		.equ	0x1000
-
-; Mnemonics for I/O ports etc
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x10	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x11	; CTC channel 1 (periodic interrupts)
-CTC_CH2		.equ	0x12	; CTC channel 2
-CTC_CH3		.equ	0x13	; CTC channel 3
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
 
-SIOA_D		.equ	0x18
-SIOA_C		.equ	0x19
-SIOB_D		.equ	0x1A
-SIOB_C		.equ	0x1B
-RTS_LOW		.equ	0xEA
-
-PIOA_D		.equ	0x1C
-PIOA_C		.equ	0x1D
-PIOB_D		.equ	0x1E
-PIOB_C		.equ	0x1F
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 30 "micro80.S"
 ;=========================================================================
 ; Buffers
 ;=========================================================================
 	.buffers
 
 _bufpool:
-        .ds 520  * 4 ; adjust NBUFS in config.h in line with this
+        .ds BUFSIZE * 4 ; adjust NBUFS in config.h in line with this
 
 ;=========================================================================
 ; Initialization code
@@ -283,7 +248,7 @@ map_for_swap:
 
 ;=========================================================================
 ; map_proc_always - map process pages
-; Inputs: page table address in 2     
+; Inputs: page table address in U_DATA__U_PAGE
 ; Outputs: none; all registers preserved
 ;=========================================================================
 map_proc_always:
@@ -397,3 +362,4 @@ inchar:
 	jr z,inchar			; no data, wait
 	in a,(SIOA_D)   		; read the character from the UART
 	ret
+
