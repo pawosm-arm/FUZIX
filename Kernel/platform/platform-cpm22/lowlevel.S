@@ -1,4 +1,3 @@
-# 1 "lowlevel.S"
 ;
 ;	Low level support code. This will become the system customisation
 ;	block in the end.
@@ -27,30 +26,10 @@
 		.export plt_interrupt_all
 
 		.export _int_disabled
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 bytes.
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-U_DATA_STASH		    .equ 0x0100	      ; 0100-02FF
-
-PROGBASE		    .equ 0x0300
-PROGLOAD		    .equ 0x0300
-
-Z80_TYPE		    .equ 1
-
-Z80_MMU_HOOKS		    .equ 0
-
-CONFIG_SWAP		    .equ 0
-
-NBUFS			    .equ 4
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 33 "lowlevel.S"
 ;
 ; Buffers (we use asm to set this up as we need them in a special segment
 ; so we can grow to fit the space free)
@@ -58,7 +37,7 @@ NBUFS			    .equ 4
 		.buffers
 		.export _bufpool
 _bufpool:
-		.ds 520  * NBUFS
+		.ds BUFSIZE * NBUFS
 		.code
 
 init_early:
@@ -114,7 +93,7 @@ map_proc:
 map_proc_always:
 map_proc_always_di:
 		push af
-		ld a,(_udata + 2     );
+		ld a,(_udata + U_DATA__U_PAGE);
 		call map_proc_a
 		pop af
 		ret
@@ -196,3 +175,5 @@ map:
 		.byte 0
 saved_map:
 		.byte 0
+
+

@@ -1,4 +1,3 @@
-# 1 "crt0.S"
 ;
 ;	We are loaded by whatever loader was written for the platform. We
 ;	are started in bank 0. We might have been loaded by a loader or by

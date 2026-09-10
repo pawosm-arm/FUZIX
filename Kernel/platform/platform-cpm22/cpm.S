@@ -1,4 +1,3 @@
-# 1 "cpm.S"
 ;
 ;	Interface to a CP/M 2.2 BIOS
 ;
