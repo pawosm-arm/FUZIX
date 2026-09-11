@@ -92,13 +92,13 @@ __uzero:
 	inc de
 	ldir
 uoutbc:
-	pop bc
-uout:
 	ld a,1
 	out (0x38),a
 	rlca
 	out (0x30),a
+	pop bc
 	ret
+
 
 __ugetc:
 	pop de
@@ -111,7 +111,12 @@ __ugetc:
 	out (0x30),a
 	ld l,(hl)
 	ld h,0
-	jr uout
+uout:
+	ld a,1
+	out (0x38),a
+	rlca
+	out (0x30),a
+	ret
 
 __ugetw:
 	pop de

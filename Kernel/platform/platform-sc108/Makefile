@@ -63,7 +63,7 @@ loader-acia.bin: loader-acia.S
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
 
 image: loader.bin loader-acia.bin
-	$(CROSS_LD) -b -C 0x0100 -S 0xF000 -f CXLDBbSs -o ../../fuzix.bin \
+	$(CROSS_LD) -b -C 0x0100 -S 0xF000 -f CLDBbXSs -o ../../fuzix.bin \
 	crt0.o commonmem.o sc108.o ../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u-thunked.o \
 	../../usermem.o usermem.o tricks.o main.o discard.o \
