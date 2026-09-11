@@ -1,4 +1,3 @@
-# 1 "linc80.S"
 ;
 ;	Linc80 Initial Support
 ;
@@ -24,53 +23,11 @@
 
         ; exported debugging tools
         .export _plt_monitor
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA			.equ	0x0300	; (this is struct u_data from kernel.h)
-U_DATA__TOTALSIZE	.equ	0x0200	; 256+256+256 bytes.
-Z80_TYPE		.equ	0	; CMOS
-
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x8000
-PROGLOAD		.equ	0x8000
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	115200
-
-CPU_CLOCK_KHZ		.equ	7372
-
-SIOA_D		.equ	0x00
-SIOB_D		.equ	0x01
-SIOA_C		.equ	0x02
-SIOB_C		.equ	0x03
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x08	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x09	; CTC channel 1
-CTC_CH2		.equ	0x0A	; CTC channel 2
-CTC_CH3		.equ	0x0B	; CTC channel 3
-
-NBUFS		.equ	4
-
-SPI_DATA	.equ	0x04
-SPI_CLOCK	.equ	0x02
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
 
-;
-;	SPI macros - SPI uses bottom bit for MISO
-;
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 31 "linc80.S"
 ;
 ; Buffers (we use asm to set this up as we need them in a special segment
 ; so we can recover the discard memory into the buffer pool
@@ -79,7 +36,7 @@ SPI_CLOCK	.equ	0x02
 	.buffers
 	.export _bufpool
 _bufpool:
-	.ds 520  * NBUFS
+	.ds BUFSIZE * NBUFS
 
 ;
 ;	We need this above 16K so the ROM doesn't map over it

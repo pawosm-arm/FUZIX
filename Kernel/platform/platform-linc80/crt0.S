@@ -1,4 +1,3 @@
-# 1 "crt0.S"
         .export init
 
 ; Linked and will end up at 0x300

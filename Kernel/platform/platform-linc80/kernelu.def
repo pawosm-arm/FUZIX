@@ -17,10 +17,10 @@ CONSOLE_RATE		.equ	115200
 
 CPU_CLOCK_KHZ		.equ	7372
 
-SIOA_D		.EQU	0x00
-SIOB_D		.EQU	0x01
-SIOA_C		.EQU	0x02
-SIOB_C		.EQU	0x03
+SIOA_D		.equ	0x00
+SIOB_D		.equ	0x01
+SIOA_C		.equ	0x02
+SIOB_C		.equ	0x03
 
 ; Z80 CTC ports
 CTC_CH0		.equ	0x08	; CTC channel 0 and interrupt vector
@@ -38,11 +38,6 @@ SPI_CLOCK	.equ	0x02
 ;	SPI macros - SPI uses bottom bit for MISO
 ;
 
-.macro	ROTATE
-	rra
-.endm
-
-.macro	LOADFIRST
-	in d,(c)
-	rlc d
-.endm
+#define ROTATE		rra
+#define LOADFIRST	in d,(c)
+#define LOADFIRST2	rlc d
