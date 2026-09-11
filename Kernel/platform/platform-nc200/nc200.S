@@ -1,4 +1,3 @@
-# 1 "nc200.S"
 ;
 ;	NC200 hardware support
 ;
@@ -40,29 +39,11 @@
 	.export _plt_monitor
 	.export _plt_reboot
 	.export outchar
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 bytes @0xF000
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
+#include "nc200.def"
 
-Z80_TYPE		    .equ 0
-
-PROGBASE		    .equ 0x0000
-PROGLOAD		    .equ 0x0100
-
-Z80_MMU_HOOKS		    .equ 0
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 1 "nc200.def"
-VIDEO_BASEH	.equ	0x60
-VIDEO_END	.equ	0x80
-VIDEO_BASE	.equ	0x6000
-VIDEO_SIZE	.equ	0x2000
-# 47 "nc200.S"
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (0xF000 upwards)
 ; -----------------------------------------------------------------------------
@@ -139,7 +120,7 @@ probe_pcmcia:
 	ld hl,(0x4200)
 	out (c),a
 	ld de,0x434E		; should be "NC"
-or a
+	or a
 	sbc hl,de
 	ret
 
@@ -237,7 +218,7 @@ suspend_1:
 	ld (resume_vector),hl
 	ld de,(suspend_r)
 	; Now switch the low 48K (OS) banks back as they were
-	; and run the "official"OS NMI handler
+	; and run the "official" OS NMI handler
 	ld hl,(entry_banks)
 	ld sp,(entry_sp);
 	ld a,l
@@ -319,7 +300,7 @@ map_proc_always:
 map_proc_always_di:
 	push hl
 	push af
-	ld hl, _udata + 2     
+	ld hl, _udata + U_DATA__U_PAGE
 	call map_proc_2
 	pop af
 	pop hl
@@ -579,10 +560,10 @@ _plot_char:
 	push bc
 	ld hl,4
 	add hl,sp
-	ld e,(hl)		 
+	ld e,(hl)		/* Y */
 	inc hl
 	inc hl
-	ld d,(hl)		 
+	ld d,(hl)		/* X* */
 	inc hl
 	inc hl
 	ld c,(hl)
@@ -948,3 +929,4 @@ endline:    pop de
 	out (0x11), a
 	ei
 	ret
+

@@ -15,10 +15,12 @@ suspend_map	.equ 0x1C4
 entry_banks	.equ 0x1C8
 suspend_stack	.equ 0x1FE
 
-.area BOOTBLOCK (ABS)
+	.abs
 
 ; Stub to switch into the resume bank and code
-.org 0xE0
+
+	.org 0xE0
+
 	out (0x13),a
 	jp (hl)
 
@@ -30,7 +32,8 @@ suspend_stack	.equ 0x1FE
 ; We expect to run in the 0x0000 page, so the first thing we need to do is
 ; remap ourselves.
 
-.org 0x100
+	.org 0x100
+
 	di
 	ld a, #0x80
 	out (0x10), a				; map boot page to 0x0000
@@ -98,18 +101,19 @@ copy_page:
 	ldir
 	ret
 
-		.org 0x200
+	.org 0x200
 ;
 ;	We should hide a logo in here ...
 ;
 signature:	.ascii "NC100PRG"
-padding2:	.db	0,0,0,0,0,3,0,1
-		jp 0xC220		; start as seen from top bank
-		.asciz	"FUZIX LOADER"
+padding2:	.byte	0,0,0,0,0,3,0,1
+	jp 0xC220		; start as seen from top bank
+	.ascii	"FUZIX LOADER"
+	.byte 0
 
 ;
 ;	At this point we are mapped at 0xC000 so this code is running from
 ;	0xC220 in truth. Only at the jp to switch do we end up mapped low
 ;
 ; This is 0xC220 -> jump to next byte but in right page
-		jp 0xC100		; start of our code
+	jp 0xC100		; start of our code

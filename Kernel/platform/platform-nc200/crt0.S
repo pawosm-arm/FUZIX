@@ -1,4 +1,3 @@
-# 1 "crt0.S"
 	        ; startup code @0
 	        .code
 
