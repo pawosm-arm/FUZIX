@@ -414,10 +414,6 @@ _rd_memcpy:  push ix
 	push bc
 	; 0-1(ix) = is_read, 2-3(ix) = dptr page 4-5(ix) = dptr, 6-7(ix) = block
 	; 8-9(ix) = len, 10-11(ix) = map2, 12-13(ix) = len2
-
-
-	; 4(ix) = is_read, 5(ix) = dptr page 6-7(ix) = dptr, 8-9(ix) = block
-	; 10-11(ix) = len, 12(ix) = map2, 13-14(ix) = len2
 	ld l, (ix + 4)		; dptr
 	ld h, (ix + 5)
 	ld c, (ix + 2)		; dptr page
@@ -929,9 +925,9 @@ endline:    pop de
 	xor a
 	cp (hl)		; 0 0 = end (for blank lines just do 01 ff 00)
 	jr nz, nextline
-	ei
 	pop af
 	out (0x11), a
+	ei
 	ret
 
 ;----------------------------------------------------------------
