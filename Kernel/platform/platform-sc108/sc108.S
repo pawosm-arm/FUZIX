@@ -1,4 +1,3 @@
-# 1 "sc108.S"
 ;
 ;	SC108 Support
 ;
@@ -20,54 +19,11 @@
 	; exported debugging tools
 	.export _plt_monitor
 	.export outchar
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ F000
-Z80_TYPE		.equ	0	; CMOS
-
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	115200
-
-CPU_CLOCK_KHZ		.equ	7372
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x88	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x89	; CTC channel 1 (periodic interrupts)
-CTC_CH2		.equ	0x8A	; CTC channel 2
-CTC_CH3		.equ	0x8B	; CTC channel 3
-
-ACIA_C          .equ     0x80
-ACIA_D          .equ     0x81
-ACIA_RESET      .equ     0x03
-ACIA_RTS_HIGH_A      .equ     0xD6   ; rts high, xmit interrupt disabled
-ACIA_RTS_LOW_A       .equ     0x96   ; rts low, xmit interrupt disabled
-
-NBUFS		.equ	4
-
-;
-;	Select where to put the high code - in our case we need this
-;	in common
-;
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
 
-HIGHPAGE	.equ	0	; We only have 1 page byte and the low page
-				; isn't used
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 27 "sc108.S"
 ; Base address of SIO/2 chip 0x80
 
 SIOA_C		.equ	0x80
@@ -97,7 +53,7 @@ ACIA_RTS_LOW_A  .equ     0x96   ; rts low, xmit interrupt disabled
 	.export _bufpool
 
 _bufpool:
-	.ds 520  * NBUFS
+	.ds BUFSIZE * NBUFS
 
 ; -----------------------------------------------------------------------------
 ;
@@ -364,7 +320,7 @@ nextbyte:
 
 oldrom:
 	.ascii "Bank helper not found, old ROM ?"
-.byte 13,10,0
+	.byte 13,10,0
 
 callhl:
 	jp (hl)
@@ -837,13 +793,13 @@ syscall_platform:
 	out (0x30),a
 	ex af,af'
 	; Stack now invalid
-	ld (_udata + 8     ),sp
+	ld (_udata + U_DATA__U_SYSCALL_SP),sp
 	ld sp,kstack_top
 	call unix_syscall_entry
 	; FIXME check di rules
 	; stack now invalid. Grab the new sp before we unbank the
 	; memory holding it
-	ld sp,(_udata + 8     )
+	ld sp,(_udata + U_DATA__U_SYSCALL_SP)
 	ld a,0x81		; back to the user page
 	out (0x38),a
 	rlca

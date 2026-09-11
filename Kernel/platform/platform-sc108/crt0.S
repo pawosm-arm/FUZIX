@@ -1,4 +1,3 @@
-# 1 "crt0.S"
 	.code
 	; from 0x100
 init:
