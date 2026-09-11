@@ -26,7 +26,7 @@ ATA_READ	.equ	0x20
 ACIA_C		.equ	0x80
 ACIA_D		.equ	0x81
 
-	.ds 10240	; boot sector and more for loader space
+	.org 0xFE00
 
 start:
 	; A modern partition setup has lots of room for boot space, so we

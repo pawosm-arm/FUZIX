@@ -3,7 +3,6 @@
 ;
 	; exported symbols
 	.export init_hardware
-	.export interrupt_handler
 	.export _program_vectors
 	.export _kernel_flag
 	.export map_page_low
@@ -13,6 +12,7 @@
 	.export map_restore_low
 	.export _plt_doexec
 	.export _plt_reboot
+	.export _do_halt
 	.export _int_disabled
 	.export syscall_platform
 
@@ -495,6 +495,9 @@ map_page_low:
 _program_vectors:
 	ret
 
+_do_halt:
+	halt
+	ret
 ;
 ;	A little SIO helper
 ;
@@ -539,7 +542,9 @@ ocloop_sio:
 ; Don't be tempted to put the symbol in the code below ..it's relocated
 ; to zero. Instead define where it ends up.
 
-_plt_doexec	.equ	0x18
+	.abs
+	.org	0x18
+_plt_doexec:		; FIXME allow equ exports in asm
 
 	.discard
 
