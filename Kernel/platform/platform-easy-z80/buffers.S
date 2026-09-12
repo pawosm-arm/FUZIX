@@ -33,33 +33,41 @@ _blen:
 
 _do_blkzero:
 	call map_buffers
+	push bc
 	ld de,(_bsrc)
 	inc de
 	ld (hl),#0
 	ld bc,#511
 	ldir
+	pop bc
 	jp map_kernel
 
 _do_blkcopyk:
 	call map_buffers
+	push bc
 	ld hl,(_bsrc)
 	ld de,(_bdest)
 	ld bc,(_blen)
 	ldir
+	pop bc
 	jp map_kernel
 
 _do_blkcopyul:
 	call map_buf_user
+	push bc
 	ld hl,(_bsrc)
 	ld de,(_bdest)
 	ld bc,(_blen)
 	ldir
+	pop bc
 	jp map_kernel
 
 _do_blkcopyuh:
 	call map_buf_user_h
+	push bc
 	ld hl,(_bsrc)
 	ld de,(_bdest)
 	ld bc,(_blen)
 	ldir
+	pop bc
 	jp map_kernel

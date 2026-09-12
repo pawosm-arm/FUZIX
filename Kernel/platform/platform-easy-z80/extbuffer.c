@@ -37,7 +37,7 @@ void blktou(void *uaddr, struct blkbuf *buf, uint16_t off, uint16_t len)
     bdest = uaddr;
     blen = len;
     /* If it's all below 16K or all over 32K then use the 0x4000 window */
-    if ((uint16_t)uaddr + len < 0x4000 || (uint16_t)uaddr > 0x8000) {
+    if ((uint16_t)uaddr + len < 0x4000 || (uint16_t)uaddr >= 0x8000) {
         bsrc = buf->__bf_data + off;
         do_blkcopyul();
         return;
@@ -94,6 +94,7 @@ void *blkptr(struct blkbuf *buf, uint16_t offset, uint16_t len)
 {
     if (len > 64)
         panic("blkptr");
+    bsrc = buf->__bf_data + offset;
     bdest = scratchbuf;
     blen = sizeof(scratchbuf);
     do_blkcopyk();
@@ -102,6 +103,7 @@ void *blkptr(struct blkbuf *buf, uint16_t offset, uint16_t len)
 
 void blkzero(struct blkbuf *buf)
 {
+    bsrc = buf->__bf_data;
     do_blkzero();
 }
 
