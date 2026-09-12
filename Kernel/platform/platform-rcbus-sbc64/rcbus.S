@@ -1,4 +1,3 @@
-# 1 "rcbus.S"
 ; 2014-02-19 Sergey Kiselev
 ; RCBUS hardware specific code
 
@@ -28,39 +27,10 @@
 
 	; exported debugging tools
 	.export outchar
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA			.equ	0xF400	; (this is struct u_data from kernel.h)
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes.
-Z80_TYPE		.equ	0	; CMOS
-U_DATA_STASH		.equ	0x7E00
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	115200
-
-CPU_CLOCK_KHZ		.equ	7372
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x88	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x89	; CTC channel 1 (periodic interrupts)
-CTC_CH2		.equ	0x8A	; CTC channel 2
-CTC_CH3		.equ	0x8B	; CTC channel 3
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 34 "rcbus.S"
 ;=========================================================================
 ; Constants
 ;=========================================================================
@@ -88,7 +58,7 @@ SIOD_D		.equ	SIOC_C+3
 	.export kernel_endmark
 
 _bufpool:
-        .ds 520  * 4 ; adjust NBUFS in config.h in line with this
+        .ds BUFSIZE * 4 ; adjust NBUFS in config.h in line with this
 ;
 ;	So we can check for overflow
 ;
@@ -406,7 +376,7 @@ map_proc_a:
 map_proc_always:
 map_proc_always_di:
 	push af
-	ld a,(_udata + 2     )
+	ld a,(_udata + U_DATA__U_PAGE)
 map_pop_a:
 	ld (pagereg),a
 	out (0x1f),a

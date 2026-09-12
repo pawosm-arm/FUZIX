@@ -1,5 +1,5 @@
 
-	.area _BOOT(ABS)
+	.abs
 
 	.org 0xB000
 
@@ -17,10 +17,11 @@ installer:
 	rst 0
 
 begin:
-	.asciz 'Configuring booter...'
+	.ascii 'Configuring booter...'
+	.byte 0
 done:
 	.ascii 'Done'
-	.db 13,10,0
+	.byte 13,10,0
 
 outstr:
 	ld a,(hl)
@@ -69,4 +70,4 @@ lobit:
 	jp bitwait
 
 data:
-	.include "loader.inc"
+#include "loader.inc"

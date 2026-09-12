@@ -1,33 +1,8 @@
-# 1 "crt0.S"
         ; exported symbols
 	.export _suspend
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA			.equ	0xF400	; (this is struct u_data from kernel.h)
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes.
-Z80_TYPE		.equ	0	; CMOS
-U_DATA_STASH		.equ	0x7E00
+#include "kernelu.def"
 
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	115200
-
-CPU_CLOCK_KHZ		.equ	7372
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x88	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x89	; CTC channel 1 (periodic interrupts)
-CTC_CH2		.equ	0x8A	; CTC channel 2
-CTC_CH3		.equ	0x8B	; CTC channel 3
-# 6 "crt0.S"
 	; Starts at 0x1000 at the moment
 
 	; Entered with bank = 1 from the bootstrap logic
@@ -111,5 +86,6 @@ _suspend:
 suspended:
 	.ascii 'Suspended, you may now power off'
 	.byte 13,10,0
+
 
 	
