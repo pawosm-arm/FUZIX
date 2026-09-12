@@ -1,9 +1,5 @@
 /* System level configuration */
 
-/* Set this if you have the RC2014 CF adapter at 0x10/0x90 */
-#define CONFIG_RC2014_CF
-/* Set this if you have the 8255 IDE adapter (mutually exclusive of RC2014_CF) */
-#undef CONFIG_RC2014_PPIDE
 /* Set this if you have the floppy interface */
 #undef CONFIG_RC2014_FLOPPY
 
@@ -11,13 +7,6 @@
  *	Turn selections into system level defines
  */
 
-#ifdef CONFIG_RC2014_CF
-#define CONFIG_IDE
-#endif
-#ifdef CONFIG_RC2014_PPIDE
-#define CONFIG_IDE
-#define CONFIG_PPIDE
-#endif
 #ifdef CONFIG_RC2014_FLOPPY
 #define CONFIG_FLOPPY
 #endif
@@ -70,12 +59,17 @@ extern uint16_t swap_dev;
 
 /* We need a tidier way to do this from the loader */
 #define CMDLINE	NULL  /* Location of root dev name */
-#define BOOTDEVICENAMES "hd#,fd,,rd"
+#define BOOTDEVICENAMES "hd#,fd"
 
 #define NBUFS    32       /* Number of block buffers, keep in line with space reserved in zeta-v2.s */
 #define NMOUNTS	 4	  /* Number of mounts at a time */
 
-#define MAX_BLKDEV 2	    /* 2 IDE */
+#define CONFIG_TD
+#define CONFIG_TD_NUM	1
+#define CONFIG_TD_IDE
+#define CONFIG_TINYIDE_8BIT
+#define CONFIG_TINYIDE_INDIRECT
+#define IDE_IS_8BIT(x)	1
 
 /* On-board DS1302, we can read the time of day from it */
 #define CONFIG_RTC_DS1302

@@ -1,4 +1,3 @@
-# 1 "easy-z80.S"
 ; 2014-02-19 Sergey Kiselev
 ; RC2014 hardware specific code
 
@@ -30,52 +29,10 @@
 	; exported debugging tools
 ;	export outchar
 ;	export inchar
-# 1 "kernelu.def"
-; FUZIX mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ D000
-Z80_TYPE		.equ	0	; just a old good Z80
-USE_FANCY_MONITOR	.equ	1	; disabling this saves around approx 0.5KB
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-Z80_MMU_HOOKS		.equ 0
-
-
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	115200
-
-CPU_CLOCK_KHZ		.equ	10000
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x88	; CTC channel 0 and interrupt vector
-CTC_CH1		.equ	0x89	; CTC channel 1 (periodic interrupts)
-CTC_CH2		.equ	0x8A	; CTC channel 2
-CTC_CH3		.equ	0x8B	; CTC channel 3
-
-; 37C65 FDC ports
-FDC_CCR		.equ	0x48	; Configuration Control Register (W/O)
-FDC_MSR		.equ	0x50	; 8272 Main Status Register (R/O)
-FDC_DATA	.equ	0x51	; 8272 Data Port (R/W)
-FDC_DOR		.equ	0x58	; Digital Output Register (W/O)
-FDC_TC		.equ	0x58	; Pulse terminal count (R/O)
-
-; MMU Ports
-MPGSEL_0	.equ	0x78	; Bank_0 page select register (W/O)
-MPGSEL_1	.equ	0x79	; Bank_1 page select register (W/O)
-MPGSEL_2	.equ	0x7A	; Bank_2 page select register (W/O)
-MPGSEL_3	.equ	0x7B	; Bank_3 page select register (W/O)
-MPGENA		.equ	0x7C	; memory paging enable register, bit 0 (W/O)
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 36 "easy-z80.S"
 ;=========================================================================
 ; Initialization code
 ;=========================================================================
@@ -241,30 +198,30 @@ _program_vectors:
 
 ;=========================================================================
 ; map_proc_always - map process pages
-; Inputs: page table address in 2     
+; Inputs: page table address in U_DATA__U_PAGE
 ; Outputs: none; all registers preserved
 ;=========================================================================
 map_proc_always:
 map_proc_always_di:
 	push hl
-	ld hl,_udata + 2     
+	ld hl,_udata + U_DATA__U_PAGE
         jr map_proc_2_pophl_ret
 
 map_buf_user:
 	push hl
-	ld hl,(_udata + 2     )
+	ld hl,(_udata + U_DATA__U_PAGE)
 	ld h,36
 	ld (_ubuffer_pages),hl
-	ld hl,(_udata+2     +2)
+	ld hl,(_udata+U_DATA__U_PAGE+2)
 	ld (_ubuffer_pages+2),hl
 	ld hl,_ubuffer_pages
         jr map_proc_2_pophl_ret
 
 map_buf_user_h:
 	push hl
-	ld hl,(_udata + 2     )
+	ld hl,(_udata + U_DATA__U_PAGE)
 	ld (_ubuffer_pages),hl
-	ld hl,(_udata + 2     +2)
+	ld hl,(_udata + U_DATA__U_PAGE+2)
 	ld l,36
 	ld (_ubuffer_pages + 2),hl
 	ld hl,_ubuffer_pages
@@ -412,3 +369,113 @@ map_savearea:
 ;=========================================================================
 ; Basic console I/O
 ;=========================================================================
+
+#if 0
+;=========================================================================
+; outchar - Wait for UART TX idle, then print the char in A
+; Inputs: A - character to print
+; Outputs: none
+;=========================================================================
+outchar:
+
+	push af
+	; wait for transmitter to be idle
+ocloop_sio:
+        xor a                   ; read register 0
+        out (SIOA_C), a
+	in a,(SIOA_C)		; read Line Status Register
+	and 0x04			; get THRE bit
+	jr z,ocloop_sio
+	; now output the char to serial port
+	pop af
+	out (SIOA_D),a
+	ret
+
+;=========================================================================
+; inchar - Wait for character on UART, return in A
+; Inputs: none
+; Outputs: A - received character, F destroyed
+;=========================================================================
+inchar:
+inchar_s:
+        xor a                           ; read register 0
+        out (SIOA_C), a
+	in a,(SIOA_C)   		; read Line Status Register
+	and 0x01			; test if data is in receive buffer
+	jr z,inchar_s			; no data, wait
+	in a,(SIOA_D)   		; read the character from the UART
+	ret
+;=========================================================================
+;
+;	Logic for IM2 interrupt driven SIO
+;
+;=========================================================================
+
+	.area _SERIALDATA
+
+	export _sio_state
+	export _sio_dropdcd
+	export _sio_rxl
+	export _sio_txl
+
+; These are laid out and exposed as arrays to C
+_sio_wr5:
+_sioa_wr5:
+	.byte 0xEA		; DTR, 8bit, tx enabled
+_siob_wr5:
+	.byte 0xEA		; DTR, 8bit, tx enabled
+_sio_flow:
+_sioa_flow:
+	.byte 0			; Flow starts off
+_siob_flow:
+	.byte 0			; Flow starts off
+_sio_state:
+_sioa_state:
+	.byte 0			; Last status report
+_siob_state:
+	.byte 0			; Last status report
+_sio_dropdcd:
+_sioa_dropdcd:
+	.byte 0			; DCD dropped since last checked
+_siob_dropdcd:
+	.byte 0			; DCD dropped since last checked
+_sio_rxl:
+_sioa_rxl:
+	.byte 0
+_siob_rxl:
+	.byte 0
+_sio_txl:
+_sioa_txl:
+	.byte 0
+_siob_txl:
+	.byte 0
+
+	.include "../../dev/z80sio.s"
+
+sio_ports a
+sio_ports b
+
+	.area _COMMONMEM
+
+;
+;	We don't do any clever IRQ re-entry tricks so we can use the istack.
+;	If we ever do soft interrupts and take the sio during a timer int
+;	we will need a small (16 byte or so) private sio work stack and to
+;	be very careful with our stack handling on switches.
+;
+sio_sp:	.word 0
+
+.macro switch
+	ld (sio_sp),sp
+	ld sp,istack_top
+	call map_save_kernel
+.endm
+
+.macro switchback
+	call map_restore
+	ld sp,(sio_sp)
+.endm
+
+sio_handler_im2	a, SIOA_C, SIOA_D, reti
+sio_handler_im2 b, SIOB_C, SIOB_D, reti
+#endif

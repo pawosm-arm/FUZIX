@@ -38,3 +38,10 @@ For emulation
 
 rc2014 -b -r EZ80_std.rom -m easyz80 -i emu-ide.img   (-R for RTC)
 
+
+
+Conversion in progress
+
+TODO:
+- Testing
+- Can we move to 0x300 code base (it's only 256 bytes per serial)
