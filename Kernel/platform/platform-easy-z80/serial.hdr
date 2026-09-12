@@ -152,5 +152,5 @@ sio_setup:
 	.byte	0x05
 	.byte	RTS_LOW
 	.byte	0x02
-	.byte	0x10		; vector 0x10 for serial (0x00 for CTC)
+	.byte	0x90		; vector 0x90 for serial (0x80 for CTC)
 
