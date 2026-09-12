@@ -59,10 +59,8 @@ void map_init(void)
 
 void device_init(void)
 {
-#ifdef CONFIG_IDE
-	devide_init();
+	ide_probe();
 #ifdef CONFIG_PPIDE
 	ppide_init();
-#endif
 #endif
 }
