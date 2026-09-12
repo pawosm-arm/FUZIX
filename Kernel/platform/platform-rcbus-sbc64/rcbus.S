@@ -283,9 +283,17 @@ sio_setup:
 
 _plt_monitor:
 _plt_reboot:
-	ld a,0x03
+	di
+	ld a,(_mach_zrcc)
+	or a
+	jr nz, do_zrcc
+	ld a,3
 	out (0x1f),a
 	rst 0
+do_zrcc:
+	ld a,1
+	out (0x1f),a
+	jp 0x100
 
 _plt_suspend:
 	; No suspend on ZRCC only on SBC/MBC64
