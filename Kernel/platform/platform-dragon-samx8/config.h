@@ -144,7 +144,8 @@
 
 #define swap_map(x) ((uint8_t *)(x & 0x3fff))
 
-extern void plt_discard(void);
-/* #define plt_copyright() */
+/* Both of these are provided: */
+#undef plt_discard
+#undef plt_copyright
 
 #define BOOTDEVICENAMES "hd#,fd#,,,,,,,dw"
