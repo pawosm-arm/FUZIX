@@ -54,7 +54,7 @@ clean:
 #	Compile up the boot block
 #
 image: bootblock
-	$(CROSS_LD) -b -C 0x0500 -S 0xF000 -X0xD000 -f CLDBbXSs -o ../../fuzix.bin \
+	$(CROSS_LD) -b -C 0x0100 -S 0xEE00 -X0xD000 -f CLDBbXSs -o ../../fuzix.bin \
 	crt0.o commonmem.o easy-z80.o ../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
 	../../usermem.o ../../cpu-z80u/usermem_std-z80u.o \

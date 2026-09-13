@@ -34,9 +34,3 @@ mappedok:
         di
 stop:   halt
         jr stop
-
-	; This gets overwriten by a serial buffer
-	.abs
-	.org 0x100
-
-	jp init
