@@ -27,41 +27,51 @@
 	.export vector
 	.export _sys_stubs
 
-	.import interrupt_handler
-	.import _ramsize
-	.import _procmem
-	.import nmi_handler
-	.import unix_syscall_entry
-	.import kstack_top
-	.import istack_switched_sp
-	.import istack_top
-	.import _unix_syscall
-	.import _plt_interrupt
-	.import _kernel_flag
-	.import stash_zp
-	.import pushax
-	.import _relocator
-	.import _udata
-
-	.import outcharhex
-	.import outxa
-	.import incaxy
-
-	.import _create_init_common
-
-        .include "kernel.def"
-        .include "../../cpu-6502/kernel02.def"
-	.include "zeropage.inc"
+#include "kernel.def"
+#include "../../cpu-6502/kernel02.def"
 
 ;
 ;	syscall is jsr [$00fe] (for now anyway)
 ;
-syscall	     =  $FE
+syscall	     .equ  $FE
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (0x0200 upwards after the common data blocks)
 ; -----------------------------------------------------------------------------
-            .segment "COMMONMEM"
 
+	.zp
+
+	.export sp
+	.export hireg
+	.export tmp
+	.export tmp1
+	.export tmp2
+	.export tmp3
+	.export tmp4
+	.export	tmp5
+	.export reg1
+	.export reg2
+	.export reg3
+	.export reg4
+
+	.export usp
+
+sp:	.word	0
+hireg:	.word	0
+tmp:	.word	0
+tmp1:	.word	0
+tmp2:	.word	0
+tmp3:	.word	0
+tmp4:	.word	0
+tmp5:	.word	0
+reg1:	.word	0
+reg2:	.word	0
+reg3:	.word	0
+reg4:	.word	0
+
+usp:	.word	0
+
+
+	.common
 ;
 ;	Fixme - can we get back to the AppleII monitor ?
 ;
@@ -131,7 +141,8 @@ _program_vectors:
 ;------------------------------------------------------------------------------
 ; COMMON MEMORY PROCEDURES FOLLOW
 
-        .segment "COMMONMEM"
+	.common
+
 ;
 ;	For swap only this is trivial. The later iie + ramworks kernel
 ;	will have far more to do as we'll need to load a page register
@@ -207,7 +218,7 @@ outchar:
 ;	Code that will live in each bank at the same address and is copied
 ;	there at boot.
 ;
-	.segment "STUBS"
+	.common	; TODO stubs
 ;
 ;	Interrupt vector logic. Keep this in platform for the 6502 so that
 ;	we can use the shorter one for the CMOS chip
@@ -245,9 +256,9 @@ vector:
 ;	Configure the C stack to the i stack
 ;
 	lda	#<istack_top
-	sta	sp
+	sta	@sp
 	lda	#>istack_top
-	sta	sp+1
+	sta	@sp+1
 	jsr	interrupt_handler
 ;
 ;	Reload the previous value into the stack ptr
@@ -333,69 +344,53 @@ syscall_entry:
 
 	stx	_udata + U_DATA__U_CALLNO
 
-	; No arguments - skip all the copying and stack bits
-	cpy	#0
-	beq	noargs
-
-	; Remove the arguments. This is fine as by the time we go back
-	; to the user stack we'll have finished with them
-	lda	sp
-	sta	ptr1
-	ldx	sp+1
-	stx	ptr1+1
-	jsr	incaxy
-	sta	sp
-	stx	sp+1
+	; 	@usp points to the user argments
 
 	;
 	;	We copy the arguments but need to deal with the compiler
-	;	stacking in the reverse order. At this point ptr1 points
+	;   stacking in the reverse order. At this point @tmp points
 	;	to the last byte of the arguments (first argument). We go
 	;	down the stack copying words up the argument list.
 	;
+	ldy	#0
 	ldx	#0
 copy_args:
-	dey
-	lda	(ptr1),y		; copy the arguments over
-	sta	_udata + U_DATA__U_ARGN+1,x
-	dey
-	lda	(ptr1),y
-	sta	_udata + U_DATA__U_ARGN,x
-        inx
+	lda	(@usp),y
+	sta	_udata+U_DATA__U_ARGN,x
 	inx
-	cpy	#0
+	iny
+	cpy	#8
 	bne	copy_args
-noargs:
-	;
+
 	; Now we need to stack switch. Save the adjusted stack we want
 	; for return
 	;
-	lda	sp
+	lda	@usp
 	pha
-	lda	sp+1
+	lda	@usp+1
 	pha
 	tsx
-	stx	_udata + U_DATA__U_SYSCALL_SP
+	stx	_udata+U_DATA__U_SYSCALL_SP
 ;
 ;	We save a copy of the high byte of sp here as we may need it to get
 ;	the brk() syscall right.
 ;
-	sta _udata + U_DATA__U_SYSCALL_SP + 1
+	sta _udata+U_DATA__U_SYSCALL_SP+1
 ;
 ;	Now switch to the kernel ZP/S
 ;	TODO: sort this mapping out properly
 ;
-	sta $C008
-	ldx #$FF
+	sta	$C008
+	ldx	#$FF
 	txs
 ;
 ;
 ;	Set up the C stack
 ;
 	lda	#<kstack_top
-	sta	sp
+	sta	@sp
 	lda	#>kstack_top
-	sta	sp+1
+	sta	@sp+1
 
 	cli
 ;
@@ -421,9 +416,9 @@ noargs:
 ;	From that recover the C stack and the syscall buf ptr
 ;
 	pla
-	sta	sp+1
+	sta	@usp+1
 	pla
-	sta 	sp
+	sta 	@usp
 	lda	_udata + U_DATA__U_CURSIG
 	beq	syscout
 	tay
@@ -444,9 +439,9 @@ noargs:
 	pha
 	lda	_udata + U_DATA__U_RETVAL+1
 	pha
-	lda	#>sigret		; Return address
+	lda	#>sigret-1		; Return address
 	pha
-	lda	#<sigret
+	lda	#<sigret-1
 	pha
 
 	tya
@@ -466,7 +461,8 @@ noargs:
 	; Invoke the helper with signal and vector stacked
 	; it will then return to syscout and recover the original
 	; frame. If the handler made syscalls then
-	jmp (PROGLOAD + 20)
+	cli
+	jmp (PROGLOAD + 16)
 
 	;
 	; FIXME: should loop for more signals if appropriate
@@ -498,39 +494,44 @@ syscout:
 ;	IRQ must be off on entry
 ;
 plt_doexec:
-;
-;	Start address of executable
-;
-	stx	ptr3+1		; Point ptr3 at base
-	sta	ptr3
-	stx	ptr2+1		; Point ptr2 at base + 0x10
+	;	Can't use pop directly and we don't actually care
+	;	about the kstack anwyay
+	ldy	#1
+	lda	(@sp),y
+	dey
+	tax
+	lda	(@sp),y
+	;	Set up for the loader
+	stx	@tmp3+1		; Point @tmp3 at base
+	sta	@tmp3
+	stx	@tmp2+1		; Point @tmp2 at base + 0x10
 	lda	#16
-	sta	ptr2
+	sta	@tmp2
 	ldy	#0
-	lda	(ptr2),y	; Get the signal vector pointer
+	lda	(@tmp2),y	; Get the signal vector pointer
 	sta	PROGLOAD+16	; if we loaded high put the vector in
 	iny
-	lda	(ptr2),y
+	lda	(@tmp2),y
 	sta	PROGLOAD+17	; the low space where it is expected
 
-	lda	ptr2
+	lda	@tmp2
 
 ;
 ;	    Switch zero page and CPU stack to user - TODO
 ;
-	sta $C009		; Auxiliary stack and SP selected
+	sta	$C009		; Auxiliary stack and SP selected
 
-	    stx ptr1+1
-	    sta ptr1
+	stx	@tmp+1
+	sta	@tmp
 
 
 ;
 ;	Set up the C stack. FIXME: assumes for now our sp in ZP matches it
 ;
 	lda	_udata + U_DATA__U_ISP
-	sta	sp
+	sta	@usp
 	ldx 	_udata + U_DATA__U_ISP+1
-        stx	sp+1
+        stx	@usp+1
 
 ;
 ;	Set up the 6502 stack: TODO
@@ -544,7 +545,7 @@ plt_doexec:
 ;
 	jsr _relocator
 
-	jmp (ptr3)		; Enter user application
+	jmp (@tmp3)		; Enter user application
 
 ;
 ;	Straight jumps no funny banking issues yet
@@ -556,13 +557,13 @@ _unix_syscall_i:
 _plt_interrupt_i:
 	jmp _plt_interrupt
 
-	.segment "COMMONDATA"
+	.commondata
 
 	.export _statusdata
 _hd_map:
-	.res 1
+	.ds 1
 _statusdata:
-	.res 8
+	.ds 8
 
 	.code
 	; Dummy stubs for now

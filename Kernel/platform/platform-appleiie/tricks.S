@@ -6,29 +6,11 @@
     .export _dofork
 	.export _ramtop
 
-	.import _chksigs
-	.import _plt_monitor
-
-	.import map_kernel
-	.import _swapper
-	.import _swapout
-
-	.import	_makeproc
-	.import _getproc
-	.import _runticks
-	.import outstring
-	.import outxa
-	.import outcharhex
-	.import pushax
-	.import _udata
-
-	.include "kernel.def"
-	.include "../../cpu-6502/kernel02.def"
-	.include "zeropage.inc"
+#include "kernel.def"
+#include "../../cpu-6502/kernel02.def"
 
 ; FIXME: review but all but some of the fork logic looks safe to go in code
-    .segment "COMMONMEM"
-
+	.common
 ; ramtop must be in common for single process swapping cases
 ; and its a constant for the others from before init forks so it'll be fine
 ; here
@@ -63,7 +45,7 @@ _plt_switchout:
         ; we should never get here
         jsr _plt_monitor
 
-badswitchmsg: .byte "_switchin: FAIL"
+badswitchmsg: .ascii "_switchin: FAIL"
 	.byte 13, 10, 0
 
 ;
@@ -77,7 +59,7 @@ _switchin:
 	sta	switch_proc_ptr
 	stx	switch_proc_ptr+1
 	ldy	#P_TAB__P_PAGE_OFFSET
-	lda	(ptr1),y
+	lda	(@tmp),y
 
 	bne	not_swapped
 
@@ -154,16 +136,16 @@ not_swapped:
 	bne	switchinfail
 	; XA holds the process ptr as a sidde effect, now construct a
 	; pointer
-	sta	ptr1
-	stx	ptr1+1
+	sta	@tmp
+	stx	@tmp+1
 	; Set it to running
 	ldy	#P_TAB__P_STATUS_OFFSET
 	lda	#P_RUNNING
-	sta	(ptr1),y
+	sta	(@tmp),y
 	; And copy the page offset into the udata
 	ldy	#P_TAB__P_PAGE_OFFSET
 	lda	#0
-	lda	(ptr1),y
+	lda	(@tmp),y
 	sta	_udata + U_DATA__U_PAGE
 	; Fix up the stack pointer from the one we are hiding in
 	ldx	_udata + U_DATA__U_SP
@@ -187,9 +169,9 @@ swtchdone:
         rts
 
 switchinfail:
-	lda	ptr1+1
+	lda	@tmp+1
 	jsr	outcharhex
-	lda	ptr1
+	lda	@tmp
 	jsr	outcharhex
         lda	#<badswitchmsg
 	ldx	#>badswitchmsg
@@ -213,18 +195,18 @@ _dofork:
 	stx fork_proc_ptr+1
 
 	ldy #P_TAB__P_PID_OFFSET
-	sta ptr1
-	stx ptr1+1
+	sta @tmp
+	stx @tmp+1
 
         ; Save the stack pointer and critical registers.
 	; 6502 at least doesn't have too many of those 8)
 
         ; When this process (the parent) is switched back in, it will be as if
         ; it returns with the value of the child's pid.
-	lda (ptr1),y
+	lda (@tmp),y
 	pha
 	iny
-	lda (ptr1),y
+	lda (@tmp),y
 	pha
 
         ; save kernel stack pointer -- when it comes back in the parent we'll be in
@@ -242,7 +224,7 @@ _dofork:
 
 	lda fork_proc_ptr
 	ldx fork_proc_ptr+1
-
+	jsr __push
 	jsr _swapout
 
         ; now the save operation is complete we can get rid of the stuff
@@ -255,11 +237,11 @@ _dofork:
 
         lda fork_proc_ptr
 	ldx fork_proc_ptr+1
-
-	jsr pushax
+	jsr	__push
 
 	lda #<_udata
 	ldx #>_udata
+	jsr	__push
 
 	; Perform the necessary magic to turn into the child
         jsr _makeproc
@@ -284,5 +266,5 @@ _dofork:
 switch_proc_ptr: .word 0
 fork_proc_ptr: .word 0 ; (C type is struct p_tab *) -- address of child process p_tab entry
 swapstack:
-	.res 128,0
+	.ds 128
 swapstack_top:

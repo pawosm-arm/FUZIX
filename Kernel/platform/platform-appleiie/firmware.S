@@ -1,9 +1,8 @@
 ;
 ;	Driver routines for firmware interfaces
 ;
-            .include "kernel.def"
-            .include "../../cpu-6502/kernel02.def"
-	    .include "zeropage.inc"
+#include "kernel.def"
+#include "../../cpu-6502/kernel02.def"
 
 	.export _pascal_op
 	.export _pascal_cmd
@@ -17,21 +16,21 @@ _pascal_op:
 	stx cmdbyte		; patch the operation data following the jsr
 	clc
 	adc #$C0		; Turn slot into slot address high
-	sta ptr1+1		; xxFF holds the index to the DOS entry
+	sta @tmp+1		; xxFF holds the index to the DOS entry
 	lda #255
-	sta ptr1
+	sta @tmp
 	ldy #0
-	lda (ptr1),y		; index
+	lda (@tmp),y		; index
 	clc
 	adc #3			; and 3 beyond that (next JMP) is the pascal
-	sta ptr1		; one.
-	jsr goptr1		; Fake a jsr (ptr1)
+	sta @tmp		; one.
+	jsr gotmp		; Fake a jsr (@tmp)
 cmdbyte:
 	.byte $00
 	.word _pascal_cmd+1
 	rts
 
-goptr1:	jmp (ptr1)
+gotmp:	jmp (tmp)
 
 ;
 ;	Issue a generic ProDOS command block
@@ -39,18 +38,18 @@ goptr1:	jmp (ptr1)
 _dos_op:
 	clc
 	adc #$C0
-	sta ptr1+1
+	sta @tmp+1
 	lda #255
-	sta ptr1
+	sta @tmp
 	ldy #0
-	lda (ptr1),y
-	sta ptr1
-	jmp (ptr1)
+	lda (@tmp),y
+	sta @tmp
+	jmp (@tmp)
 
 ;
 ;	The caller loads up to 9 bytes of data into this buffer
 ;
 	.bss
-_pascal_cmd:	.res 9
+_pascal_cmd:	.ds 9
 
 

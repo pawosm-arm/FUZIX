@@ -8,25 +8,10 @@
 ;	and blow it away (at least for lower resolution modes)
 ;
 ;
-		; imported symbols
-		.import init_early
-		.import init_hardware
-		.import _fuzix_main
-		.import kstack_top
-		.import vector
-		.import nmi_handler
-
-		.import  __BSS_RUN__, __BSS_SIZE__
-		.importzp	ptr1, ptr2, tmp1
-
-	        ; startup code @0
-		.include "zeropage.inc"
-
 ;
 ;	So we end up first in the image
 ;
-	        .segment "START"
-
+		.code
 entry:
 ;
 ;	We are entered at $2000 from ProDOS
@@ -49,35 +34,52 @@ entry:
 		sta $0400
 
 		lda #<kstack_top	; C stack
-		sta sp
+		sta @sp
 		lda #>kstack_top
-		sta sp+1 
+		sta @sp+1 
 
-		lda #<__BSS_RUN__
-		sta ptr1
-		lda #>__BSS_RUN__
-		sta ptr1+1
+		lda #<_udata
+		sta @tmp
+		lda #>_udata
+		sta @tmp+1
 
 		lda #'3'
 		sta $0400
 
 		lda #0
 		tay
-		ldx #>__BSS_SIZE__
+		ldx #2
+wipeud:
+		sta (@tmp),y
+		iny
+		bne wipeud
+		inc @tmp+1
+		dex
+		bne wipeud
+
+		lda #<__bss
+		sta @tmp
+		lda #>__bss
+		sta @tmp+1
+
+		lda #0
+		tay
+		ldx #>__bss_size
 		beq bss_wipe_tail
-bss_wiper_1:	sta (ptr1),y
+bss_wiper_1:	sta (@tmp),y
 		iny
 		bne bss_wiper_1
-		inc ptr1+1
+		inc @tmp+1
 		dex
 		bne bss_wiper_1
 
 bss_wipe_tail:
-		cpy #<__BSS_SIZE__
+		cpy #<__bss_size
 		beq gogogo
-		sta (ptr1),y
+		sta (@tmp),y
 		iny
 		bne bss_wipe_tail
+
 
 gogogo:
 		lda #'4'
@@ -93,7 +95,8 @@ gogogo:
 		sei			; Spin
 stop:		jmp stop
 
-		.segment "VECTORS"
-		.addr	vector
-		.addr	$2000		; does it matter ???
-		.addr	nmi_handler
+		.abs
+		.org 0xFFFA
+		.word	vector
+		.word	$2000		; does it matter ???
+		.word	nmi_handler
