@@ -1,4 +1,3 @@
-# 1 "diskboot.S"
 ; 2015-01-21 Will Sowerbutts <will@sowerbutts.com>
 ;
 ; Boot sector for N8VEM Mark IV SBC with UNA BIOS, based on
