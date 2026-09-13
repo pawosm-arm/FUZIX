@@ -54,7 +54,8 @@ _ide_write:
 	ld	a,PPIDE_PPI_BUS_READ
 	out	(ppi_control),a
 	ret
-	
+
+	.common	
 
 devide_map:
 	ld	a, (_td_raw)
