@@ -47,6 +47,7 @@ SRCS  = \
 	cal.c \
 	chmem.c \
 	cksum.c \
+	colrm.c \
 	cp.c \
 	cu.c \
 	cut.c \

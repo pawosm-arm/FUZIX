@@ -69,6 +69,7 @@ f 0755 /bin/chgrp       chgrp
 f 0755 /bin/chmem       chmem
 f 0755 /bin/chown       chown
 f 0755 /bin/cksum       cksum
+f 0755 /usr/bin/colrm	colrm
 f 0755 /bin/cut         cut
 f 0755 /bin/decomp16    decomp16
 f 0755 /bin/dirname     dirname
