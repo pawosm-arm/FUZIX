@@ -8,7 +8,7 @@
 
 DIR *fdopendir(int fd)
 {
-	DIR *dir = calloc(1, sizeof(DIR));
+	register DIR *dir = calloc(1, sizeof(DIR));
 	if (dir == NULL) {
 		errno = ENOMEM;
 		return NULL;

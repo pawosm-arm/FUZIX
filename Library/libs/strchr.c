@@ -8,7 +8,7 @@
 
 /* FIXME: asm version ?? */
 /********************** Function strchr ************************************/
-char *strchr(const char *s, int c)
+char *strchr(register const char *s, int c)
 {
 	register char ch;
 

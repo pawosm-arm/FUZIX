@@ -43,7 +43,7 @@ struct history
 #undef dirfd
 #define dirfd(d) (*(int *)d)
 
-static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struct FTW *), int fd_limit, int flags, struct history *h)
+static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struct FTW *), int fd_limit, int flags, register struct history *h)
 {
 	size_t l = strlen(path), j = l && path[l-1]=='/' ? l-1 : l;
 	struct stat st;
@@ -107,7 +107,7 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 		}
 		d = fdopendir(dfd);
 		if (d) {
-			struct dirent *de;
+			register struct dirent *de;
 			while ((de = readdir(d))) {
 				if (de->d_name[0] == '.'
 				 && (!de->d_name[1]

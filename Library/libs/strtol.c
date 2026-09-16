@@ -6,7 +6,7 @@
  *
  * strtol.c - This file is part of the libc-8086 package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <limits.h>
 
-static unsigned long do_conv(const char *nptr, char **endptr, int base, int uns)
+static unsigned long do_conv(register const char *nptr, char **endptr, register int base, int uns)
 {
 	const char *start = nptr;
 	unsigned long int number = 0;

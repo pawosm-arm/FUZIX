@@ -16,7 +16,7 @@
  * This ignores __MODE__IOTRAN; probably exactly what you want.
  * (It _is_ what fgetc wants)
  */
-int fread(void *buf, size_t size, size_t nelm, FILE * fp)
+int fread(void *buf, size_t size, size_t nelm, register FILE * fp)
 {
 	register int len, v;
 	unsigned bytes, got = 0;

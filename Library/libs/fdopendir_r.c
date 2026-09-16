@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-DIR *fdopendir_r(DIR *dir, int fd)
+DIR *fdopendir_r(register DIR *dir, int fd)
 {
 	struct stat statbuf;
 
