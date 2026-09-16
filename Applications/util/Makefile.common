@@ -101,6 +101,7 @@ SRCS  = \
 	tar.c \
 	tail.c \
 	termcap.c \
+	tree.c \
 	umount.c \
 	uname.c \
 	uniq.c \
