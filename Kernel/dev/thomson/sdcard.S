@@ -1,7 +1,5 @@
-#include "../../build/kernel.def"
-#include "../../cpu-6809/kernel09.def"
 
-	.common
+; Set the segment before including
 
 	.export _sddrive_rx_sector
 	.export _sddrive_tx_sector
