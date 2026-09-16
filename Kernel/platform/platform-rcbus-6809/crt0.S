@@ -44,6 +44,8 @@ bss_wipe:	sta ,x+
 
 		.code
 
-main:		jsr _fuzix_main
+main:		lda #>_udata
+		tfr a,dp		; We use DP for the udata
+		jsr _fuzix_main
 		orcc #0x10		; we should never get here
 stop:		bra stop
