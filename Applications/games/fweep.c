@@ -214,7 +214,7 @@ void waitcr(void)
 
 void input(char *b, uint16_t l)
 {
-	char *s = b;
+	register char *s = b;
 	char *e = b + l;
 	while(s < e && read(0, s, 1) == 1) {
 		if (*s == 13 || *s == 10) {
@@ -339,12 +339,13 @@ uint8_t memory[64];
 
 static uint8_t zbuf_alloc(void)
 {
+	register uint8_t *p = zbuf_pri;
 	uint8_t low = 255;
 	uint8_t i, lnum = 0;
-	for (i = 0; i < zbuf_num; i++) {
-		if (zbuf_pri[i] == 0)
+	for (i = 0; i < zbuf_num; i++, p++) {
+		if (*p == 0)
 			return i;
-		if (zbuf_pri[i] < low) {
+		if (*p < low) {
 			lnum = i;
 			low = zbuf_pri[i];
 		}
@@ -355,9 +356,10 @@ static uint8_t zbuf_alloc(void)
 static void zbuf_sweep(void)
 {
 	uint8_t i;
-	for (i = 0; i < zbuf_num; i++)
-		if (zbuf_pri[i] > 1)
-			zbuf_pri[i] /= 2;
+	register uint8_t *p = zbuf_pri;
+	for (i = 0; i < zbuf_num; i++, p++)
+		if (*p > 1)
+			*p /= 2;
 }
 
 static void zbuf_load(uint8_t slot, uint16_t page)
@@ -399,8 +401,9 @@ static void zbuf_writeback(uint8_t slot)
 static uint8_t zbuf_find(uint16_t page)
 {
 	uint8_t i;
-	for (i = 0; i < zbuf_num; i++) {
-		if (zbuf_page[i] == page) {
+	register uint16_t *p = zbuf_page;
+	for (i = 0; i < zbuf_num; i++, p++) {
+		if (*p == page) {
 			zbuf_pri[i] |= 0x80;
 			return i;
 		}
@@ -500,6 +503,7 @@ void write8(uint16_t address, uint8_t value)
 }
 
 static char tmpstr[] = "/tmp/fweepXXXXXX";
+
 void paging_init(void)
 {
 	uint8_t i = 0;
@@ -716,7 +720,7 @@ boolean verify_checksum(void)
 static void sync_alphabet(void)
 {
 #if VERSION >= 5
-	uint8_t *p = alpha;
+	register uint8_t *p = alpha;
 	uint16_t r;
 	if ((r = alphabet_table) != 0) {
 		while(p != alpha + 78)
@@ -810,7 +814,7 @@ uint32_t text_print(uint32_t address)
 void make_rectangle(uint32_t addr, int width, int height, int skip)
 {
 	int old_column = cur_column;
-	int w, h;
+	register int w, h;
 	for (h = 0; h < height; h++) {
 		for (w = 0; w < width; w++)
 			char_print(read8(addr++));
@@ -864,7 +868,7 @@ void storei(uint16_t value)
 void enter_routine(uint32_t address, boolean stored, int argc)
 {
 	int c = read8(address);
-	int i;
+	register int i;
 
 	if (frameptr == &frames[FRAMESIZE - 1])
 		panic("out of frames.\n");
@@ -956,7 +960,7 @@ void insert_object(obj_t obj, uint16_t dest)
 {
 	obj_t p = parent(obj);
 //	obj_t s = sibling(obj);
-	obj_t x;
+	register obj_t x;
 	if (p) {
 		x = child(p);
 		if (x == obj) {
@@ -1032,7 +1036,7 @@ input_again:
  *	Fetch a dictionary entry of 2 or 3 zwords into the passed
  *	word array
  */
-void dictionary_get(uint16_t addr, uint16_t *p)
+void dictionary_get(uint16_t addr, register uint16_t *p)
 {
 	uint8_t c = VERSION > 3 ? 3 : 2;
 	uint16_t w;
@@ -1119,7 +1123,7 @@ uint16_t encodeword(void)
 	return w;
 }
 
-void dictionary_encode(uint8_t *text, int len, uint16_t *wp)
+void dictionary_encode(uint8_t *text, int len, register uint16_t *wp)
 {
 	sync_alphabet();
 	wordptr = text;
@@ -1140,7 +1144,7 @@ void add_to_parsebuf(uint16_t parsebuf, uint16_t dict, uint8_t * d,
 		     int k, int el, int ne, int p, uint16_t flag)
 {
 	/* Encode the word into zscii */
-	int i;
+	register int i;
 	uint16_t n = parsebuf + (read8(parsebuf + 1) << 2);
 	uint16_t vbuf[3];
 	uint16_t dbuf[3];
@@ -1178,8 +1182,6 @@ void add_to_parsebuf(uint16_t parsebuf, uint16_t dict, uint8_t * d,
  *	Process a command line input
  */
 
-/* Out of the fn in order to build nicely on SDCC and CC65 - sigh */
-static boolean ws[256];
 
 void tokenise(uint16_t text, uint16_t dict, uint16_t parsebuf, int len,
 	      uint16_t flag)
@@ -1187,6 +1189,7 @@ void tokenise(uint16_t text, uint16_t dict, uint16_t parsebuf, int len,
 	uint8_t d[10];
 	int i, el, ne, k, p, p1;
 	int l;
+	static boolean ws[256];
 
 	memset(ws, 0, 256 * sizeof(boolean));
 
@@ -1482,11 +1485,11 @@ void switch_output(int st)
 
 void execute_instruction(void)
 {
-	uint8_t in = pc();
-	uint16_t at;
-	int16_t n;
+	register uint16_t at;
+	register int16_t n;
+	register int argc;
+	register uint8_t in = pc();
 	uint16_t u;
-	int argc;
 
 	if (!predictable)
 		randv -= 0x0200;
