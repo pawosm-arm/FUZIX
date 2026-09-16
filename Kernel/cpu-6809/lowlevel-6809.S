@@ -46,10 +46,10 @@
 ;		B = syscall no
 ;
 unix_va_syscall:
-	pshs cc,u
+	pshs dp,cc,u
 	ldu	#_udata + U_DATA__U_ARGN
 	stb	_udata + U_DATA__U_CALLNO
-	leax	7,s
+	leax	8,s
 	ldd	,x++
 	std	,u++
 	bra	syscall
@@ -65,12 +65,13 @@ unix_va_syscall:
 ;		X = syscall number, D = arg1
 ;
 unix_syscall_entry:
-	pshs cc,u
+	pshs dp,cc,u
+        orcc #0x10
 	ldu #_udata + U_DATA__U_ARGN
 	std ,u++
 	tfr x,d
 	stb _udata + U_DATA__U_CALLNO
-	leax 7,s	; skip return addresses
+	leax 8,s	; skip return addresses
 syscall:
 	ldd ,x++	; second argument from caller's stack
 	std ,u++
@@ -93,6 +94,8 @@ syscall:
         ; re-enable interrupts
         andcc #0xef
 
+	lda #>_udata
+	tfr a,dp
         ; now pass control to C
         jsr _unix_syscall
 
@@ -122,7 +125,7 @@ not_error:
         ; no error to signal! return syscall return value instead of error code
         ldd _udata + U_DATA__U_RETVAL
 unix_return:
-	puls cc,u,pc
+	puls dp,cc,u,pc
 ;
 ;	We must rts on the right bank !
 ;
@@ -160,6 +163,8 @@ dispatch_process_signal:
 	jsr ,u
 
 signal_return:
+	lda #>_udata
+	tfr a,dp
         orcc #0x10
 	puls x,y
 	stx _udata + U_DATA__U_RETVAL
@@ -208,6 +213,8 @@ reinterrupt:
 	rti
 
 interrupt_handler:
+	lda #>_udata
+	tfr a,dp
 	; If the platform interrupt code re-enabled interrupts then
 	; we are on the interrupt stack already and platform author
 	; is assumed to know what they are doing 8)
@@ -321,12 +328,14 @@ null_handler:
 	; kernel jump to NULL is bad
 	lda _udata + U_DATA__U_INSYS
 	bne trap_illegal
+	lda #>_udata
+	tfr a,dp
 	; user is merely not good
-	ldd #7			; SIGBUS
+	ldd #9			; SIGKILL
 	pshs d
 	ldd _udata + U_DATA__U_PTAB
 	ldx #39			; Function 39 = kill
-	jsr unix_syscall_entry	; kill (getpid(), SIGBUS)
+	jsr unix_syscall_entry	; kill (getpid(), SIGKILL)
 	leas 2,s
 	ldx #0
 	jsr unix_syscall_entry
