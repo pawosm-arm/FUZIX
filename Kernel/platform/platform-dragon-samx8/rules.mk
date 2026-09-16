@@ -1,5 +1,6 @@
 CROSS_CCOPTS += -I$(FUZIX_ROOT)/Kernel/platform/platform-dragon-nx32
 CROSS_CCOPTS += -I$(FUZIX_ROOT)/Kernel/platform/platform-coco3
+CROSS_CCOPTS += -p $(FUZIX_ROOT)/Kernel/build/rules.6809
 
 # Partially reproduces the target selection logic in platform Makefile
 
