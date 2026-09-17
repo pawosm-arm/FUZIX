@@ -50,6 +50,8 @@ SDRIVE1"FUZIX.VHD"
 
 Then type BOOT.  Type 'hda1' at the boot prompt.
 
+Swap appears to work.
+
 
 RUNNING UNDER EMULATION
 =======================
@@ -73,9 +75,13 @@ XRoar should automatically type "BOOT" to boot off the mounted floppy.  Type
 'dw' at the boot prompt.  Remember when you finish that you have a socat job
 running in the background.
 
+Swap will not work in this configuration, as the swap partition is not visible
+over DriveWire.
 
-TODO (test/debug)
-=================
 
- * swap
- * probably loads of other things
+COMPRESSING THE KERNEL
+======================
+
+Completely optional, but if you have dzip installed, appending
+FZLOAD09_FORMAT=dzip to the make command in the examples above will compress
+the kernel, which loads faster.
