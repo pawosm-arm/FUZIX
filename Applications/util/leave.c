@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 static void doalarm(unsigned int);
