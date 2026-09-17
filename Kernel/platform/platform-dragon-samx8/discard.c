@@ -16,6 +16,11 @@ void tty_detect(void);
 extern uint16_t framedet;
 extern uint8_t sys_hz;
 
+void size_ram(void) {
+	ramsize = 512;
+	procmem = MAX_MAPS * 16;
+}
+
 void plt_copyright(void)
 {
 	kprintf("SAMx8 2025-2026 Ciaran Anscomb\n");

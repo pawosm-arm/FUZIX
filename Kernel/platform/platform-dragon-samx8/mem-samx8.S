@@ -6,7 +6,6 @@
 ; Copyright 2025-2026 Ciaran Anscomb
 
 	; exported
-	.export size_ram
 	.export map_kernel
 	.export map_proc
 	.export map_proc_a
@@ -17,17 +16,6 @@
 
 #include "kernel.def"
 #include "../../cpu-6809/kernel09.def"
-
-	.discard
-
-; Sets ramsize, procmem
-size_ram:
-	; we know what we should have
-	ldd #512
-	std _ramsize		; in KB
-	ldd #512-64-16		; 512 - kernel (64), video & COMMON (16)
-	std _procmem
-	rts
 
 	.common
 
