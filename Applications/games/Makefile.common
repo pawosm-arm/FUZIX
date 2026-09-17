@@ -20,7 +20,7 @@ APPSNS = $(OBJSNS:.o=)
 
 CFLAGS += -DCONFIG_IO_CUSS
 
-all: $(APPS) $(APPSNS) size.report
+all: $(APPS) $(APPSNS) $(APPSFP) size.report
 
 $(APPS): %: %.o
 	$(LINKER) $(CRT0) $^ -o $@ $(LINKER_OPT) -ltermcap$(USERCPU) $(LINKER_TAIL)
