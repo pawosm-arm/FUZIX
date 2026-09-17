@@ -64,21 +64,24 @@ SRC_CURS = $(shell find curses -name '*.c')
 SRC_RL = readline.c readline_fn.c
 
 SRC_LM += acosf.c acoshf.c asinf.c asinhf.c atan2f.c atanf.c atanhf.c
-SRC_LM += cbrtf.c ceilf.c copysignf.c erff.c expf.c expm1f.c
+SRC_LM += cbrtf.c ceilf.c cosf.c copysignf.c erff.c expf.c expm1f.c
 SRC_LM += fabsf.c fdimf.c floorf.c fmaxf.c fminf.c fmodf.c frexpf.c
 SRC_LM += hypotf.c ilogbf.c j0f.c j1f.c jnf.c
 SRC_LM += ldexpf.c lgammaf.c lgammaf_r.c logf.c log2f.c log10f.c logbf.c
 SRC_LM += lrintf.c lroundf.c
 SRC_LM += modff.c nearbyintf.c nextafterf.c powf.c
 SRC_LM += remainderf.c remquof.c rintf.c roundf.c
-SRC_LM += scalbnf.c scalbln.c
+SRC_LM += scalbf.c scalbnf.c
 SRC_LM += sinf.c sincosf.c sinhf.c
-SRC_LM += tanf.c __tandf.c coshf.c truncf.c __rem_pio2.c tanhf.c
+SRC_LM += tanf.c __tandf.c coshf.c truncf.c tanhf.c
 SRC_LM += sqrtf.c tgammaf.c
 SRC_LM += vfscanf_m.c vfprintf_m.c
 SRC_LM += __expo2f.c __float_bits.c __fpclassifyf.c __log1pf.c __signgam.c
-SRC_LM += mathhelper.c
-
+SRC_LM += mathhelper.c __cosdf.o __sindf.o
+SRC_LM += __rem_pio2f.c __rem_pio2.c __rem_pio2_large.c _fnum.c ecvt.o
+# So that they end up using the maths versions
+OBJ_LX = printf.o sprintf.o fprintf.o vprintf.o
+OBJ_LX += fscanf.o scanf.o sscanf.o vfscanf.o vscanf.o vsscanf.o
 OBJ_C = $(SRC_C:.c=.o)
 OBJ_CURS = $(SRC_CURS:.c=.o)
 OBJ_CT = $(SRC_CT:.c=.o)
@@ -134,8 +137,8 @@ termcap$(PLATFORM).lib: $(OBJ_CT)
 	ln -sf termcap$(PLATFORM).lib libtermcap$(PLATFORM).a
 	cp libtermcap$(PLATFORM).a libtermcap.a
 
-m$(PLATFORM).lib: $(OBJ_LM)
-	$(AR) rc m$(PLATFORM).lib `$(LORDER) $(OBJ_LM) | tsort`
+m$(PLATFORM).lib: $(OBJ_LM) $(OBJ_LX)
+	$(AR) rc m$(PLATFORM).lib `$(LORDER) $(OBJ_LM) $(OBJ_LX) | tsort`
 	ln -sf m$(PLATFORM).lib libm$(PLATFORM).a
 	cp libm$(PLATFORM).a libm.a
 

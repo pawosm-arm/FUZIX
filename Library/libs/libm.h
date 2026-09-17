@@ -226,4 +226,6 @@ float  __expo2f(float);
 double __log1p(double);
 float  __log1pf(float);
 
+void _fnum(double, int, int, char *);
+
 #endif

@@ -114,4 +114,8 @@ extern long nrand48(unsigned short __xsubi[3]);
 extern unsigned short *seed48(unsigned short __seed16v[3]);
 extern void srand48(long __sedval);
 
+/* Odd legacy fpisms that exist here */
+extern char *ecvt(double __val, int __ndig, int *__pdecpt, int *__psign);
+extern char *fcvt(double __val, int __ndig, int *__pdecpt, int *__psign);
+
 #endif /* __STDLIB_H */
