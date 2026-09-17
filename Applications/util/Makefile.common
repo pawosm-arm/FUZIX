@@ -87,6 +87,7 @@ SRCS  = \
 	mode.c \
 	more.c \
 	mount.c \
+	nohup.c \
 	nvtool.c \
 	od.c \
 	passwd.c \
