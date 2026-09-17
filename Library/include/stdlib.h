@@ -65,6 +65,8 @@ extern unsigned long strtoul(const char *__nptr,
 
 extern int mkstemp(char *__template);
 extern int mkstemps(char *__template, int __suffix);
+extern char *mkdtemp(char *__template);
+extern char *mkdtemps(char *__template, int __suffix);
 
 #ifndef __HAS_NO_DOUBLES__
 extern double strtod(const char *__nptr, char **__endptr);

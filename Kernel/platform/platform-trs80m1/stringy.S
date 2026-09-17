@@ -1,20 +1,10 @@
-	.module stringy
+	.export	_tape_op
+	.export	_tape_err
 
-	.globl	_tape_op
-	.globl	_tape_err
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80u.def"
 
-        .include "kernel.def"
-        .include "../../cpu-z80/kernel-z80.def"
-
-	.area _COMMONMEM
-
-	.globl _tape_op
-
-	.globl go_slow
-	.globl go_fast
-
-	.globl map_proc_always
-	.globl map_kernel_restore
+	.export _tape_op
 
 _tape_op:
 	call go_slow
@@ -30,7 +20,8 @@ do_tape_op:
 	xor a
 	ld (_tape_err),a
 
-	ld hl,#6		; SP + 6
+	push bc
+	ld hl,10		; SP + 10
 	add hl,sp
 	ld d,(hl)
 	inc hl
@@ -52,7 +43,8 @@ do_tape_op:
 	jr z, select_op
 	dec a
 	jr z, erase_op
-	ld hl,#0xFFFF
+	ld hl,0xFFFF
+	pop bc
 	ret
 find_op:
 	ld a,d
@@ -66,7 +58,8 @@ seekf_op:
 	ld a,d
 	call 0x300F		; find file A
 tape_error:
-	ld hl,#0		; return 0 if good or -1 if bad and save err
+	pop bc
+	ld hl,0			; return 0 if good or -1 if bad and save err
 	ret z
 	dec hl
 	ld (_tape_err),a

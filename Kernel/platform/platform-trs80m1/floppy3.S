@@ -16,19 +16,11 @@
 ;		but check
 ;
 ;
-	.globl _fd3_restore
-	.globl _fd3_operation
-	.globl _fd3_motor_on
-	.globl _fd3_motor_off
-	.globl fd_nmi_handler
-	.globl _fd_map
-	.globl _fd_selected
-	.globl _fd_tab
-	.globl _fd_cmd
-	.globl map_kernel, map_proc_always
-	.globl nmi_handler
-
-	.module floppy3
+	.export _fd3_restore
+	.export _fd3_operation
+	.export _fd3_motor_on
+	.export _fd3_motor_off
+	.export fd_nmi_handler
 
 FDCREG	.equ	0xF0
 FDCTRK	.equ	0xF1
@@ -61,7 +53,7 @@ SIZE	.equ	6		; For now 1 = 256 2 = 512
 STEP	.equ	7		; Step rate
 COMP	.equ	8		; Write compensation
 
-	.area	_COMMONMEM
+	.common
 ;
 ;	Simple routine for pauses
 ;
@@ -92,7 +84,7 @@ fd_nmi_handler:
 	xor	a
 	out	(FDCINT), a
 	push	bc
-	ld	bc, #100
+	ld	bc, 100
 	call	nap
 	pop	bc
 	pop	af
@@ -104,7 +96,7 @@ fd_nmi_handler:
 ;	Preserve HL, DE
 ;
 waitdisk:
-	ld	bc, #0
+	ld	bc, 0
 waitdisk_l:
 	in	a, (FDCREG)
 	bit	0, a
@@ -259,10 +251,10 @@ fdio_inbyte2:				; this is patched for I/O size
 ;	status at about 58 clocks
 ;
 fdio_out:
-	ld	a, #0x76		; 47
+	ld	a, 0x76			; 47
 	ld	e,a			; 51
 	set	6,d			; 59
-	ld	b,#0x0F
+	ld	b,0x0F
 fdio_p:	djnz	fdio_p
 fdio_outl:
 	in	a, (FDCREG)		; Wait for DRQ (or error)
@@ -273,9 +265,9 @@ fdio_outl:
 	in	a, (FDCREG)		; No longer busy ??
 	rra
 	ret	nc			; Bugger...
-	ld	a, #0xC0		; Turn on magic floppy NMI interface
+	ld	a, 0xC0			; Turn on magic floppy NMI interface
 	out	(FDCINT), a
-	ld	b, #50			; Spin for it
+	ld	b, 50			; Spin for it
 spin1:	djnz	spin1
 	ld	b, (hl)			; Next byte
 	inc	hl
@@ -287,7 +279,7 @@ fdio_waitlock:
 	jr	z, fdio_waitlock
 	out	(c), b
 	ld	a, d
-	ld	b, #0xFE
+	ld	b, 0xFE
 fdio_outbyte:
 	out	(FDCCTRL), a		; stalls
 	outi
@@ -307,7 +299,7 @@ fdio_nmiout:
 	jr	fdxferdone
 
 fdxferbad:
-	ld	a, #0xff
+	ld	a, 0xff
 	ret
 
 ;
@@ -318,6 +310,13 @@ fdxferbad:
 ;	fd_reset3(uint8_t *drvptr)
 ;
 _fd3_restore:
+	push	bc
+	ld	hl,6
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)
+	ex	de,hl
 	ld	a, (fdcctrl)
 	out	(FDCCTRL), a
 	ld	a, #1
@@ -341,6 +340,7 @@ _fdr_wait:
 	ret	nz
 	ld	(de), a		; Track 0 correctly hit (so 0)
 	ld	l,a
+	pop	bc
 	ret
 ;
 ;	fd_operation3(uint8_t *driveptr)
@@ -349,7 +349,12 @@ _fdr_wait:
 ;	running.
 ;
 _fd3_operation:
-	ex	de,hl		; arg into de
+	push	bc
+	ld	hl,6
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)		; arg in de
 	ld	a, (_fd_map)
 	or	a
 	call	nz, map_proc_always
@@ -361,6 +366,7 @@ _fd3_operation:
 	ld	l, a
 	ld	h, #0
 	pop	ix
+	pop	bc
 	ld	a, (_fd_map)
 	or	a
 	ret	z
@@ -379,6 +385,10 @@ _fd3_operation:
 ;
 ;
 _fd3_motor_on:
+	push	bc
+	ld	hl,6
+	add	hl,sp
+	ld	l,(hl)
 	;
 	;	Select drive B, turn on motor if needed
 	;
@@ -393,11 +403,11 @@ _fd3_motor_on:
 ;
 notsel:
 	ld	a, l
-	and	#0x7F
+	and	0x7F
 	out 	(FDCCTRL), a
 	out	(FDCCTRL), a	; TRS80 erratum: model 4 gate array apparently needs this
 	ld	(fdcctrl), a
-	ld	bc, #0x7F00	; Long delay (may need FE or FF for some disks?)
+	ld	bc, 0x7F00	; Long delay (may need FE or FF for some disks?)
 	call	nap
 	; FIXME: longer motor spin up delay goes here (0.5 or 1 second)
 	
@@ -405,10 +415,11 @@ notsel:
 ;
 ;	All is actually good
 ;
-	ld	a,#1
+	ld	a,1
 	ld	(motor_running),a
 motor_was_on:
-	ld	hl, #0
+	ld	hl, 0
+	pop	bc
 	ret
 
 ;
@@ -428,11 +439,13 @@ _fd3_motor_off:
 	ld	(motor_running), a
 	ret
 
+	.commondata
+
 curdrive:
-	.db	0xff
+	.byte	0xff
 motor_running:
-	.db	0
+	.byte	0
 fdcctrl:
-	.db	0
+	.byte	0
 fdc_active:
-	.db	0
+	.byte	0

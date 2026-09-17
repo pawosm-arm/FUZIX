@@ -29,26 +29,17 @@ void z180_timer_interrupt(void)
     unsigned char a;
 
     /* we have to read both of these registers in order to reset the timer */
-    a = TIME_TCR;
-    a = TIME_TMDR0L;
+    a = in(TIME_TCR);
+    a = in(TIME_TMDR0L);
 
     timer_interrupt();
-}
-
-void plt_idle(void)
-{
-    /* Let's go to sleep while we wait for something to interrupt us;
-     * Makes the Mark IV's run LED go red, which amuses me greatly. */
-    __asm
-        halt
-    __endasm;
 }
 
 void plt_interrupt(void)
 {
     switch(irqvector){
         case Z180_INT_TIMER0:
-            z180_timer_interrupt(); 
+            z180_timer_interrupt();
             return;
         case Z180_INT_ASCI0:
             tty_pollirq_asci0();

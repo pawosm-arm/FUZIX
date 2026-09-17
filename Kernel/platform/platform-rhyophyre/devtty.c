@@ -7,6 +7,8 @@
 #include <devtty.h>
 #include <z180.h>
 
+/* TODO: An SIO style vectors ASCI driver template */
+
 static uint8_t tbuf1[TTYSIZ];
 static uint8_t tbuf2[TTYSIZ];
 
@@ -97,13 +99,13 @@ void tty_setup(uint_fast8_t minor, uint_fast8_t flags)
 
 	/* ASCI serial set up */
 	if (minor == 1) {
-		ASCI_CNTLA0 = cntla;
-		ASCI_CNTLB0 = cntlb;
-		ASCI_ASEXT0 &= ~0x20;
-		ASCI_ASEXT1 |= ecr;
+		out(ASCI_CNTLA0, cntla);
+		out(ASCI_CNTLB0, cntlb);
+		out(ASCI_ASEXT0, in(ASCI_ASEXT0) & ~0x20);
+		out(ASCI_ASEXT1, in(ASCI_ASEXT1) | ecr);
 	} else if (minor == 2) {
-		ASCI_CNTLA1 = cntla;
-		ASCI_CNTLB1 = cntlb;
+		out(ASCI_CNTLA1, cntla);
+		out(ASCI_CNTLB1, cntlb);
 	}
 }
 /* For the moment */
@@ -115,18 +117,18 @@ int tty_carrier(uint_fast8_t minor)
 
 void tty_pollirq_asci0(void)
 {
-    while(ASCI_STAT0 & 0x80)
-        tty_inproc(1, ASCI_RDR0);
-    if (ASCI_STAT0 & 0x70)
-        ASCI_CNTLA0 &= ~0x08;
+    while(in(ASCI_STAT0) & 0x80)
+        tty_inproc(1, in(ASCI_RDR0));
+    if (in(ASCI_STAT0 & 0x70))
+    	out(ASCI_CNTLA0, in(ASCI_CNTLA0) & ~0x08);
 }
 
 void tty_pollirq_asci1(void)
 {
-    while(ASCI_STAT1 & 0x80)
-        tty_inproc(2, ASCI_RDR1);
-    if (ASCI_STAT1 & 0x70)
-        ASCI_CNTLA1 &= ~0x08;
+    while(in(ASCI_STAT1) & 0x80)
+        tty_inproc(2, in(ASCI_RDR1));
+    if (in(ASCI_STAT1) & 0x70)
+        out(ASCI_CNTLA1, in(ASCI_CNTLA1) & ~0x08);
 }
 
 void tty_putc(uint_fast8_t minor, uint_fast8_t c)
@@ -135,12 +137,12 @@ void tty_putc(uint_fast8_t minor, uint_fast8_t c)
         case 1:
 	    /* For now make console 1 serial 1 plus ps/2 and video */
 	    vtoutput(&c, 1);
-            while(!(ASCI_STAT0 & 2));
-            ASCI_TDR0 = c;
+            while(!(in(ASCI_STAT0) & 2));
+            out(ASCI_TDR0, c);
             break;
         case 2:
-            while(!(ASCI_STAT1 & 2));
-            ASCI_TDR1 = c;
+            while(!(in(ASCI_STAT1) & 2));
+            out(ASCI_TDR1, c);
             break;
     }
 }

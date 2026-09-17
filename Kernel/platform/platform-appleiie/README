@@ -197,7 +197,8 @@ Main bank:
 BF00-BFFF		ProDOS
 C000-CFFF		I/O
 D000-FFFF		Language space (12K with 4K switchable over Dxxx)
-			Mostly occupied by ProDOS
+			Mostly occupied by ProDOS tied to primary main bank
+			(can't use aux language and primary main etc)
 
 Aux bank:
 0000-00FF:		Aux ZP (upper half ProDOS used)
@@ -207,6 +208,16 @@ Aux bank:
 0800-BFFF:		User if no ramdisk
 C000-CFFF:		I/O
 D000-FFFF:		Aux Language space (ditto)
+			12K/4K switchable over Dxxx tied to aux main bank
 
 
-
+Switching
+0000-01FF		Main or aux (Switch C008/C009)
+0200-BFFF		Switched for RD/WR independently
+			CD02/3 selects read
+			CD04/5 selects write
+C000-CFFF		I/O and ROM (fixed)
+D000-FFFF		ROM | RAM | low 4K other RAM
+			C08X
+			(can pick low D000-DFFF from two 4K blocks
+     			 and whole between RAM and ROM plus write prot)

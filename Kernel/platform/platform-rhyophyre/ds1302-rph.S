@@ -1,34 +1,33 @@
 ; 2014-12-31 William R Sowerbutts
 ; N8VEM Mark IV SBC DS1302 real time clock interface code
 
-        .module ds1302-mark4
         .z180
 
         ; exported symbols
-        .globl _ds1302_set_ce
-        .globl _ds1302_set_clk
-        .globl _ds1302_set_data
-        .globl _ds1302_set_driven
-        .globl _ds1302_get_data
+        .export _ds1302_set_ce
+        .export _ds1302_set_clk
+        .export _ds1302_set_data
+        .export _ds1302_set_driven
+        .export _ds1302_get_data
 
-        .include "kernel.def"
-        .include "../../cpu-z180/z180.def"
-        .include "../../cpu-z80/kernel-z80.def"
+#include "kernelu.def"
+#include "../../cpu-z180/z180.def"
+#include "../../cpu-z80u/kernel-z80u.def"
 
 ; -----------------------------------------------------------------------------
 ; DS1302 interface
 ; -----------------------------------------------------------------------------
 
-MARK4_RTC       = MARK4_IO_BASE + 0x0A
-PIN_CE          = 0x10
-PIN_DATA_HIZ    = 0x20
-PIN_CLK         = 0x40
-PIN_DATA_OUT    = 0x80
-PIN_DATA_IN     = 0x01
+MARK4_RTC       .equ MARK4_IO_BASE + 0x0A
+PIN_CE          .equ 0x10
+PIN_DATA_HIZ    .equ 0x20
+PIN_CLK         .equ 0x40
+PIN_DATA_OUT    .equ 0x80
+PIN_DATA_IN     .equ 0x01
 
 .area _DATA
 
-rtc_shadow:     .db 0           ; we can't read back the latch contents, so we must keep a copy
+rtc_shadow:     .byte 0           ; we can't read back the latch contents, so we must keep a copy
 
 .area _CODE
 

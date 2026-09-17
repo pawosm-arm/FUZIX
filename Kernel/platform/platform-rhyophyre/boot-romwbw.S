@@ -19,9 +19,7 @@
 ;	interrupts even if called with them disabled. Work around this
 ;	by turning them back off when we need too
 ;
-		.module boot
-
-.area	    BOOT	(ABS)
+	.abs
 	.org	    0xF000
 
 	.ds   384
@@ -40,7 +38,7 @@
 	.byte 0		; minor
 	.byte 0		; update
 	.byte 0		; patch
-	.ascii 'Fuzix MK4 Loader'
+	.ascii 'Fuzix RPH Loader'
 	.byte '$'	; indicate valid label
 	.word 0		; no patch
 	.word 0xF200	; load target
@@ -60,82 +58,82 @@
 ;	add networking we might have to get clever.
 ;
 bootit:
-	ld a,#0x01
+	ld a,0x01
 	out (0x0D),a
 
-	ld bc, #0x0100
-	ld e, #13
+	ld bc, 0x0100
+	ld e, 13
 	rst 8
-	ld bc, #0x0100
-	ld e, #10
+	ld bc, 0x0100
+	ld e, 10
 	rst 8
 
-	ld sp, #0xFE00		; SP as high as we can
-	ld bc, #0xF8F0		; Get the CPU info into H L and speed into
+	ld sp, 0xFE00		; SP as high as we can
+	ld bc, 0xF8F0		; Get the CPU info into H L and speed into
 				; DE
 	rst 8
 
 	push hl
 	push de
 
-	ld bc, #0xF100		; Get system type into L
+	ld bc, 0xF100		; Get system type into L
 	rst 8
 
 	push hl
 
-	ld bc, #0xF8E0		; Get boot sysinfo into DE
+	ld bc, 0xF8E0		; Get boot sysinfo into DE
 	rst 8
 
-	ld a,#0x03
+	ld a,0x03
 	out (0x0D),a
 
-	ld b, #0x13		; ROMWBW disk read request
+	ld b, 0x13		; ROMWBW disk read request
 	ld c, d			; Device (same as booted off)
-	ld hl, #0x8000		; Loading at 0x8000 for the moment
-	ld e, #32		; 32 sectors (16K)
+	ld hl, 0x8000		; Loading at 0x8000 for the moment
+	ld e, 32		; 32 sectors (16K)
 	push bc
 	rst 8			; Can error but if so wtf do we do ?
 	or a
 	jr nz,failed
 
-	ld a,#0x07
+	ld a,0x07
 	out (0x0D),a
 
-	ld hl,#0x8100		; Don't copy first 256 bytes over
-	ld de,#0x0100
-	ld bc,#0x3F00		; We've loaded 0100-4000
+	ld hl,0x8100		; Don't copy first 256 bytes over
+	ld de,0x0100
+	ld bc,0x3F00		; We've loaded 0100-4000
 	ldir
 
-	ld a,#0x0F
+	ld a,0x0F
 	out (0x0D),a
 
 	;
 	;	Same process again for second 16K of kernel
 	;
 	pop bc
-	ld hl,#0x8000
-	ld e,#32		; Load the next 16K
+	ld hl,0x8000
+	ld e,32		; Load the next 16K
 	push bc
 	rst 8
 	or a
 	jr nz,failed
 
-	ld a,#0x1F
+	ld a,0x1F
 	out (0x0D),a
 
-	ld hl,#0x8000		; Move it into place
-	ld de,#0x4000
-	ld bc,#0x4000
+	ld hl,0x8000		; Move it into place
+	ld de,0x4000
+	ld bc,0x4000
 	ldir
 
-	ld a,#0x3F
+	ld a,0x3F
 	out (0x0D),a
 	;
 	;	And the third 16K
 	;
 	pop bc
-	ld hl,#0x8000		; Low the next 16K
-	ld e, #32
+	ld hl,0x8000		; Low the next 16K
+	ld e, 32
 	push bc
 	rst 8
 	or a
@@ -144,38 +142,38 @@ bootit:
 	; No need to put it in place
 
 
-	ld a,#0x7F
+	ld a,0x7F
 	out (0x0D),a
 	;
 	;	Final 16K
 	;
 	pop bc
-	ld hl,#0xC000		; Now load 0xC000
-	ld e, #24		; takes us up to EFFF
+	ld hl,0xC000		; Now load 0xC000
+	ld e, 24		; takes us up to EFFF
 	rst 8
 	or a
 	jr nz,failed
 
 	; Into the kernel
 
-	ld a,#0xFF
+	ld a,0xFF
 	out (0x0D),a
 	di
 	jp 0x0100
 
 failed:
-	ld bc,#0x0100
-	ld e,#'E'
+	ld bc,0x0100
+	ld e,'E'
 	rst 8
 	di
-	ld a,#0xF0
+	ld a,0xF0
 flasher:
 	out (0x0D),a
-	ld bc,#0x0020
+	ld bc,0x0020
 wait:
 	djnz wait
 	dec c
 	jr nz, wait
-	ld c,#0x20
+	ld c,0x20
 	cpl
 	jr wait

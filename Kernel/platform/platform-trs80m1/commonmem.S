@@ -1,14 +1,14 @@
 ;
 ;	We keep this down at 4100-43ff overlaying the original boot up stuff
 ;
-        .module commonmem
 
-        .area _UDATA
+	.abs
+	.org 0x4100
 
-        .globl _ub
-        .globl _udata
-        .globl kstack_top
-        .globl istack_switched_sp
+        .export _ub
+        .export _udata
+        .export kstack_top
+        .export istack_switched_sp
 
 
 _ub:    ; first 512 bytes: starts with struct u_block, with the kernel stack working down from above

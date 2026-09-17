@@ -2,69 +2,53 @@
 ;	    TRS 80 banking logic for the selector and alpha supermem
 ;
 
-            .module trs80bank
-
             ; exported symbols
-            .globl init_hardware
-	    .globl map_kernel
-	    .globl map_proc
-	    .globl map_proc_a
-	    .globl map_proc_hl
-	    .globl map_proc_always
-	    .globl map_kernel_di
-	    .globl map_proc_di
-	    .globl map_proc_always_di
-	    .globl map_proc_save
-	    .globl map_kernel_restore
-	    .globl map_save_kernel
-	    .globl map_restore
-	    .globl map_save_kmap
-	    .globl map_restore_kmap
-	    .globl fork_mapsave
-	    .globl mapper_init
+            .export init_hardware
+	    .export map_kernel
+	    .export map_proc
+	    .export map_proc_a
+	    .export map_proc_hl
+	    .export map_proc_always
+	    .export map_kernel_di
+	    .export map_proc_di
+	    .export map_proc_always_di
+	    .export map_proc_save
+	    .export map_kernel_restore
+	    .export map_save_kernel
+	    .export map_restore
+	    .export map_save_kmap
+	    .export map_restore_kmap
+	    .export fork_mapsave
+	    .export mapper_init
 
-            ; imported symbols
-	    .globl _program_vectors	
-            .globl _ramsize
-            .globl _procmem
-	    .globl vtbufinit
-	    .globl _trs80_mapper
-	    .globl ___hard_di
-	    .globl ___hard_irqrestore
+	    .export bankpatch1
+	    .export bankpatch2
 
-	    .globl bankpatch1
-	    .globl bankpatch2
+	    .export __uget
+            .export __ugetc
+	    .export __ugetw
+            .export __uput
+            .export __uputc
+            .export __uputw
+            .export __uzero
 
-	    .globl s__COMMONMEM
-	    .globl l__COMMONMEM
-
-
-	    .globl __uget
-            .globl __ugetc
-	    .globl __ugetw
-            .globl __uput
-            .globl __uputc
-            .globl __uputw
-            .globl __uzero
-
-            .include "kernel.def"
-            .include "../../cpu-z80/kernel-z80.def"
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80u.def"
 
 ; -----------------------------------------------------------------------------
 ; KERNEL MEMORY BANK (above 08000, only accessible when the kernel is mapped)
 ; -----------------------------------------------------------------------------
-            .area _BOOT
-
+		.common
 init_hardware:
 	    push af
 	    call vtbufinit
 	    pop af
 	    ld a,(_trs80_mapper)
 	    or a
-	    ld hl,#0xFFFF		; FFFF is free in all our pages
+	    ld hl,0xFFFF		; FFFF is free in all our pages
 	    jr nz, memsize_selector
             ; set system RAM size
-	    ld bc,#0xFF43		; kernel included
+	    ld bc,0xFF43		; kernel included
 	    xor a
 mark_pages:
 	    out (c),b
@@ -72,8 +56,8 @@ mark_pages:
 	    djnz mark_pages
 scan_pages:
 	    out (c),a			; bank 0
-	    ld (hl),#0xff		; so we catch any wrapping
-	    ld b,#2
+	    ld (hl),0xff		; so we catch any wrapping
+	    ld b,2
 scan_pages_l:
 	    out (c),b
 	    cp (hl)			; still 0 ?
@@ -89,28 +73,28 @@ mismatch:				; B holds the first page above
 
 memsize_selector:
             ; set system RAM size	- HL already points to FFFF
-	    ld bc,#0x381f
-	    ld e,#4			; only 4 pages to test
+	    ld bc,0x381f
+	    ld e,4			; only 4 pages to test
 mark_up:
 	    out (c),b
 	    ld (hl),e
-	    ld a,#0xF0			; subtract 0x10
+	    ld a,0xF0			; subtract 0x10
 	    add b
 	    ld b,a
 	    dec e
 	    jr nz, mark_up
-	    ld bc,#0x081f
-	    ld e,#1
+	    ld bc,0x081f
+	    ld e,1
 scan:
 	    out (c),b
 	    ld a,(hl)
 	    cp e
 	    jr nz,scan_done
-	    ld a,#0x10
+	    ld a,0x10
 	    add b
 	    ld b,a
 	    inc e
-	    ld a,#5
+	    ld a,5
 	    cp e
 	    jr nz,scan
 	    dec e
@@ -120,7 +104,7 @@ scan_done:
 ;
 	    dec e			; one holds kernel code
 	    ld h,e
-	    ld l,#0			; effectively * 256
+	    ld l,0			; effectively * 256
 	    srl h
 	    rr  l			; * 128
 	    srl h
@@ -128,12 +112,12 @@ scan_done:
 	    srl h
 	    rr  l			; * 32 so now in Kbytes
             ld (_procmem), hl
-	    ld de,#80			; Kernel costs us 80K due to bank
+	    ld de,80			; Kernel costs us 80K due to bank
 	    add hl,de			; annoyances
             ld (_ramsize), hl
 
             ; set up interrupt vectors for the kernel (also sets up common memory in page 0x000F which is unused)
-            ld hl, #0
+            ld hl, 0
             push hl
             call _program_vectors
             pop hl
@@ -149,7 +133,7 @@ mapper_init:
 	    ld (_trs80_mapper),a
 	    or a
 	    jr nz, mapper_selector
-	    ld hl,#0x0043
+	    ld hl,0x0043
 	    ld (ksave_map),hl
 	    ld (map_reg),hl
 	    ld (map_bank1),hl
@@ -158,7 +142,7 @@ mapper_init:
 	    ret
 mapper_selector:
 	    ; Patch the fast copier for our port numbering
-	    ld a,#0x1f
+	    ld a,0x1f
 	    ld (bankpatch1 + 1),a
 	    ld (bankpatch2 + 1),a
 	    ld (bankpatch3 + 1),a
@@ -282,12 +266,12 @@ map_restore_kmap:
 ;
 ;	This lot is tricky.
 ;
-	.globl __bank_0_1
-	.globl __bank_0_2
-	.globl __bank_1_2
-	.globl __bank_2_1
-	.globl __stub_0_1
-	.globl __stub_0_2
+	.export __bank_0_1
+	.export __bank_0_2
+	.export __bank_1_2
+	.export __bank_2_1
+	.export __stub_0_1
+	.export __stub_0_2
 
 ;
 ;	Start with the easy ones - we are going from common
@@ -381,7 +365,7 @@ __bank_2_1:
 ;	a call in common and resolves the function pointer to the code in
 ;	common. The function stub it adds is simply
 ;
-;		ld de,#realaddr
+;		ld de,realaddr
 ;		call __stub_0_%d   where %d is the target bank
 ;
 ;	For the same reason as bank calls we need to restore the previous
@@ -421,9 +405,6 @@ callhl:	jp (hl)
 ;	Fast inter-bank copier. Copies from kernel common, data or banked
 ;	data (logical bank2) to/from userspace
 ;
-	.area _COMMONMEM
-
-;
 ;	We could use sp and make this faster still but it gets ugly and
 ;	complicated. Might be worth doing pairs of bytes though.
 ;
@@ -435,14 +416,14 @@ b2bcopy:
 	exx
 b2b_loop:
 patch0:
-	ld a,#0
+	ld a,0
 bankpatch3:
 	out (0x43),a
 	ld a,(hl)
 	inc hl
 	ex af,af'
 patch1:
-	ld a,#0
+	ld a,0
 bankpatch4:
 	out (0x43),a
 	ex af,af'
@@ -452,6 +433,8 @@ bankpatch4:
 	dec c
 	jr nz, b2b_loop
 	ret
+
+; --- FIXME convert to new reg and offsets
 
 uputget:
         ; load DE with the byte count
@@ -477,7 +460,7 @@ uputget:
 
 __uput:
 	push ix
-	ld ix,#0
+	ld ix,0
 	add ix,sp
 	call uputget
 	jr z, uput_out
@@ -502,12 +485,12 @@ ucopier:
 	pop hl
 uput_out:
 	pop ix
-	ld hl,#0
+	ld hl,0
 	ret
 
 __uget:
 	push ix
-	ld ix, #0
+	ld ix, 0
 	add ix, sp
 	call uputget
 	jr z, uput_out
@@ -551,7 +534,7 @@ __uputw:
 __ugetc:
 	call map_proc_save
         ld l, (hl)
-	ld h, #0
+	ld h, 0
 	jp map_kernel_restore
 
 __ugetw:
@@ -575,7 +558,7 @@ __uzero:
 	or c
 	ret z
 	call map_proc_save
-	ld (hl), #0
+	ld (hl), 0
 	dec bc
 	ld a, b
 	or c
