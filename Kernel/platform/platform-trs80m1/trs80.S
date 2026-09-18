@@ -219,9 +219,9 @@ _hd_xfer_out:
 
 
 ;
-;	Storage for buffers. Must be banked with CODE2
+;	Storage for buffers. Is actually banked with overlay2
 ;
-	.overlay2
+	.buffers
 
 	.export _bufdata
 	.export _bufdata_end
