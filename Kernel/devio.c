@@ -37,8 +37,6 @@ Bufsync() write outs all dirty blocks.
 Note that a pointer to a buffer structure is the same as a pointer to
 the data if the buffer is inline. This is very important.
 
-FIXME: need to add locking to this for the sleeping case, and a hash for
-the bigger systems
 **********************************************************************/
 
 static uint16_t bufclock;		/* Time-stamp counter for LRU */
@@ -173,10 +171,6 @@ void tmpfree(void *p)
  * Write back a buffer doing the locking outselves. This is called when
  * we do a sync or when we get a media change and need to write back
  * data.
- *
- * FIXME: for the simple case I don't think we can ever get called within
- * an active I/O so the block/bunlock should be fine - but not needed. In
- * async mode they are
  */
 static void bdput(register bufptr bp)
 {
@@ -218,9 +212,6 @@ bufptr bfind(uint16_t dev, blkno_t blk)
 
 	for (bp = bufpool; bp < bufpool_end; ++bp) {
 		if (bp->bf_dev == dev && bp->bf_blk == blk) {
-			/* FIXME: this check is only relevant for non sync stuff
-			   if it's sleeping then this is fine as we'll block here
-			   and sleep until the buffer is unlocked */
 			if (bcheck(bp))
 				panic(PANIC_WANTBSYB);
 			block(bp);
@@ -277,9 +268,6 @@ bufptr freebuf(void)
 			oldtime = age;
 		}
 	}
-	/* FIXME: Once we support sleeping on disk I/O this goes away and
-	   we sleep on something - buffer going unbusy or even the oldest
-	   buffer and then check if it's still old and if not retry */
 	if (!oldest)
 		panic(PANIC_NOFREEB);
 
@@ -416,8 +404,6 @@ int d_blkoff(uint_fast8_t shift)
 
 int nxio_open(uint_fast8_t minor, uint16_t flag)
 {
-	used(minor);
-	used(flag);
 	udata.u_error = ENXIO;
 	return -1;
 }
@@ -427,31 +413,22 @@ int nxio_open(uint_fast8_t minor, uint16_t flag)
  */
 int no_open(uint_fast8_t minor, uint16_t flag)
 {
-	used(minor);
-	used(flag);
 	return 0;
 }
 
 int no_close(uint_fast8_t minor)
 {
-	used(minor);
 	return 0;
 }
 
 int no_rdwr(uint_fast8_t minor, uint_fast8_t rawflag, uint_fast8_t flag)
 {
-	used(minor);
-	used(rawflag);
-	used(flag);
 	udata.u_error = EINVAL;
 	return -1;
 }
 
 int no_ioctl(uint_fast8_t minor, uarg_t a, char *b)
 {
-	used(minor);
-	used(a);
-	used(b);
 	udata.u_error = ENOTTY;
 	return -1;
 }
