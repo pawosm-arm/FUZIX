@@ -23,7 +23,7 @@
 _vtbackbuf:
 	.ds 1024
 
-	.common		; FIXME? commondata
+	.commondata
 _vtbase:
 	.word	0x3C00
 	.word	_vtbackbuf
@@ -114,92 +114,89 @@ _cursor_off:
 _cursor_disable:
 	ret
 
-
-; TO CONVERT
 _cursor_on:
-		pop hl
-		pop bc
-		pop de
-		push de
-		push bc
-		push hl
-		call addr
-		ld a,(hl)
-		ld (hl),'_'
-		ld (csave),a
-		ld (cpos),hl
-		ret
+	ld	hl,4
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	inc	hl
+	ld	d,(hl)
+	call	addr
+	ld	a,(hl)
+	ld	(hl),'_'
+	ld	(csave),a
+	ld	(cpos),hl
+	ret
 
 ; FIXME: should not corrupt ix
 _plot_char:
-		pop ix
-		pop hl
-		pop de
-		pop bc
-		push bc
-		push de
-		push hl
-		push ix
-		call addr
-		ld a,(_video_lower)	; hot path, maybe we should runtime
-		or a			; patch
-		jr nz, plot_lower
-		;
-		; Deal with gate Z30 fun and games. The default model 1
-		; doesn't have bit 6 of the video RAM instead it's generated
-		; by looking at bit 5 and bit 7, and setting bit 6 if both
-		; are low. If we try to print in the lower case range then
-		; bit 5 is high, and we end up printing symbols 32-63
-		; instead.
-		;
-		ld a, c
-		and 0xE0		; Z30 bits
-		cp 0x60		; problem case
-		jr nz, plot_lower
-		res 5,c			; force into upper
+	push	ix
+	ld	ix,6
+	add	ix,sp
+	ld	e,(ix + 0)
+	ld	d,(ix + 2)
+
+	call	addr
+	ld	a,(_video_lower)	; hot path, maybe we should runtime
+	or	a			; patch
+	ld	a, (ix + 4)
+	jr	nz, plot_lower
+	;
+	; Deal with gate Z30 fun and games. The default model 1
+	; doesn't have bit 6 of the video RAM instead it's generated
+	; by looking at bit 5 and bit 7, and setting bit 6 if both
+	; are low. If we try to print in the lower case range then
+	; bit 5 is high, and we end up printing symbols 32-63
+	; instead.
+	;
+	and	0xE0		; Z30 bits
+	cp	0x60		; problem case
+	jr	nz, plot_lower
+	res	5,a		; force into upper
 plot_lower:
-		ld (hl),c
-		ret
+	ld	(hl),a
+	pop	ix
+	ret
 
 _clear_lines:
-		pop hl
-		pop bc
-		pop de			; E = y D = count
-		push de
-		push bc
-		push hl
-		ld c,d
-		ld d,0
-		call addr
-		ld a,32
+	push	bc
+	ld	hl,6
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	inc	hl
+	ld	d,(hl)
+	ld	c,d
+	ld	d,0
+	call	addr
+	ld	a,32
 clear0:
-		ld b,64		; line width
+	ld	b,64		; line width
 clear1:
-		ld (hl),a
-		inc hl
-		djnz clear1
-		dec c
-		jr nz, clear0
-		ret
+	ld	(hl),a
+	inc	hl
+	djnz	clear1
+	dec	c
+	jr	nz, clear0
+	pop	bc
+	ret
 
-; FIXME shouldn't trash IX
 _clear_across:
-		pop ix
-		pop hl
-		pop de		; E = y, D = x
-		pop bc		; C = count
-		push bc
-		push de
-		push hl
-		push ix
-		call addr
-		ld a,32
-		ld b,c
-clear2:		ld (hl),a
-		inc hl
-		djnz clear2
+	push	ix
+	ld	ix,6
+	add	ix,sp
+	ld	e,(ix + 0)
+	ld	d,(ix + 2)
+	call	addr
+	push	bc
+	ld	b,(ix + 4)
+clear2: ld	(hl),a
+	inc	hl
+	djnz	clear2
+	pop	bc
+	pop	ix
 _vtattr_notify:
-		ret
+	ret
 
 _scroll_up:
 	push	bc
@@ -229,7 +226,5 @@ _scroll_down:
 	pop	bc
 	ret
 
-csave:		.byte	0
-cpos:		.word	0
-
-
+csave:	.byte	0
+cpos:	.word	0
