@@ -39,8 +39,6 @@ int tty_read(uint_fast8_t minor, uint_fast8_t rawflag, uint_fast8_t flag)
 	register struct tty *t;
 
 	/* FIXME: fix race of timer versus the ptimer_insert to psleep_flags_io */
-	used(rawflag);
-
 	q = &ttyinq[minor];
 	t = &ttydata[minor];
 
@@ -105,8 +103,6 @@ int tty_write(uint_fast8_t minor, uint_fast8_t rawflag, uint_fast8_t flag)
 {
 	register struct tty *t;
 	uint_fast8_t c;
-
-	used(rawflag);
 
 	if (!valaddr_r(udata.u_base, udata.u_count))
 		return -1;
