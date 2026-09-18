@@ -434,157 +434,183 @@ b2bcopy:
 	ld a, c
 	ld (patch1 + 1), a	; destination bank
 	exx
+	; This is a hard copy case
+	; For the loop trickery see
+	; https://map.grauw.nl/articles/fast_loops.php
+	;
+	ld	a,c		; save lower loop count
+	dec	bc		; number of full cycles + 1
+	inc	b		; b is now the outer loop count
+	ld	c,b		; upper count
+	ld	b,a		; lower count
 b2b_loop:
 patch0:
-	ld a,0
+	ld	a,0
 bankpatch3:
-	out (0x43),a
-	ld a,(hl)
-	inc hl
-	ex af,af'
+	out	(0x43),a
+	ld	a,(hl)
+	inc	hl
+	ex	af,af'
 patch1:
-	ld a,0
+	ld	a,0
 bankpatch4:
-	out (0x43),a
-	ex af,af'
-	ld (de),a
-	inc de
-	djnz b2b_loop
-	dec c
-	jr nz, b2b_loop
+	out	(0x43),a
+	ex	af,af'
+	ld	(de),a
+	inc	de
+	djnz	b2b_loop
+	dec	c
+	jr	nz, b2b_loop
 	ret
 
-; --- FIXME convert to new reg and offsets
-
+; IX + 0	src
+; IX + 2	dest
+; IX + 4	count
 uputget:
+	ld	ix,10
+	add	ix,sp
         ; load DE with the byte count
-        ld e, (ix + 10) ; byte count
-        ld d, (ix + 11)
-	ld a, d
-	or e
-	ret z		; no work
-	dec de		; we return BC as a count for two 8bit loops
-	ld b, e		; not a 16bit value
-	inc b		; See http://map.grauw.nl/articles/fast_loops.php
-	inc d
-	ld c, d
+        ld	c, (ix + 4) ; byte count
+        ld	b, (ix + 5)
+	ld	a, c
+	or	b
+	ret	z		; no work
         ; load HL with the source address
-        ld l, (ix + 6) ; src address
-        ld h, (ix + 7)
+        ld	l, (ix + 0) ; src address
+        ld	h, (ix + 1)
         ; load DE with destination address (in userspace)
-        ld e, (ix + 8)
-        ld d, (ix + 9)
-	ld a, b
-	or c
+        ld	e, (ix + 2)
+        ld	d, (ix + 3)
+	; will return NZ
 	ret
 
-__uput:
-	push ix
-	ld ix,0
-	add ix,sp
-	call uputget
-	jr z, uput_out
-	exx
-	; Disable interrupts, returns old state in HL
-	; Use helper as NMOS Z80 has bugs in this area
-	call ___hard_di
-	; Our banks
-	ld a, (_udata + U_DATA__U_PAGE)
-	ld c, a
-	ld a, (map_bank2 + 1)	; kernel is source
-	ld b, a
-ucopier:
-	; Save the mapping
-	ld de, (map_reg)	; save old mapping
-	push hl
-	push de
-	call b2bcopy
-	pop bc			; port and value
-	out (c), b
-	call ___hard_irqrestore
-	pop hl
-uput_out:
-	pop ix
-	ld hl,0
-	ret
-
+;
+;	Our memory map has all the kernel data and literals within
+;	bank however we might be copying from a kernel space disk buffer
+;	in overlay 2. What we won't be doing though is copying across the
+;	boundary
+;
 __uget:
-	push ix
-	ld ix, 0
-	add ix, sp
-	call uputget
-	jr z, uput_out
+	push	ix
+	push	bc
+	call	uputget
+	jr	z, uput_out
+	bit	7,e		; to buffer directly ?
+	jr	z,do_copy
 	exx
-	call ___hard_di
-	ld a, (_udata + U_DATA__U_PAGE)
-	ld b, a
-	ld a, (map_bank2 + 1)	; kernel is destination
-	ld c, a
-	jr ucopier
+	; Use alt regs for bank numbers
+	ld	a, (_udata + U_DATA__U_PAGE)
+	ld	b, a
+	ld	a, (map_bank2 + 1)	; kernel is destination
+	ld	c, a
+	; copy BC (adjusted) from HL to DE between banks
+	call	b2bcopy
+	jr	uput_out
+__uput:
+	push	ix
+	push	bc
+	call	uputget
+	jr	z, uput_out
+	bit	7,h
+	jr	z, do_copy
+	; Use alt regs for bank numbers
+	ld	a, (_udata + U_DATA__U_PAGE)
+	ld	c, a
+	ld	a, (map_bank2 + 1)	; kernel is source
+	ld	b, a
+	call	b2bcopy
+	jr	uput_out
+do_copy:
+	call	map_proc_save
+	ldir
+	call	map_kernel_restore
+uput_out:
+	pop	bc
+	pop	ix
+	ld	hl,0
+	ret
 
 __uputc:
-	pop iy	;	bank
-	pop bc	;	return
-	pop de	;	char
-	pop hl	;	dest
-	push hl
-	push de
-	push bc
-	push iy
-	call map_proc_save
-	ld (hl), e
+	ld	hl,4
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	inc	hl
+	ld	a,(hl)
+	inc	hl
+	ld	h,(hl)
+	ld	l,a
+	call	map_proc_save
+	ld	(hl), e
 uputc_out:
-	jp map_kernel_restore			; map the kernel back below common
+	jp	map_kernel_restore			; map the kernel back below common
 
 __uputw:
-	pop iy
-	pop bc	;	return
-	pop de	;	word
-	pop hl	;	dest
-	push hl
-	push de
-	push bc
-	push iy
-	call map_proc_save
-	ld (hl), e
-	inc hl
-	ld (hl), d
-	jp map_kernel_restore
+	ld	hl,4
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)
+	inc	hl
+	ld	a,(hl)
+	inc	hl
+	ld	h,(hl)
+	ld	l,a
+
+	call	map_proc_save
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	jp	map_kernel_restore
 
 __ugetc:
-	call map_proc_save
-        ld l, (hl)
-	ld h, 0
-	jp map_kernel_restore
+	pop	de
+	pop	hl
+	push	hl
+	push	de
+	call	map_proc_save
+        ld	l, (hl)
+	ld	h, 0
+	jp	map_kernel_restore
 
 __ugetw:
-	call map_proc_save
-        ld a, (hl)
-	inc hl
-	ld h, (hl)
-	ld l, a
-	jp map_kernel_restore
+	pop	de
+	pop	hl
+	push	hl
+	push	de
+	call	map_proc_save
+        ld	a, (hl)
+	inc	hl
+	ld	h, (hl)
+	ld	l, a
+	jp	map_kernel_restore
 
 __uzero:
-	pop iy
-	pop de	; return
-	pop hl	; address
-	pop bc	; size
-	push bc
-	push hl
-	push de
-	push iy
-	ld a, b	; check for 0 copy
-	or c
-	ret z
-	call map_proc_save
-	ld (hl), 0
-	dec bc
-	ld a, b
-	or c
-	jp z, uputc_out
-	ld e, l
-	ld d, h
-	inc de
+	push	bc
+	ld	hl,9
+	add	hl,sp
+	ld	b,(hl)
+	dec	hl
+	ld	c,(hl)
+	dec	hl
+	ld	e,(hl)
+	dec	hl
+	ld	d,(hl)
+	ex	de,hl
+	ld	a, b	; check for 0 copy
+	or	c
+	jr	z, bcout
+	call	map_proc_save
+	ld	(hl), 0
+	dec	bc
+	ld	a, b
+	or	c
+	jp	z, uputc_out
+	ld	e, l
+	ld	d, h
+	inc	de
 	ldir
-	jp uputc_out
+	pop	bc
+	jp	map_kernel_restore
+bcout:	pop	bc
+	ret
