@@ -33,6 +33,7 @@ kstack_base:
         .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 kstack_top:
 
+	.commondata
 ;
 ;	We link the pre bank switching setup code in 4300-43FF and a bit
 ;	then convert it into istack.

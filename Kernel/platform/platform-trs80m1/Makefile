@@ -53,7 +53,7 @@ clean:
 	rm -f *.o *.lst *.asm *.lst *.sym *.adb *.rst *.ihx core *~
 
 image: trs80load.bin trs80load-m3.bin
-	$(CROSS_LD) -b -C 0x4300 -O 0x8000 -f CLDSsBbX -o fuzix.bin \
+	$(CROSS_LD) -b -D 0x4300 -O 0x8C00 -f DLSsBCbX -o fuzix.bin \
 	crt0.o commonmem.o trs80.o trs80-bank.o ../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u-banked.o \
 	../../usermem.o tricks.o main.o discard.o \
@@ -71,6 +71,9 @@ image: trs80load.bin trs80load-m3.bin
 	devlpr.o vtsupport.o ../../devinput.o devinput.o ide.o \
 	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap -R fuzix.relocs
 	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
+	# Move the 8000-8BFF block into both banks
+	dd if=fuzix.bin of=fuzix.bin bs=256 skip=128 count=12 seek=384 conv=notrunc
+	dd if=fuzix.bin of=fuzix.bin bs=256 skip=128 count=12 seek=640 conv=notrunc
 	# Perform the banking conversion
 	bankman fuzix.bin fuzix.tmpmap fuzix.relocs z80
 

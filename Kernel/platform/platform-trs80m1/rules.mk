@@ -6,7 +6,7 @@
 #
 export CCROSS_CCOPTS=-Os
 export BANKED=-banked
-export CCBANKED=-banked-usefp
+export CCBANKED=-banked
 
 export CROSS_CC_SEG1=-Toverlay1
 export CROSS_CC_SEG2=-Toverlay2
