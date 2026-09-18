@@ -49,6 +49,9 @@
 #define CPUSH
 #define CPOP
 #endif
+#ifndef HELPER_BANK
+#define HELPER_BANK	.overlay1
+#endif
 
 	.common
 ;
@@ -851,7 +854,7 @@ is_z80:
 	ret
 
 #ifdef BANKED_Z80
-	.overlay1
+	HELPER_BANK
 #else
 	.code
 #endif
@@ -861,7 +864,6 @@ is_z80:
 ;
 ;
 		.export _memcpy
-		.code
 _memcpy:
 		push	bc
 #ifdef BANKED_Z80
@@ -901,7 +903,6 @@ done:
 ;	TODO: rewrite into Z80 style with a set and copy
 ;
 		.export _memset
-		.code
 _memset:
 		push	bc
 #ifdef BANKED_Z80
@@ -939,7 +940,6 @@ loopin:
 		ret
 
 		.export _strlen
-		.code
 _strlen:
 #ifdef BANKED_Z80
 		ld	hl,4		; Allow for the push of BC
@@ -964,7 +964,6 @@ sloop:		inc	de
 ;	memcpy
 ;
 		.export _memcmp
-		.code
 _memcmp:
 		push	bc
 #ifdef BANKED_Z80
