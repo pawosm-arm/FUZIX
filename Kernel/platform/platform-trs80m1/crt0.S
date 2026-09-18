@@ -22,7 +22,9 @@ start:
 		ldir
 		; We pass A into init_early holding the mapper type
 		call init_early
+		push af
 		call init_hardware
+		pop af
 		push af
 		call _vtinit
 		pop af
@@ -36,5 +38,5 @@ stop:		halt
 
 		.common
 stub:
-		.ds 768
+		.ds 700
 stub_end:

@@ -129,14 +129,14 @@ waitdisk_l:
 fdsetup:
 	ld	a, (de)
 	out	(FDCTRK), a
-	cp	TRACK(ix)
+	cp	(ix+TRACK)
 	jr	z, fdiosetup
 	;
 	;	So we can verify
 	;
-	ld	a, TRACK(ix)
+	ld	a, (ix+TRACK)
 	out	(FDCDATA), a
-	ld	a, SECTOR(ix)
+	ld	a, (ix+SECTOR)
 	out	(FDCSEC), a
 	;
 	;	Need to seek the disk
@@ -160,24 +160,24 @@ setuptimeout:			; NE = bad
 fdiosetup:
 	ld	bc,#0x0518		; patch in a skip over the out and
 	ld	de,#0x0718		; JR + 7
-	ld	a, SIZE(ix)
+	ld	a, (ix+SIZE)
 	cp	#2
 	jr	z, patchfor256
-	ld	bc,#(FDCCTRL * 256 + 0xD3)	; out (FDCCTRL),a
+	ld	bc,FDCCTRL*256+0xD3		; out (FDCCTRL),a
 	ld	de,#0x0000			; nop, nop
 patchfor256:
 	ld	(fdio_inbyte2),bc		; second loop
 	ld	(fdio_outpatch),de
 
-	ld	a, TRACK(ix)
+	ld	a, (ix+TRACK)
 	ld	(de), a		; save track
-	cp	COMP(ix)
+	cp	(ix+COMP)
 	ld	a, (fdcctrl)
 	jr	nc, noprecomp
 	or	#0x10		; Precomp on
 noprecomp:
 	out	(FDCCTRL), a
-	ld	a, SECTOR(ix)
+	ld	a, (ix+SECTOR)
 	out	(FDCSEC), a
 	in	a, (FDCREG)	; Clear any pending status
 
@@ -189,13 +189,13 @@ noprecomp:
 
 	ld	bc, #FDCDATA		; 256 or 512 bytes/sector, c is our port
 
-	ld	a, CMD(ix)
+	ld	a, (ix+CMD)
 	out	(FDCREG), a		; issue the command
 	;
 	;	Now count the clocks. We need 58 between here and the actual
 	;	data poll
 	;
-	ld	a, DIRECT(ix)		; 19
+	ld	a, (ix+DIRECT)		; 19
 	dec	a			; 23
 	jr	z, fdio_in		; 30/35	 12/7
 	jp	nc, fdio_out		; 40	 10
@@ -302,6 +302,8 @@ fdxferbad:
 	ld	a, 0xff
 	ret
 
+	.overlay1
+
 ;
 ;	C glue interface.
 ;
@@ -342,6 +344,9 @@ _fdr_wait:
 	ld	l,a
 	pop	bc
 	ret
+
+	.common
+
 ;
 ;	fd_operation3(uint8_t *driveptr)
 ;
@@ -360,8 +365,8 @@ _fd3_operation:
 	call	nz, map_proc_always
 	push	ix
 	ld	ix, #_fd_cmd
-	ld	l, DATA(ix)
-	ld	h, DATA+1(ix)
+	ld	l, (ix+DATA)
+	ld	h, (ix+DATA+1)
 	call	fdsetup		; Set up for a command
 	ld	l, a
 	ld	h, #0
@@ -384,6 +389,8 @@ _fd3_operation:
 ;	bit 7:		set for double density (MFM)
 ;
 ;
+	.overlay1
+
 _fd3_motor_on:
 	push	bc
 	ld	hl,6

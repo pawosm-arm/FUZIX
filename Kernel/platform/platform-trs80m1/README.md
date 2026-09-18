@@ -1,5 +1,11 @@
 # TRS80 Model I and III plus Clones
 
+## Conversion to fcc in progress
+TODO
+- Rewrite user access functions
+- Need an option on overlay tools to bank discard
+- Why is our common space suddenly so big ?
+
 ## Base Systems
 
 - Tandy Model I with Alpha Supermem or compatible and expansion box

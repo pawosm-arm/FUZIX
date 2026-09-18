@@ -1,10 +1,9 @@
-	.export	_tape_op
-	.export	_tape_err
-
 #include "kernelu.def"
-#include "../../cpu-z80u/kernel-z80u.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
 	.export _tape_op
+
+	.common
 
 _tape_op:
 	call go_slow

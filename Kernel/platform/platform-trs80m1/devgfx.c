@@ -167,7 +167,7 @@ static uint8_t displaymap[4] = {0, 0, 0, 0};
 static int8_t udg_ioctl(uarg_t arg, char *ptr);
 
 /* TODO: Arbitrate graphics between tty 1 and tty 2 */
-int gfx_ioctl(uint8_t minor, uarg_t arg, char *ptr)
+int gfx_ioctl(uint_fast8_t minor, uarg_t arg, char *ptr)
 {
   uint8_t m;
 
@@ -244,9 +244,9 @@ void gfx_init(void)
         max_mode = 1;
       } /* else add UDG support FIXME */
     }
-    out(ioctrl, 0x20);
+    out(IOCTRL, 0x20);
     *fb = c;
-    if (max_mode == 0 && gfx_data != 0xFF) {
+    if (max_mode == 0 && in(GFX_DATA) != 0xFF) {
       max_mode = 1;
       displaymap[1] = 1;
     }
@@ -395,11 +395,11 @@ static int8_t udg_ioctl(uarg_t arg, char *ptr)
     /* Fall through */
   case VTSETFONT:
     for (i = base; i <= limit; i++) {
-      uint8_t c[16];
-      if (uget(c, ptr, 16) == -1)
+      uint8_t cbit[16];
+      if (uget(cbit, ptr, 16) == -1)
         return -1;
       ptr += 16;
-      load_char[trs80_udg](i, c);
+      load_char[trs80_udg](i, cbit);
     }
     if (arg == VTSETUDG)
       udgflag |= SOFTFONT_UDG;

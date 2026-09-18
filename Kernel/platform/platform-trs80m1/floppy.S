@@ -18,8 +18,6 @@
 	.export _fd_selected
 	.export _fd_tab
 	.export _fd_cmd
-	.export map_kernel_restore, map_proc_always
-	.export go_fast, go_slow
 
 ;
 ;	The 1791 is memory mapped
@@ -100,23 +98,23 @@ fdsetup:
 	ld	hl,FDCTRK
 	ld	a, (de)
 	ld	(hl), a			; Load track register
-	cp	TRACK(ix)
+	cp	(ix + TRACK)
 	jr	z, fdiosetup		; Is it the one we wanted
 	;
 	;	So we can verify
 	;
 	inc	hl			; now FDCTRK
-	ld	a, TRACK(ix)
+	ld	a, (ix + TRACK)
 	ld	(hl), a
 	inc	hl			; now FDCSEC
-	ld	a, SECTOR(ix)
+	ld	a, (ix + SECTOR)
 	ld	(hl), a
 	;
 	;	Need to seek the disk
 	;
 	ld	hl,#FDCREG
 	ld	a, 0x18
-	or	STEP(ix)
+	or	(ix + STEP)
 	ld	(hl), a
 	call	waitcmd
 	and	0x18		; error bits
@@ -158,13 +156,13 @@ waitfail:
 ;	Head in the right place
 ;
 fdiosetup:
-	ld	a, TRACK(ix)
+	ld	a, (ix + TRACK)
 	ld	(de), a		; save track
 
 	; FIXME: select which controller first etc
 
 	ld	de, FDCSEC	; sector register
-	ld	a, SECTOR(ix)
+	ld	a, (ix + SECTOR)
 	ld	(FDCSEC), a
 
 	inc	de		; now points at FDCDATA
@@ -172,9 +170,9 @@ fdiosetup:
 	ld	hl, #FDCREG	; status/cmd
 	ld	a,(hl)		; clear status
 	
-	ld	a, DIRECT(ix)
+	ld	a, (ix + DIRECT)
 	dec	a
-	ld	a, CMD(ix)	; 0 - none, 1 - in, 2 = out
+	ld	a, (ix + CMD)	; 0 - none, 1 - in, 2 = out
 	ld	(hl),a
 	push	af		; 11
 	ex	(sp),hl		; 30		Delay 55us (98 clocks)
@@ -279,6 +277,7 @@ fdio_xfer_out:
 	jr	fd_xferdone
 
 
+	.overlay1
 ;
 ;	C glue interface.
 ;
@@ -315,6 +314,8 @@ _fd_restore:
 	ret	nz
 	ld	(hl), a		; Track 0 correctly hit (so 0)
 	ret
+
+	.common
 ;
 ;	fd_operation(uint8_t *cmd)
 ;
@@ -335,8 +336,8 @@ _fd_operation:
 	call	nz, map_proc_always
 	call	go_slow
 	ld	ix, #_fd_cmd
-	ld	c, DATA(ix)
-	ld	b, DATA+1(ix)
+	ld	c, (ix+DATA)
+	ld	b, (ix+DATA+1)
 	call	fdsetup		; Set up for a command
 	ld	h, #0
 	call	go_fast
@@ -381,6 +382,8 @@ waitdiskl:
 ;	bit 7:		set for double density (MFM)
 ;
 ;
+	.overlay1
+
 _fd_motor_on:
 	push	bc
 	ld	hl,6

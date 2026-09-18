@@ -77,9 +77,11 @@
 #define TTYDEV   BOOT_TTY /* Device used by kernel for messages, panics */
 #define SWAPDEV  (swap_dev)  /* Device for swapping (dynamic). */
 #define NBUFS    5         /* Number of block buffers - keep in sync with asm! */
-#define NMOUNTS	 3	   /* Number of mounts at a time */
+#define NMOUNTS	 2	   /* Number of mounts at a time */
 
 extern void plt_discard(void);
 #define plt_copyright()
 
 #define BOOTDEVICENAMES "hd#,fd#"
+
+#define CONFIG_SMALL
