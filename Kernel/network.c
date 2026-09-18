@@ -183,9 +183,8 @@ void net_free(void)
  *	Helpers
  */
 
-void net_setup(struct socket *sp)
+void net_setup(register struct socket *s)
 {
-	register struct socket *s = sp;	/* TODO: clean up when compiler gets reg arg */
 	s->s_state = SS_INIT;
 	s->s_iflags = 0;
 	s->s_parent = 0xFF;
