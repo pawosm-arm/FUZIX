@@ -602,9 +602,9 @@ __uzero:
 	dec	hl
 	ld	c,(hl)
 	dec	hl
-	ld	e,(hl)
-	dec	hl
 	ld	d,(hl)
+	dec	hl
+	ld	e,(hl)
 	ex	de,hl
 	ld	a, b	; check for 0 copy
 	or	c

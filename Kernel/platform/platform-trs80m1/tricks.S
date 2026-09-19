@@ -91,6 +91,8 @@ copy_over:
 	;
 	jp map_kernel_restore
 
+	.commondata
+
 spcache:
 	.word 0
 copyct:
