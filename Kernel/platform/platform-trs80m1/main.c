@@ -77,6 +77,8 @@ struct blkbuf *bufpool_end = &bufpool[NBUFS];
 /* Turn DISCARD into space in bank 2 for buffers */
 void plt_discard(void)
 {
+#if 0
+  /* Need to work from F600 back to discard start now FIXME */
 	extern uint8_t *bdnext;
 
 	/* The buffers are the last kept thing in segment 2, so we can blow
@@ -97,6 +99,7 @@ void plt_discard(void)
 	}
 	/* Assign data to the extra buffers */
 	bufsetup();
+#endif
 }
 
 #ifdef CONFIG_RTC

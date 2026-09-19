@@ -428,6 +428,7 @@ callhl:	jp (hl)
 ;	We could use sp and make this faster still but it gets ugly and
 ;	complicated. Might be worth doing pairs of bytes though.
 ;
+	.export b2bcopy		; for debug
 b2bcopy:
 	ld a, b
 	ld (patch0 + 1), a	; source bank
@@ -504,8 +505,9 @@ __uget:
 	ld	a, (map_bank2 + 1)	; kernel is destination
 	ld	c, a
 	; copy BC (adjusted) from HL to DE between banks
+	call	map_proc_save
 	call	b2bcopy
-	jr	uput_out
+	jr	map_out
 __uput:
 	push	ix
 	push	bc
@@ -513,16 +515,19 @@ __uput:
 	jr	z, uput_out
 	bit	7,h
 	jr	z, do_copy
+	exx
 	; Use alt regs for bank numbers
 	ld	a, (_udata + U_DATA__U_PAGE)
 	ld	c, a
 	ld	a, (map_bank2 + 1)	; kernel is source
 	ld	b, a
+	call	map_proc_save
 	call	b2bcopy
-	jr	uput_out
+	jr	map_out
 do_copy:
 	call	map_proc_save
 	ldir
+map_out:
 	call	map_kernel_restore
 uput_out:
 	pop	bc
@@ -564,20 +569,24 @@ __uputw:
 	jp	map_kernel_restore
 
 __ugetc:
-	pop	de
-	pop	hl
-	push	hl
-	push	de
+	ld	hl,4
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)
+	ex	de,hl
 	call	map_proc_save
         ld	l, (hl)
 	ld	h, 0
 	jp	map_kernel_restore
 
 __ugetw:
-	pop	de
-	pop	hl
-	push	hl
-	push	de
+	ld	hl,4
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)
+	ex	de,hl
 	call	map_proc_save
         ld	a, (hl)
 	inc	hl
