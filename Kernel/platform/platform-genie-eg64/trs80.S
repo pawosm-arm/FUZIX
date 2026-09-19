@@ -1,4 +1,3 @@
-# 1 "trs80.S"
 ;
 ;	    Genie EG64  hardware support
 ;
@@ -22,28 +21,10 @@
         .export _plt_monitor
         .export _plt_reboot
         .export outchar
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-PROGBASE		    .equ 0x6000
-PROGLOAD		    .equ 0x6000
-
-Z80_TYPE		    .equ 1
-
-NBUFS			    .equ 4
-
-Z80_MMU_HOOKS		    .equ 0
-
-CONFIG_SWAP		    .equ 1
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 28 "trs80.S"
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (0x0000 upwards after the udata etc)
 ; -----------------------------------------------------------------------------

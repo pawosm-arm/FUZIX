@@ -1,26 +1,6 @@
-# 1 "crt0.S"
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256
-
-PROGBASE		    .equ 0x6000
-PROGLOAD		    .equ 0x6000
-
-Z80_TYPE		    .equ 1
-
-NBUFS			    .equ 4
-
-Z80_MMU_HOOKS		    .equ 0
-
-CONFIG_SWAP		    .equ 1
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 4 "crt0.S"
 	.common
 ;
 ;	On entry the bootloader has put the banker into the
@@ -59,4 +39,5 @@ stop:	halt
 
 	.export _bufpool
 _bufpool:
-	.ds	520  * NBUFS
+	.ds	BUFSIZE * NBUFS
+
