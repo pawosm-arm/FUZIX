@@ -69,6 +69,7 @@ void kputchar(uint_fast8_t c)
 	if (c == '\n')
 		tty_putc(1, '\r');
 	tty_putc(1, c);
+	*((volatile uint8_t *)0x37E8) = c;
 }
 
 ttyready_t tty_writeready(uint_fast8_t minor)

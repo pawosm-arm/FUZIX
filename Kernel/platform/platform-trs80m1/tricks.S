@@ -20,6 +20,8 @@
 ;	out for NMI as we do model 3 this way!)
 ;
 bankfork:
+	push ix
+	push iy
 	ld (cpatch0 + 1),a	; patch parent into loop
 	ld a,c
 	ld (cpatch1 + 1),a	; patch child into loop
@@ -86,6 +88,8 @@ copy_over:
 	;	Get the stack back
 	;
 	ld sp,(spcache)
+	pop iy
+	pop ix
 	;
 	;	And the correct kernel bank.
 	;

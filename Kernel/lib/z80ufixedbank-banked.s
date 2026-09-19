@@ -71,6 +71,7 @@ swapped: .ascii "_switchin: SWAPPED"
 
 _switchin:
         di
+	pop hl
         pop bc  ; return address (we can trash bc here - we will restore one)
         pop de  ; new process pointer
 ;
@@ -78,6 +79,7 @@ _switchin:
 ;
         push de ; restore stack
         push bc ; restore stack
+	push hl
 
 	ld a,1
 	ld (_int_disabled),a

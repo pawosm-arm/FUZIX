@@ -210,6 +210,7 @@ hd_out:
 	ret
 
 _hd_xfer_out:
+	push	bc
 	call	hd_prep_xfer
 	push	af
 	call	nz, map_proc_a

@@ -15,7 +15,7 @@ void blkfromk(void *kaddr, struct blkbuf *buf, uint16_t off, uint16_t len)
 }
 
 /*
- *	This works because our uput and uget (see trs80-bank.s) switch
+ *	This works because our uput and uget (see trs80-bank.S) switch
  *	to kernel logical bank 2 when copying, as kernel bank 1 is only
  *	code so it knows that any copy must be to common or bank 2. Without
  *	that this would need a double buffer.
