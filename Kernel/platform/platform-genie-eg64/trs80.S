@@ -39,6 +39,7 @@ _need_resched:
 	.common
 
 _plt_monitor:
+	call	_vtflush		; get any panic onscreen
 monitor_spin:
 	di
 	jr monitor_spin
