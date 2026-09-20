@@ -104,6 +104,7 @@ _program_vectors:
 	pop	hl ; function argument -- base page number
 	push	hl ; put stack back as it was
 	push	de
+	push	bc
 
 	call	map_proc
 
@@ -127,6 +128,7 @@ _program_vectors:
 	ld	(0x0066), a  ; Set vector for NMI
 	ld	hl, fd_nmi_handler
 	ld	(0x0067), hl
+	pop	bc
 	jp	map_kernel
 	
 ; outchar: Wait for UART TX idle, then print the char in A
@@ -147,8 +149,10 @@ _hd_xfer_in:
 	ld	a, (_hd_page)
 	or	a
 	call 	nz, map_proc_a
+	push	bc
 	ld	bc, #0xC8		; 256 bytes from 0xC8
 	inir
+	pop	bc
 	jp	map_kernel
 
 _hd_xfer_out:
@@ -159,8 +163,10 @@ _hd_xfer_out:
 	ld	a, (_hd_page)
 	or	a
 	call	nz, map_proc_a
+	push	bc
 	ld	bc, #0xC8		; 256 bytes to 0xC8
 	otir
+	pop	bc
 xfer_out_wait:				; busy wait after OTIR
 	ex	(sp), hl
 	ex	(sp), hl

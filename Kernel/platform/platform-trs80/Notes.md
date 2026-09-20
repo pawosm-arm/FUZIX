@@ -1,7 +1,5 @@
 # TRS80 Model 4/4P
 
-(or right now more accurately sdltrs/xtrs)
-
 ## Emulator Bugs
 
 Repeating instructions like LDIR appear to be misemulated. LDIR
@@ -23,7 +21,7 @@ expander board could be used with a bit of tweaking (or both!)
 
 ## Memory Map:
 
-Base memory 0-FFFF (with a fair bit of slack) is used for the kernel
+Base memory 0-FFFF (with a tiny bit of slack) is used for the kernel
 User processes run 0-7FFF in bank U64L32 or U64U32, in both cases
 with the upper 32K being kept as the kernel bank.
 
