@@ -63,7 +63,7 @@ static unsigned ignore_sym(const char *p)
 
 static unsigned symnum(char c)
 {
-    static char *p = "ACDBZXSLs89";
+    static char *p = "ACDBZXSLsb1234PU";
     char *x = strchr(p, c);
     if (x == NULL)
         return -1;
