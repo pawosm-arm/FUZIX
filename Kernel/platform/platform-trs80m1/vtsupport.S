@@ -151,6 +151,7 @@ _plot_char:
 	;
 	and	0xE0		; Z30 bits
 	cp	0x60		; problem case
+	ld	a, (ix + 4)
 	jr	nz, plot_lower
 	res	5,a		; force into upper
 plot_lower:

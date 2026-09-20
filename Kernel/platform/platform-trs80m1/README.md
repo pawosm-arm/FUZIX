@@ -2,9 +2,7 @@
 
 ## Conversion to fcc in progress
 TODO
-- Rewrite user access functions
-- Need an option on overlay tools to bank discard
-- Why is our common space suddenly so big ?
+- Find scribble or whatever is causing the weird corruption/error
 
 ## Base Systems
 
