@@ -166,8 +166,10 @@ _clear_lines:
 	ld	e,(hl)
 	inc	hl
 	inc	hl
-	ld	d,(hl)
-	ld	c,d
+	ld	c,(hl)
+	xor	a
+	cp	c
+	jr	z,clear_done
 	ld	d,0
 	call	addr
 	ld	a,32
@@ -179,6 +181,7 @@ clear1:
 	djnz	clear1
 	dec	c
 	jr	nz, clear0
+clear_done:
 	pop	bc
 	ret
 

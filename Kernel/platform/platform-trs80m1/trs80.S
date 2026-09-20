@@ -53,10 +53,10 @@ plt_interrupt_all:
 
 _plt_reboot:
 	di
-	ld sp,#0xffff
-	xor a
-	out (0x43),a
-	rst 0
+	ld	sp,0xffff
+	xor	a
+	out	(0x43),a
+	rst	0
 
 _int_disabled:
 	.byte 1
@@ -65,45 +65,45 @@ _int_disabled:
 ; BOOT MEMORY BANK (below 0x8000)
 ; -----------------------------------------------------------------------------
 
-	.common		; CHECK FIXME
+	.common	
 
 init_early:
-	call mapper_init	; A is the mapper type passed from crt0.s
-	ld a,(4)
-	cp #0x30
-	jr nz, not_m3
-	ld a,#1
-	ld (_trs80_model),a
-	ld a,#0x74
-	out (0xE0),a	; Mask iobus, cassette
-	xor a
-	out (0xE4),a	; and NMI sources
-	jr not_vg
+	call	mapper_init	; A is the mapper type passed from crt0.s
+	ld	a,(4)
+	cp	0x30
+	jr	nz, not_m3
+	ld	a,1
+	ld	(_trs80_model),a
+	ld	a,0x74
+	out	(0xE0),a	; Mask iobus, cassette
+	xor	a
+	out	(0xE4),a	; and NMI sources
+	jr	not_vg
 not_m3:
 	; Detect machine type (Model 1 or LNW80 or VideoGenie ?)
-	ld a,#8
-	out (0xFE),a	; turn off ROM on the LNW80
-	ld hl,#0
-	ld a,(hl)
-	inc (hl)
-	cp (hl)
-	jr z, not_lnw	; if it's RAM it's an LNW80
-	dec (hl)
-	xor a
-	out (0xFE),a	; ROM back on, normal video mode for now
-	ld a,#2		; LNW80
-	ld (_trs80_model), a
-	jr not_vg
+	ld	a,8
+	out	(0xFE),a	; turn off ROM on the LNW80
+	ld	hl,0
+	ld	a,(hl)
+	inc	(hl)
+	cp	(hl)
+	jr	z, not_lnw	; if it's RAM it's an LNW80
+	dec	(hl)
+	xor	a
+	out	(0xFE),a	; ROM back on, normal video mode for now
+	ld	a,2		; LNW80
+	ld	(_trs80_model), a
+	jr	not_vg
 not_lnw:
-	ld hl,(0x18F5)
-	ld de,#0x4E53	; 'SN' for VG, 'L3' for TRS80 Model 1
-	or a
-	sbc hl,de
-	jr nz, not_vg
-	ld a,#3
-	ld (_trs80_model),a	; Video Genie
+	ld	hl,(0x18F5)
+	ld	de,0x4E53	; 'SN' for VG, 'L3' for TRS80 Model 1
+	or	a
+	sbc	hl,de
+	jr	nz, not_vg
+	ld	a,3
+	ld	(_trs80_model),a	; Video Genie
 not_vg:
-	jp _rom_vectors
+	jp	_rom_vectors
 
 _halt:
 	halt
@@ -123,57 +123,53 @@ _halt:
 ;	Only allowed to mess with AF
 ;
 go_slow:
-	ld a,(_trs80_model)
-	or a
-	jr nz, snot_model_1
+	ld	a,(_trs80_model)
+	or	a
+	jr	nz, snot_model_1
 	; A = 0
-	out (254),a
+	out	(254),a
 	ret
 snot_model_1:
-	cp #1		; model III ?
-	ret nz
-	xor a
-	out (95),a
+	cp	1		; model III ?
+	ret	nz
+	xor	a
+	out	(95),a
 	ret
 go_fast:
-	ld a,(_trs80_model)
-	or a
-	jr nz,fnot_model_1
+	ld	a,(_trs80_model)
+	or	a
+	jr	nz,fnot_model_1
 	; A = 0
-	inc a
-	out (254),a
+	inc	a
+	out	(254),a
 	ret
 fnot_model_1:
-	cp #1
-	ret nz
+	cp	1
+	ret	nz
 	; A = 1
-	out (95),a
+	out	(95),a
 	ret
 
 _program_vectors:
 	ret
 
 _rom_vectors:
-	ld a,#0xC3
-	ld (0x4012), a
-	ld hl, #interrupt_handler
-	ld (0x4013), hl
-
-	; set restart vector for UZI system calls
-	ld (0x400F), a   ;  (rst 30h is unix function call vector)
-	ld hl, #unix_syscall_entry
-	ld (0x4010), hl
+	ld	a,0xC3
+	ld	(0x4012), a
+	ld	hl, interrupt_handler
+	ld	(0x4013), hl
 
 	; Model III only but just writing it does no harm
-	ld hl,#fd_nmi_handler
-	ld (0x404A), hl
-	jp map_kernel
+	ld	hl,	fd_nmi_handler
+	ld	(0x404A), hl
+	jp	map_kernel
 	
 ; outchar: Wait for UART TX idle, then print the char in A
 ; destroys: AF
 ; FIXME: need to do different things for Video Genie and Model III
 outchar:
-	ld (0x37E8), a
+	; xtrs debug trick only
+	ld	(0x37E8), a
 	ret
 
 ;
