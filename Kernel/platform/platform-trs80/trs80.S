@@ -3,40 +3,18 @@
 ;
 	; exported symbols
 	.export init_early
-	.export init_hardware
-	.export interrupt_handler
 	.export _program_vectors
 	.export plt_interrupt_all
+	.export _int_disabled
 
 	; hard disk helpers
 	.export _hd_xfer_in
 	.export _hd_xfer_out
-	; and the page from the C code
-	.export _hd_page
 
 	; exported debugging tools
 	.export _plt_monitor
 	.export _plt_reboot
 	.export outchar
-
-	; imported symbols
-	.export _ramsize
-	.export _procmem
-	.export istack_top
-	.export istack_switched_sp
-	.export unix_syscall_entry
-	.export outcharhex
-	.export fd_nmi_handler
-	.export null_handler
-	.export map_kernel
-	.export map_proc
-	.export map_proc_a
-	.export _opreg
-	.export _modout
-	.export _int_disabled
-
-	.export map_proc_always
-	.export map_kernel
 
 	.export _bufpool
 
@@ -79,6 +57,7 @@ _plt_reboot:
 
 	.code
 
+	.export _plt_idle
 _plt_idle:
 	halt
 	ret
@@ -194,8 +173,8 @@ xfer_out_wait:				; busy wait after OTIR
 ;	Video screen flip
 ;
 
-	.export	_vtswap
-__vtswap:
+	.export	_vt_swap
+_vt_swap:
 	push	bc
 	ld	hl, 0xf800
 	ld	de, _vtbackbuf
@@ -225,8 +204,6 @@ exchit:
 	.export _gfx_draw
 	.export _gfx_exg
 	.export _gfx_blit
-
-	.export _ctrl_cache
 
 _gfx_write:
 	pop	de
@@ -488,3 +465,56 @@ blitrd_n:
 
 scratch:
 	.ds 128
+
+;
+;	Should this be in the common base code ?
+;
+	.code
+	.export	_memmove
+
+_memmove:
+	push	hl
+	push	bc
+	ld	hl,11
+	add	hl,sp
+	ld	b,(hl)
+	dec	hl
+	ld	c,(hl)
+	dec	hl
+	ld	d,(hl)
+	dec	hl
+	ld	e,(hl)
+	dec	hl
+	ld	a,(hl)
+	dec	hl
+	ld	l,(hl)
+	ld	h,a
+	; To HL from DE for BC length
+	ld	a,b
+	or	c
+	jr	z, nowork
+	; Which way do we do it ?
+	push	hl
+	or	a
+	sbc	hl,de
+	pop	hl
+	jr	z, nowork
+	jr	nc,lowhi
+	ex	de,hl
+	; HL < DE so we are copying downwards
+	ldir
+nowork:	pop	bc
+	pop	hl
+	ret
+lowhi:
+	dec	bc
+	add	hl,bc
+	ex	de,hl
+	add	hl,bc
+	inc	bc
+	lddr
+	pop	bc
+	pop	hl
+	ret
+
+

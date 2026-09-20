@@ -41,7 +41,7 @@ flopind:
 flopstat:
 	in	a, (0xF0)
 	and	0x19
-	bit 	7, a
+	bit 	0, a
 	jr	nz, flopstat
 	or	a
 	ret	z
@@ -158,6 +158,7 @@ out:	jp (hl)
 
 booted:	ld de, #0xF850
 	call prints
-	.ascii 'Booting...\0'
+	.ascii 'Booting...'
+	.byte 0
 
 ; OS starts on the following byte

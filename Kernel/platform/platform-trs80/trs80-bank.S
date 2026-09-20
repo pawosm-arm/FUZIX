@@ -59,7 +59,7 @@ init_hardware:
         ret
 
 
-	.common
+	.commondata
 
 opsave:
 	.byte	0x06	; used as a word so keep together
@@ -72,6 +72,8 @@ _modout:
 			; external I/O enabled, 4MHz
 extmem:
 	.byte	0x00
+
+	.common
 
 detect_ext:
 	 in	a,(0x94)

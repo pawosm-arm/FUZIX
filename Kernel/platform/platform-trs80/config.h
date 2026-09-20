@@ -49,7 +49,7 @@
 #define SWAPBASE    0x0000	/* We swap the lot in one, include the */
 #define SWAPTOP	    0x8000	/* vectors so its a round number of sectors */
 
-#define MAX_SWAPS	64	/* Should be plenty (2MB!) */
+#define MAX_SWAPS   64		/* Should be plenty (2MB!) */
 
 #define swap_map(x)	((uint8_t *)(x))
 
@@ -64,7 +64,7 @@
 #define TTYDEV   BOOT_TTY /* Device used by kernel for messages, panics */
 #define SWAPDEV  (swap_dev)  /* Device for swapping (dynamic). */
 #define NBUFS    5        /* Number of block buffers - keep in sync with asm! */
-#define NMOUNTS	 4	  /* Number of mounts at a time */
+#define NMOUNTS	 3	  /* Number of mounts at a time */
 /* Reclaim the discard space for buffers */
 #define CONFIG_DYNAMIC_BUFPOOL
 /* Use large I/O */
@@ -74,5 +74,3 @@ extern void plt_discard(void);
 #define plt_copyright()
 
 #define BOOTDEVICENAMES "hd#,fd#"
-
-#define CONFIG_SMALL

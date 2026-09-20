@@ -16,7 +16,7 @@ static char tbuf3[TTYSIZ];
 uint8_t curtty;		/* output side */
 uint8_t inputtty;	/* input side */
 static struct vt_switch ttysave[2];
-static uint8_t vtbackbuf[VT_WIDTH * VT_HEIGHT];
+uint8_t vtbackbuf[VT_WIDTH * VT_HEIGHT];
 struct vt_repeat keyrepeat;
 
 uint8_t *vtbase[2] = { (uint8_t *)0xF800, vtbackbuf };

@@ -4,9 +4,9 @@ CSRCS += devices.c main.c devinput.c
 DISCARD_CSRCS = discard.c devhd_discard.c
 
 ASRCS = trs80.S trs80-bank.S crt0.S
-ASRCS += tricks.S commonmem.S floppy.S drivewire.S
+ASRCS += tricks.S commonmem.S floppy.S
 
-DSRCS = ../../dev/devdw.c
+DSRCS = 
 
 COBJS = $(CSRCS:.c=.o)
 AOBJS = $(ASRCS:.S=.o)
@@ -34,11 +34,28 @@ clean:
 	rm -f $(OBJS) *.lst *.asm *.sym *.rst *.lk  core *~
 
 image: trs80load.bin hdload.bin
+	$(CROSS_LD) -b -C 0x0100 -S 0xE400 -f CLDBbXSs -o ../../fuzix.bin \
+	crt0.o commonmem.o trs80.o trs80-bank.o ../../start.o \
+	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
+	../../cpu-z80u/usermem_std-z80u.o \
+	../../usermem.o tricks.o main.o discard.o \
+	devfd.o floppy.o devhd.o devhd_discard.o devgfx.o \
+	devices.o ../../timer.o ../../kdata.o ../../devio.o \
+	../../filesys.o ../../blk512.o ../../process.o \
+	../../inode.o ../../syscall_exec.o ../../syscall_exec16.o \
+	../../syscall_fs.o ../../syscall_fs2.o ../../syscall_fs3.o \
+	../../syscall_proc.o ../../syscall_other.o ../../syscall_net.o \
+	../../network.o ../../tty.o ../../vt.o ../../mm.o ../../mm/memalloc_none.o \
+	../../swap.o ../../mm/bankfixed.o ../../devsys.o \
+	devtty.o devlpr.o ../../devinput.o devinput.o \
+	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
+	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
+	../../tools/pack85 ../../fuzix.bin fuzix.bin <../../fuzix.map
 	dd if=/dev/zero of=boot.raw bs=256 count=720
 	# Boot block at 0,0
 	dd if=trs80load.bin of=boot.raw bs=256 count=1 conv=notrunc
 	# Kernel lives on the end of the disk (so we can add an fs)
-	dd if=../../fuzix.bin of=boot.raw bs=1 seek=129024 conv=notrunc
+	dd if=fuzix.bin of=boot.raw skip=256 bs=1 seek=129024 conv=notrunc
 	../../tools/makejv3 -s -t dd40s -d boot.raw boot4p.jv3
 	dd if=hdload.bin of=hdboot.raw bs=256 count=1 conv=notrunc
 	../../tools/makejv3 -s -t dd40s -d hdboot.raw hdboot4p.jv3
