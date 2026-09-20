@@ -272,10 +272,10 @@ static void keyproc(void)
 	int i;
 	uint8_t key;
 
+	keyscan();
 	for (i = 0; i < 8; i++) {
 		/* Set one of A0 to A7, and read the byte we get back.
 		   Invert that to get a mask of pressed buttons */
-		keyin[i] = *(uint8_t *) (0x3800 | (1 << i));
 		key = keyin[i] ^ keymap[i];
 		if (key) {
 			int n;
@@ -433,15 +433,19 @@ static void keydecode(void)
 /* Polled 40 times a second */
 void kbd_interrupt(void)
 {
-	newkey = 0;
-	keyproc();
-	if (keysdown && keysdown < 3) {
-		if (newkey) {
-			keydecode();
-			kbd_timer = keyrepeat.first;
-		} else if (!--kbd_timer) {
-			keydecode();
-			kbd_timer = keyrepeat.continual;
+	/* Fast path. Scan all the matrix lines at once and see if any
+	   key is down in one quick check */
+	if (keysdown || anykey()) {
+		newkey = 0;
+		keyproc();
+		if (keysdown && keysdown < 3) {
+			if (newkey) {
+				keydecode();
+				kbd_timer = keyrepeat.first;
+			} else if (!--kbd_timer) {
+				keydecode();
+				kbd_timer = keyrepeat.continual;
+			}
 		}
 	}
 	if (vtq != vtbuf)

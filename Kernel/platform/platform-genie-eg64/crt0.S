@@ -8,7 +8,7 @@
 ;
 start:
 	ld	sp, kstack_top
-	ld	a,0xD0
+	ld	a,0xE0
 	; Unmap I/O space as it may have BSS over it
 	out	(0xC0),a
 	; Zero the BSS

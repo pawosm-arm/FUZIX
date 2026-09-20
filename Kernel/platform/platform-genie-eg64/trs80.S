@@ -28,13 +28,15 @@
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (0x0000 upwards after the udata etc)
 ; -----------------------------------------------------------------------------
-	.common
+	.commondata
 
 _int_disabled:
 	.byte 1
 
 _need_resched:
 	.byte 0
+
+	.common
 
 _plt_monitor:
 monitor_spin:
@@ -46,9 +48,11 @@ plt_interrupt_all:
 
 
 ; -----------------------------------------------------------------------------
-; Needs to be in 4000-7FFF
+; Needs to be higher than the ROM space
 ; -----------------------------------------------------------------------------
-	.common
+
+	.code
+
 _plt_reboot:
 	di
 	ld	sp,0
@@ -56,6 +60,8 @@ _plt_reboot:
 	out	(0x43),a
 	out	(0xC0),a
 	rst	0
+
+	.discard
 
 init_early:
 	ld	bc,0xC0	; map in the ROM at 0000-3FFF
@@ -101,8 +107,6 @@ not_vg:
 	out	(c),b		; Back to RAM mapping
         ret
 
-;------------------------------------------------------------------------------
-; COMMON MEMORY PROCEDURES FOLLOW
 
 	.common
 ;
@@ -212,6 +216,7 @@ _hd_xfer_out:
 	.export _anykey
 
 _keyscan:
+	push	bc
 	call	map_io
 	ld	b,8
 	ld	hl,0x3801
@@ -222,6 +227,7 @@ scank:
 	inc	de
 	sla	l
 	djnz	scank
+	pop	bc
 	jp	map_kernel
 
 _anykey:
@@ -330,7 +336,7 @@ _clear_lines:
 	ld	e,(hl)
 	inc	hl
 	inc	hl
-	ld	d,(hl)	; Clear D lines from line E
+	ld	d,(hl)		; Clear D lines from line E
 	xor	a
 	cp	d		; no work ?
 	ret	z
@@ -360,17 +366,18 @@ _clear_across:
 	inc	hl
 	inc	hl
 	ld	a,(hl)
-	; DE = coords, C = count
+	; DE = coords, A = count
 	or	a
 	ret	z		; No work
 	push	bc
+	ld	b,a
 	call	videopos
-	ld	b,c
 	ld	a,0x20
 wipea:
 	ld	(hl),a
 	inc	hl
 	djnz	wipea
+	pop	bc
 	jp	map_kernel
 
 _cursor_on:
@@ -397,6 +404,8 @@ _cursor_off:
 _vtattr_notify:
 _cursor_disable:
 	ret
+
+	.commondata
 
 cursorpos:
 	.word	0

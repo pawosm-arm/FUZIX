@@ -48,6 +48,7 @@ __uputw:
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
+	ld	d,(hl)
 	inc	hl
 	ld	a,(hl)
 	inc	hl
@@ -102,8 +103,8 @@ __uput:
         ld	d, (ix + 3)
 	call	map_proc_noio
 	ldir
-uput_out:
 	call	map_kernel
+uput_out:
 	pop	ix
 	pop	bc
 	ld	hl, 0
@@ -124,17 +125,21 @@ __uzero:
 	; Now zeroing BC bytes from HL
 	ld	a, b	; check for 0 copy
 	or	c
-	ret	z
+	jr	z,uz_out
 	call	map_proc_noio
 	ld	(hl), 0
 	dec	bc
 	ld	a, b
 	or	c
-	jr	z, uz_out
+	jr	z, uz_done
 	ld	e, l
 	ld	d, h
 	inc	de
 	ldir
-uz_out:
+uz_done:
 	pop	bc
 	jp	map_kernel
+uz_out:
+	pop	bc
+	ret
+
