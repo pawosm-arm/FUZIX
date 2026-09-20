@@ -3,31 +3,31 @@ CSRCS = devlpr.c devtty.c devfd.c devhd.c devgfx.c
 CSRCS += devices.c main.c devinput.c
 DISCARD_CSRCS = discard.c devhd_discard.c
 
-ASRCS = trs80.s trs80-bank.s crt0.s
-ASRCS += tricks.s commonmem.s floppy.s drivewire.s
+ASRCS = trs80.S trs80-bank.S crt0.S
+ASRCS += tricks.S commonmem.S floppy.S drivewire.S
 
 DSRCS = ../../dev/devdw.c
 
-COBJS = $(CSRCS:.c=.rel)
-AOBJS = $(ASRCS:.s=.rel)
-DISCARD_COBJS = $(DISCARD_CSRCS:.c=.rel)
-DOBJS = $(patsubst ../../dev/%.c,%.rel, $(DSRCS))
+COBJS = $(CSRCS:.c=.o)
+AOBJS = $(ASRCS:.S=.o)
+DISCARD_COBJS = $(DISCARD_CSRCS:.c=.o)
+DOBJS = $(patsubst ../../dev/%.c,%.o, $(DSRCS))
 OBJS  = $(COBJS) $(AOBJS) $(DISCARD_COBJS) $(DOBJS)
 
 CROSS_CCOPTS += -I../../dev/
 
 all:	$(OBJS) trs80load.bin
 
-$(COBJS): %.rel: %.c
+$(COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
 
-$(AOBJS): %.rel: %.s
+$(AOBJS): %.o: %.S
 	$(CROSS_AS) $(ASOPTS) $<
 
-$(DOBJS): %.rel: ../../dev/%.c
+$(DOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
 
-$(DISCARD_COBJS): %.rel: %.c
+$(DISCARD_COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
 
 clean:
@@ -43,15 +43,13 @@ image: trs80load.bin hdload.bin
 	dd if=hdload.bin of=hdboot.raw bs=256 count=1 conv=notrunc
 	../../tools/makejv3 -s -t dd40s -d hdboot.raw hdboot4p.jv3
 
-trs80load.bin: trs80load.s
-	sdasz80 -o trs80load.s
-	sdldz80 -i trs80load.rel
-	makebin -s 256 trs80load.ihx trs80load.bin
+trs80load.bin: trs80load.S
+	fcc -mz80 -c trs80load.S
+	ldz80 -b trs80load.o -o trs80load.bin
 
-hdload.bin: hdload.s
-	sdasz80 -o hdload.s
-	sdldz80 -i hdload.rel
-	makebin -s 256 hdload.ihx hdload.bin
+hdload.bin: hdload.S
+	fcc -mz80 -c hdload.S
+	ldz80 -b hdload.o -o hdload.bin
 
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
 

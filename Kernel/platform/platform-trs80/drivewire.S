@@ -1,4 +1,3 @@
-# 1 "drivewire.S"
 	.export _dw_operation
 	.export _dw_transaction
 	.export _dw_reset
@@ -194,3 +193,4 @@ gotbyte:
 	in a, (0xEB)
 	or a
 	ret
+

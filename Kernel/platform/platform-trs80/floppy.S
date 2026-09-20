@@ -1,4 +1,3 @@
-# 1 "floppy.S"
 ;
 ;	Core floppy routines for the TRS80 1791 FDC
 ;	Based on the 6809 code

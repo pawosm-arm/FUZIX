@@ -1,4 +1,3 @@
-# 1 "trs80-bank.S"
 ;	   TRS 80 banking logic for the base Model 4 and 4P
 ;
 ;	Handles
@@ -26,30 +25,10 @@
 	.export map_restore
 	.export _opreg
 	.export _modout
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 @ E800
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-U_DATA_STASH		    .equ 0x7E00	      ; 7E00-7FFF
-
-PROGBASE		    .equ 0x0000
-PROGLOAD		    .equ 0x0100
-
-Z80_TYPE		    .equ 1
-
-NBUFS			    .equ 5
-
-Z80_MMU_HOOKS		    .equ 0
-
-CONFIG_SWAP		    .equ 1
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 32 "trs80-bank.S"
 ; -----------------------------------------------------------------------------
 ; KERNEL MEMORY BANK (below 0xE800, only accessible when the kernel is mapped)
 ; -----------------------------------------------------------------------------
@@ -275,7 +254,7 @@ map_proc_always:
 map_proc_always_di:
 	push	af
 	push	hl
-	ld	hl, _udata + 2     
+	ld	hl, _udata + U_DATA__U_PAGE
 	call	map_proc_hl
 	pop	hl
 	pop	af

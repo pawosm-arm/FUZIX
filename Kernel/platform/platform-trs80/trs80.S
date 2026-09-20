@@ -1,4 +1,3 @@
-# 1 "trs80.S"
 ;
 ;	TRS 80  hardware support
 ;
@@ -40,33 +39,13 @@
 	.export map_kernel
 
 	.export _bufpool
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 @ E800
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-U_DATA_STASH		    .equ 0x7E00	      ; 7E00-7FFF
-
-PROGBASE		    .equ 0x0000
-PROGLOAD		    .equ 0x0100
-
-Z80_TYPE		    .equ 1
-
-NBUFS			    .equ 5
-
-Z80_MMU_HOOKS		    .equ 0
-
-CONFIG_SWAP		    .equ 1
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 46 "trs80.S"
 	.buffers
 _bufpool:
-	.ds 520  * NBUFS
+	.ds BUFSIZE * NBUFS
 
 	.common
 
