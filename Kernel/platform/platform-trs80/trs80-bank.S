@@ -172,6 +172,8 @@ scandone90:
 	ld	a,0x87		; ADD A,A
 	ld	(bankpatch),a
 	ld	a,2		; Hypermem
+	srl	b		; Hypermem is counted in pairs so halve our
+				; count
 	jr	expander_found
 
 no_hyper:
