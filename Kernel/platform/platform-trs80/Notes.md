@@ -37,6 +37,15 @@ Processes that don't fit are swapped to hard disk. Without swap you
 can run a pair of 32K processes, just enough for stuff like
 bootstrap.
 
+## Memory Tricks To Watch
+
+We keep the two video console copies at F800, one is the video RAM (map III)
+the other is the main memory (Map IV). We normally run with the main memory
+enabled but switch in the I/O briefly to scan the keyboard and for video
+output. Currently all our actual code and stacks etc sit under F400 so are
+permanently mapped but we could (carefully) use F400-F7FF for something in
+future.
+
 ## Adding Support For Other Banked RAM:
 
 See trs80-map*s, and the various map_* functions. These can be extended

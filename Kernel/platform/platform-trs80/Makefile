@@ -1,6 +1,6 @@
 
 CSRCS = devlpr.c devtty.c devfd.c devhd.c devgfx.c
-CSRCS += devices.c main.c devinput.c
+CSRCS += devices.c main.c devinput.c devmega.c
 DISCARD_CSRCS = discard.c devhd_discard.c
 
 ASRCS = trs80.S trs80-bank.S crt0.S
@@ -31,9 +31,9 @@ $(DISCARD_COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
 
 clean:
-	rm -f $(OBJS) *.lst *.asm *.sym *.rst *.lk  core *~
+	rm -f $(OBJS) *~ *.tmp *.raw fuzix.bin fuzix.tmpmap *.jv3
 
-image: trs80load.bin hdload.bin
+image: trs80load.bin bin hdboot.bin
 	$(CROSS_LD) -b -C 0x0100 -S 0xE400 -f CLDBbXSs -o ../../fuzix.bin \
 	crt0.o commonmem.o trs80.o trs80-bank.o ../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
@@ -47,7 +47,7 @@ image: trs80load.bin hdload.bin
 	../../syscall_proc.o ../../syscall_other.o ../../syscall_net.o \
 	../../network.o ../../tty.o ../../vt.o ../../mm.o ../../mm/memalloc_none.o \
 	../../swap.o ../../mm/bankfixed.o ../../devsys.o \
-	devtty.o devlpr.o ../../devinput.o devinput.o \
+	devtty.o devlpr.o ../../devinput.o devinput.o devmega.o \
 	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
 	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
 	../../tools/pack85 ../../fuzix.bin fuzix.bin <../../fuzix.map
@@ -64,9 +64,9 @@ trs80load.bin: trs80load.S
 	fcc -mz80 -c trs80load.S
 	ldz80 -b trs80load.o -o trs80load.bin
 
-hdload.bin: hdload.S
-	fcc -mz80 -c hdload.S
-	ldz80 -b hdload.o -o hdload.bin
+hdboot.bin: hdboot.S
+	fcc -mz80 -c hdboot.S
+	ldz80 -b hdboot.o -o hdboot.bin
 
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
 
@@ -76,5 +76,10 @@ diskimage: image
 	cp hdboot4p.jv3 $(IMAGES)/hdboot.jv3
 	# Build a file system to fit
 	(cd $(FUZIX_ROOT)/Standalone/filesystem-src; ./build-filesystem $(ENDIANFLAGH) $(IMAGES)/filesys.img 256 21760)
-	cat xtrsheader $(IMAGES)/filesys.img >$(IMAGES)/hard4p-0
+	dd if=$(IMAGES)/filesys.img of=disk.tmp bs=32768 seek=2
+	dd if=hdboot.bin of=disk.tmp seek=2 bs=128 count=1 conv=notrunc
+	dd if=fuzix.bin bs=256 of=disk.tmp seek=4 skip=1 conv=notrunc
+	cat xtrsheader disk.tmp >$(IMAGES)/hard4p-0
 	../../tools/trslabel $(IMAGES)/hard4p-0
+	rm disk.tmp
+

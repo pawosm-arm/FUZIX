@@ -13,6 +13,7 @@
 
         ; exported symbols
         .export init_hardware
+	.export map_io
 	.export map_kernel
 	.export map_kernel_di
 	.export map_kernel_restore
@@ -66,7 +67,7 @@ opsave:
 extsave:
 	.byte	0x01
 _opreg:
-	.byte	0x86	; kernel map, 80 columns, linear video memory
+	.byte	0x87	; kernel map, no I/O
 _modout:
 	.byte	0x50	; 80 column, sound enabled, altchars off,
 			; external I/O enabled, 4MHz
@@ -194,13 +195,26 @@ no_hyper:
 ;	The lower 32K is switched between the various user banks and the
 ;	base kernel bank
 ;
+;	We pack these early in common space so they land below F400 as
+;	F400-FFFF will disappear during screen and keyboard checks
+;
 map_kernel:
 map_kernel_di:
 map_kernel_restore:
 	push	af
 	ld	a, (_opreg)
 	and	0x8C		; keep video bits
-	or	0x02		; map 2, base memory
+	or	0x03		; map 2, base memory, no I/O
+	ld	(_opreg), a
+	out	(0x84), a	; base memory so 0x94 doesn't matter
+	pop	af
+	ret
+
+map_io:
+	push	af
+	ld	a, (_opreg)
+	and	0x8C		; keep video bits
+	or	0x02		; map 2, base memory with I/O
 	ld	(_opreg), a
 	out	(0x84), a	; base memory so 0x94 doesn't matter
 	pop	af
@@ -273,7 +287,7 @@ map_save_kernel:
 	ld 	(extsave), a
 	ld	a, (_opreg)
 	and	0x8C		; keep video bits
-	or	0x02		; map 2, base memory
+	or	0x03		; map 3, base memory
 	ld	(_opreg), a
 	out	(0x84), a	; base memory so 0x94 doesn't matter
 	pop	af

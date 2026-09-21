@@ -16,11 +16,7 @@ static char tbuf3[TTYSIZ];
 uint8_t curtty;		/* output side */
 uint8_t inputtty;	/* input side */
 static struct vt_switch ttysave[2];
-uint8_t vtbackbuf[VT_WIDTH * VT_HEIGHT];
 struct vt_repeat keyrepeat;
-
-uint8_t *vtbase[2] = { (uint8_t *)0xF800, vtbackbuf };
-
 
 #define TR1865_CTRL	0xE8
 #define TR1865_BAUD	0xE9
@@ -61,16 +57,11 @@ ttyready_t tty_writeready(uint_fast8_t minor)
 
 void vtbuf_init(void)
 {
-    memset(vtbackbuf, ' ', VT_WIDTH * VT_HEIGHT);
+    memset((void *)0xF800, ' ', VT_WIDTH * VT_HEIGHT);
 }
 
 void vtexchange(void)
 {
-        /* Swap the pointers over: TRS80 video we switch by copying not
-           flipping hardware pointers */
-        uint8_t *v = vtbase[0];
-        vtbase[0] = vtbase[1];
-        vtbase[1] = v;
         /* The cursor x/y for current tty are stale in the save area
            so save them */
         vt_save(&ttysave[curtty]);
@@ -178,7 +169,7 @@ void tty_data_consumed(uint_fast8_t minor)
 }
 
 uint8_t keymap[8];
-static uint8_t keyin[8];
+uint8_t keyin[8];
 static uint8_t keybyte, keybit;
 static uint8_t newkey;
 static int keysdown = 0;
@@ -191,10 +182,8 @@ static void keyproc(void)
 	int i;
 	uint8_t key;
 
+	keyscan();
 	for (i = 0; i < 8; i++) {
-	        /* Set one of A0 to A7, and read the byte we get back.
-	           Invert that to get a mask of pressed buttons */
-		keyin[i] = *(uint8_t *)(0xF400 | (1 << i));
 		key = keyin[i] ^ keymap[i];
 		if (key) {
 			int n;
@@ -332,8 +321,8 @@ static void keydecode(void)
                 } else {
                     if (c == '8')
                         c = '[';
-                    else if (c == ')')
-                        c = '9';
+                    else if (c == '9')
+                        c = ']';
                     else if (c == '-')
                         c = '|';
                     else if (c > 31 && c < 127)
@@ -371,14 +360,18 @@ static void keydecode(void)
 void kbd_interrupt(void)
 {
 	newkey = 0;
-	keyproc();
-	if (keysdown && keysdown < 3) {
-		if (newkey) {
-			keydecode();
-			kbd_timer = keyrepeat.first;
-		} else if (! --kbd_timer) {
-			keydecode();
-			kbd_timer = keyrepeat.continual;
+	if (keysdown || anykey()) {
+		newkey = 0;
+		keyproc();
+		if (keysdown && keysdown < 3) {
+			if (newkey) {
+				keydecode();
+				kbd_timer = keyrepeat.first;
+			} else if (! --kbd_timer) {
+				keydecode();
+				kbd_timer = keyrepeat.continual;
+			}
 		}
 	}
+	poll_input();
 }

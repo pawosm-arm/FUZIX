@@ -73,7 +73,7 @@ void hd_probe(void)
 		} else {
 			for (i = 0; i < 15; i++) {
 				if (p->cyl[i] != 0xFFFFU) {
-					if (p->type[i] == 0x56) {
+					if (p->type[i] == 0x56 && swap_dev == 0xFFFF) {
 						/* Configure swap */
 						hd_swapon(p, dev, i);
 					}

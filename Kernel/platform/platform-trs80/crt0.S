@@ -3,6 +3,8 @@
 ;	Once the loader completes it jumps here
 ;
 start:
+	ld	a,0x87
+	out	(0x84),a	; I/O map off as we move things over it
 	ld	sp, kstack_top
 	; move the common memory where it belongs    
 	ld	hl, __bss

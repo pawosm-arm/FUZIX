@@ -1,6 +1,10 @@
 ;
 ;	TRS80 bootblock (256 bytes)
 ;
+;	We load the kernel into the main system memory as that's the
+;	one bit we can be sure is present. That way the OS can figure
+;	out what to do for banking or if there is no other memory.
+;
 	.abs
 	.org	0x000
 

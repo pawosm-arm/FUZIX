@@ -13,7 +13,7 @@
 uint8_t hd_page;
 
 /* Swap is scanned for so not constant */
-uint16_t swap_dev;
+uint16_t swap_dev = 0xFFFF;	/* FFFF: not found */
 
 /* Seek and restore low 4 bits are the step rate, read/write support
    multi-sector mode but not all emulators do .. */
@@ -110,7 +110,7 @@ int hd_transfer(uint_fast8_t minor, bool is_read, uint_fast8_t rawflag)
 
 	while (ct < nblock) {
 		/* Head next bits, plus drive */
-		out(HD_SDH, 0x80 | head | (dev << 3));
+		out(HD_SDH, head | (dev << 3));
 		out(HD_SECNUM, sector);
 		/* cylinder bits */
 		out(HD_CYLLO, cyl & 0xFF);

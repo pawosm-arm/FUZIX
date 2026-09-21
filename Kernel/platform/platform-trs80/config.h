@@ -17,7 +17,6 @@
 /* Video terminal, not a serial tty */
 #define CONFIG_VT
 /* Simple character addressed device */
-#define CONFIG_VT_SIMPLE
 #define CONFIG_VT_MULTI
 /* Banked memory set up */
 #define CONFIG_BANK_FIXED

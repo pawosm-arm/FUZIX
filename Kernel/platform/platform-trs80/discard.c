@@ -2,6 +2,7 @@
 #include <printf.h>
 #include <devhd.h>
 #include <devtty.h>
+#include <devmega.h>
 #include <tty.h>
 
 #define GFX_X		0x80
@@ -33,7 +34,7 @@
 
 static uint_fast8_t probe_gfx(void)
 {
-	kputs("Probing gfx\n");
+	kputs("Probing gfx: ");
 	out(GFX_X, 1);
 	out(GFX_Y, 1);
 	out(GFX_CTRL, 0x40); /* Graphics off, inc X on read/write */
@@ -65,6 +66,8 @@ void device_init(void)
 	/* Time of day clock */
 	inittod();
 #endif
+	/* Probe first as it's our preferred swap */
+	mega_probe();
 	hd_probe();
 	tty_setup(3, 0);
 }
