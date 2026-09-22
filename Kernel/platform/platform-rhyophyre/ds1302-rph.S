@@ -12,7 +12,7 @@
 
 #include "kernelu.def"
 #include "../../cpu-z180/z180.def"
-#include "../../cpu-z80u/kernel-z80u.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
 ; -----------------------------------------------------------------------------
 ; DS1302 interface

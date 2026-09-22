@@ -83,7 +83,7 @@ static void n7220_op(uint8_t *op)
     n = *op++;
     while(n--) {
         n7220_waitfifo();
-        out(GCP_P, *op++);
+        out(GDC_P, *op++);
     }
 }
 

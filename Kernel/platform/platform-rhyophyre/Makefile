@@ -1,12 +1,14 @@
-ASRCS = crt0.S z180.S commonmem.S rph.S ds1302-rph.S monitor.S
+ASRCS = crt0.S z180.S commonmem.S rph.S monitor.S
 CSRCS += devices.c main.c devtty.c ps2.c devinput.c 7220.c
 DISCARD_CSRCS = discard.c
 DISCARD_DSRCS = ../../dev/ds1302_discard.c ../../dev/tinyide_discard.c
 DISCARD_DSRCS += ../../dev/tinydisk_discard.c
 DSRCS = ../../dev/tinydisk.c
-DSRCS += ../../dev/tinyide_ppide_rbc.c ../../dev/tinyide.c
+DSRCS +=  ../../dev/tinyide.c
 DSRCS += ../../dev/ds1302.c ../../dev/ps2kbd.c ../../dev/ps2mouse.c
-DASRCS = ../../dev/devrd_hw.S ../../dev/devrd_z180_hw.S
+DASRCS = ../../dev/devrd_hwu.S ../../dev/devrd_z180_hw.S
+DASRCS += ../../dev/tinyide_ppide_rbc.S ../../dev/ds1302_rcbusu.S
+
 
 AOBJS = $(ASRCS:.S=.o)
 COBJS = $(CSRCS:.c=.o)
@@ -31,7 +33,7 @@ $(DOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
 
 $(DAOBJS): %.o: ../../dev/%.S
-	$(CROSS_AS) $(ASOPTS) $@ $<
+	$(CROSS_AS) $(ASOPTS) $<
 
 $(DISCARD_COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
@@ -42,13 +44,12 @@ $(DISCARD_DOBJS): %.o: ../../dev/%.c
 clean:
 	rm -f $(OBJS) core *~ fuzix.com makecpmloader
 
-z180.o: z180.S kernel.def ../../cpu-z180/z180.S
+z180.o: z180.S kernelu.def ../../cpu-z180/z180.S
 
 bootblock:
-	sdasz80 -o boot-romwbw.S
-	sdldz80 -i boot-romwbw.o
+	fcc -mz80 -c boot-romwbw.S
 	# This makes us a binary from physical 0
-	makebin -s 62464 boot-romwbw.ihx boot-romwbw.tmp
+	ldz80 -b boot-romwbw.o -o boot-romwbw.tmp
 	# Chop off the leading 61440 bytes we don't want
 	dd if=boot-romwbw.tmp of=boot-romwbw.bin bs=512 count=2 skip=120
 

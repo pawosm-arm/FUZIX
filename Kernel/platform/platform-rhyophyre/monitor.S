@@ -6,31 +6,27 @@
 	.export _plt_reboot
 	.export map_kernel
 
-; -----------------------------------------------------------------------------
-#ifdef USE_FANCY_MONITOR ; -----------------------------------------------------
-	.area _CODE ; actual monitor lives in kernel bank
-	.include "../../lib/monitor-z80.S"
-
+#ifdef USE_FANCY_MONITOR
+	.code
+#include "../../lib/monitor-z80.S"
 	.common
-			; Stub in common space to bank in monitor
+	; Stub in common space to bank in monitor
 _plt_monitor:
 	di
 	call map_kernel
 	jp monitor_entry
-
-
-; -----------------------------------------------------------------------------
-#else ; MICRO MONITOR ---------------------------------------------------------
+#else
 	.export outchar
 	.export outnewline
 	.export outhl
 
-		.common
+	.common
 _plt_monitor:  di
 	call outnewline
 	; just dump a few words from the stack
-	ld b, #50
-stacknext:      pop hl
+	ld b, 50
+stacknext:
+	pop hl
 	call outhl
 	ld a, #' '
 	call outchar

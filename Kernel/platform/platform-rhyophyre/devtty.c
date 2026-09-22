@@ -115,7 +115,7 @@ int tty_carrier(uint_fast8_t minor)
     return 1;
 }
 
-void tty_pollirq_asci0(void)
+void tty_pirq_asci0(void)
 {
     while(in(ASCI_STAT0) & 0x80)
         tty_inproc(1, in(ASCI_RDR0));
@@ -123,7 +123,7 @@ void tty_pollirq_asci0(void)
     	out(ASCI_CNTLA0, in(ASCI_CNTLA0) & ~0x08);
 }
 
-void tty_pollirq_asci1(void)
+void tty_pirq_asci1(void)
 {
     while(in(ASCI_STAT1) & 0x80)
         tty_inproc(2, in(ASCI_RDR1));
@@ -133,10 +133,12 @@ void tty_pollirq_asci1(void)
 
 void tty_putc(uint_fast8_t minor, uint_fast8_t c)
 {
+    char ch;
     switch(minor){
         case 1:
 	    /* For now make console 1 serial 1 plus ps/2 and video */
-	    vtoutput(&c, 1);
+	    ch = c;
+	    vtoutput(&ch, 1);
             while(!(in(ASCI_STAT0) & 2));
             out(ASCI_TDR0, c);
             break;

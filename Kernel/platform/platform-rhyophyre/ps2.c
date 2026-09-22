@@ -96,10 +96,10 @@ void ps2_int(void)
     if (!ps2_present)
         return;
 
-    while ((stat = in(PS2STAT) & 0x21) {
+    while ((stat = in(PS2STAT)) & 0x21) {
         data = in(PS2DATA);
         if (stat & 0x20)
-            ps2mouse_byte(ps2data);
+            ps2mouse_byte(in(PS2DATA));
         else
             ps2kbd_byte(data);
     }
@@ -139,7 +139,7 @@ unsigned int ps2mouse_get(void)
         }
         /* Random keyboard chatter */
         if (c & 0x01) {
-            ps2data;
+            in(PS2DATA);
         }
     } while (--t);
     return -1;
