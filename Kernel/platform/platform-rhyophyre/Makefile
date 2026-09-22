@@ -51,13 +51,13 @@ bootblock:
 	# This makes us a binary from physical 0
 	ldz80 -b boot-romwbw.o -o boot-romwbw.tmp
 	# Chop off the leading 61440 bytes we don't want
-	dd if=boot-romwbw.tmp of=boot-romwbw.bin bs=512 count=2 skip=120
+	dd if=boot-romwbw.tmp of=boot-romwbw.bin bs=512 conv=sync count=2 skip=120
 
 #
 #	Compile up the boot block
 #
 image: bootblock
-	$(CROSS_LD) -b -C 0x0080 -S 0xF600 -f CLDBbXSs -o ../../fuzix.bin \
+	$(CROSS_LD) -b -C 0x0100 -S 0xF600 -f CLDBbXSs -o ../../fuzix.bin \
 	crt0.o commonmem.o z180.o rph.o main.o devices.o discard.o \
 	devtty.o ../../dev/tinyide.o ../../dev/tinyide_discard.o \
 	../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
@@ -69,7 +69,7 @@ image: bootblock
 	../../tools/pack85 ../../fuzix.bin fuzix.bin <../../fuzix.map
 	cat boot-romwbw.bin >fuzix.romwbw
 	dd if=/dev/zero bs=256 count=1 >>fuzix.romwbw
-	cat fuzix.bin >>fuzix.romwbw
+	dd if=fuzix.bin bs=256 skip=1  >>fuzix.romwbw
 
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
 
