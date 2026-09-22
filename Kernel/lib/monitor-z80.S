@@ -13,67 +13,59 @@
                 .z80
 
                 ; exported symbols
-                .globl monitor_entry
+                .export monitor_entry
 
-                ; imported symbols
-                .globl inchar
-                .globl outchar
-                .globl outcharhex
-                .globl outhl
-                .globl outnewline
-                .globl outstring
-
-                ; NOTE: no .area declaration -- this file should be
+                ; NOTE: no area declaration -- this file should be
                 ; .include'd from platform code (see monitor.s in
                 ; platform-p112 or platform-n8vem-mark4)
 
 ; expect to arrive here with return PC on stack
 monitor_entry:  di                      ; turn off pesky interrupts
-                ld hl, #0
+                ld hl, 0
                 add hl, sp              ; save SP
                 ld (entry_sp), hl       ; save to memory
                 pop bc                  ; save PC
-                ld sp, #monitor_stack
+                ld sp, monitor_stack
                 push bc                 ; orig PC
                 ex de,hl                ; orig SP -> DE
-                ld hl, #entrystr1
+                ld hl, entrystr1
                 call outstring
                 ex de,hl                ; orig SP -> HL
                 call outhl
-                ld hl, #entrystr2
+                ld hl, entrystr2
                 call outstring
                 pop hl
                 call outhl
 monitor_loop:   call outnewline
-                ld hl, #prompt
+                ld hl, prompt
                 call outstring
-                ld hl, #linebuffer
-                ld b, #(linebuffer_end-linebuffer) ; length
+                ld hl, linebuffer
+                ld b, linebuffer_end-linebuffer ; length
                 call instring
                 call outnewline
                 call parse_args
-                ld hl, #monitor_loop
+                ld hl, monitor_loop
                 push hl ; return address
                 ld hl,(arg1)
                 ld de,(arg2)
                 ;ld bc,(arg3)
                 ld a, (linebuffer)
-                cp #'D'
+                cp 'D'
                 jr z, dump
-                cp #'I'
+                cp 'I'
                 jp z, inport
-                cp #'O'
+                cp 'O'
                 jp z, outport
-                cp #'J'
+                cp 'J'
                 jp z, jump
-badinput:       ld a, #'?'
+badinput:       ld a, '?'
                 jp outchar  ; ret back to monitor_loop
 
-parse_args:     ld hl, #0
+parse_args:     ld hl, 0
                 ld (arg1), hl
                 ld (arg2), hl
                 ;ld (arg3), hl
-                ld de, #linebuffer+1
+                ld de, linebuffer+1
                 call gethex
                 ld (arg1), hl
                 ld (arg2), hl
@@ -98,28 +90,28 @@ dmph:           ld      a,(hl)
                 jr      z,enddmp
                 inc     hl
                 ld      a,l
-                and     #0x0F
+                and     0x0F
                 jr      nz,dmph
                 pop     hl
                 call    dumpl
                 jr      dump
 enddmp:         pop     hl
-dumpl:          ld      a,#'|'
+dumpl:          ld      a,'|'
                 call outchar
-                ld      a,#' '
+                ld      a,' '
                 call outchar
 dumpln:         ld      a,(hl)
-                cp      #0x20
+                cp      0x20
                 jr      c,outdot
-                cp      #0x7f
+                cp      0x7f
                 jr      c,char
-outdot:         ld      a,#'.'
+outdot:         ld      a,'.'
 char:           call    outchar
                 call    hl_eq_de
                 ret     z
                 inc     hl
                 ld      a,l
-                and     #0x0F
+                and     0x0F
                 jr      nz,dumpln
                 ret
 
@@ -141,7 +133,7 @@ jump:           jp (hl)
 inport:         push hl
                 ld      a,l
                 call    outcharhex
-                ld      a,#'='
+                ld      a,'='
                 call    outchar
                 pop hl
                 ld      c,l
@@ -161,13 +153,13 @@ outport:        ld      c,l
 
 out_addr:       call    outnewline
                 call    outhl
-                ld      a,#':'
+                ld      a,':'
                 call    outchar
-                ld      a,#' '
+                ld      a,' '
                 jp      outchar
 
 outbyte:        call    outcharhex
-                ld      a,#' '
+                ld      a,' '
                 jp      outchar
 
 ;cmd_debug:
@@ -185,9 +177,9 @@ outbyte:        call    outcharhex
 
 ; parse 16-bit hex number at (DE) into HL
 ; return with carry flag set if end of string
-gethex:         ld      hl,#0
+gethex:         ld      hl,0
 ghskip:         ld      a,(de)
-                cp      #' '
+                cp      ' '
                 jr      nz, gh1
                 inc     de
                 jr      ghskip
@@ -195,21 +187,21 @@ gh1:            ld      a,(de)
                 inc     de
                 or      a
                 jp      z,aend
-                cp      #','
+                cp      ','
                 ret     z
-                cp      #' '
+                cp      ' '
                 ret     z
-                sub     #'0'
+                sub     '0'
                 jp      m,badinput
-                cp      #10
+                cp      10
                 jp      m,dig
-                cp      #0x11
+                cp      0x11
                 jp      m,badinput
-                cp      #0x17
+                cp      0x17
                 jp      p,badinput
-                sub     #7
+                sub     7
 dig:            ld      c,a
-                ld      b,#0
+                ld      b,0
                 add     hl,hl
                 add     hl,hl
                 add     hl,hl
@@ -223,28 +215,28 @@ aend:           scf
 ; instring (from socz80, added buffer length checking, added case conversion)
 ; reads a string from terminal to memory. HL=buffer address, B=buffer length.
 ; Returns length of string (excluding 0 terminator) in C
-instring:       ld c, #0        ; we use C to remember our string length
+instring:       ld c, 0        ; we use C to remember our string length
 instringloop:   call inchar
                 ; test for cr/lf
-                cp #0x0d
+                cp 0x0d
                 jr z, cr
-                cp #0x0a
+                cp 0x0a
                 jr z, cr
                 ; test for backspace
-                cp #0x08
+                cp 0x08
                 jr z, backspace
-                cp #0x7f
+                cp 0x7f
                 jr z, backspace
                 ; test for non-printing characters
-                cp #0x20 ; < 0x20?
+                cp 0x20 ; < 0x20?
                 jp c, instringloop 
-                cp #0x7e ; > 0x7e?
+                cp 0x7e ; > 0x7e?
                 jp nc, instringloop
-                cp #'a'
+                cp 'a'
                 jr c, storechar
-                cp #'z'+1
+                cp 'z'+1
                 jr nc, storechar
-                and #0x5f ; uppercase: characters from a-z are now A-Z
+                and 0x5f ; uppercase: characters from a-z are now A-Z
 storechar:      ; store the character in the buffer
                 ld (hl), a
                 inc hl
@@ -254,34 +246,34 @@ storechar:      ; store the character in the buffer
                 ld a, c
                 sub b
                 jr nz, instringloop ; space remains - next character
-                ld a, #7
+                ld a, 7
                 call outchar ; ring the bell
                 ; buffer full - fall through to backspace
 backspace:      ld a, c
-                cp #0
+                cp 0
                 jr z, instringloop ; cannot backspace past the start
                 dec hl
                 dec c
-                ld a, #0x08 ; move back
+                ld a, 0x08 ; move back
                 call outchar
-                ld a, #0x20 ; print space
+                ld a, 0x20 ; print space
                 call outchar
-                ld a, #0x08 ; move back again
+                ld a, 0x08 ; move back again
                 call outchar
                 jr instringloop
-cr:             ld a, #0
+cr:             ld a, 0
                 ld (hl), a
                 ret
 
 
 ; strings
-entrystr1:      .db 13, 10
+entrystr1:      .byte 13, 10
                 .ascii "monitor: SP="
-                .db 0
+                .byte 0
 entrystr2:      .ascii ", PC="
-                .db 0
+                .byte 0
 prompt:         .ascii ":( "
-                .db 0
+                .byte 0
 
 ; arguments
 arg1:           .ds 2
