@@ -9,6 +9,8 @@
 uint16_t ramtop = PROGTOP;
 extern unsigned char irqvector;
 uint16_t swap_dev = 0xFFFF;
+uint16_t rtc_port = 0x8A;
+uint8_t rtc_shadow;
 
 struct blkbuf *bufpool_end = bufpool + NBUFS; /* minimal for boot -- expanded after we're done with _DISCARD */
 
@@ -42,10 +44,10 @@ void plt_interrupt(void)
             z180_timer_interrupt();
             return;
         case Z180_INT_ASCI0:
-            tty_pollirq_asci0();
+            tty_pirq_asci0();
             return;
         case Z180_INT_ASCI1:
-            tty_pollirq_asci1();
+            tty_pirq_asci1();
             return;
         default:
             return;

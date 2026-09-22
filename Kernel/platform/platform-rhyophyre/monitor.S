@@ -4,7 +4,6 @@
 
 	.export _plt_monitor
 	.export _plt_reboot
-	.export map_kernel
 
 #ifdef USE_FANCY_MONITOR
 	.code

@@ -22,3 +22,16 @@ PROGBASE		    .equ 0x0000
 PROGLOAD		    .equ 0x0100
 
 #define CONFIG_SWAP
+#define CONFIG_TINYIDE_PPI
+
+PPIDE_RD_LINE	.equ	0x40
+PPIDE_WR_LINE	.equ	0x20
+PPIDE_PPI_BUS_READ	.equ	0x92
+PPIDE_PPI_BUS_WRITE	.equ	0x80
+
+ppi_port_a	.equ	0x88
+ppi_port_b	.equ	0x89
+ppi_port_c	.equ	0x8A
+ppi_control	.equ	0x8B
+
+ppide_data	.equ	0x08

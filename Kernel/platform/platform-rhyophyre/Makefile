@@ -57,9 +57,19 @@ bootblock:
 #	Compile up the boot block
 #
 image: bootblock
+	$(CROSS_LD) -b -C 0x0080 -S 0xF600 -f CLDBbXSs -o ../../fuzix.bin \
+	crt0.o commonmem.o z180.o rph.o main.o devices.o discard.o \
+	devtty.o ../../dev/tinyide.o ../../dev/tinyide_discard.o \
+	../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
+	../../dev/tinyide_ppide_rbc.o ../../dev/ds1302.o \
+	../../dev/ds1302_discard.o ../../dev/ds1302_rcbusu.o ps2.o \
+	../../dev/ps2kbd.o ../../dev/ps2mouse.o devinput.o 7220.o monitor.o \
+	../../libfuzix.a /opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
+	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
+	../../tools/pack85 ../../fuzix.bin fuzix.bin <../../fuzix.map
 	cat boot-romwbw.bin >fuzix.romwbw
 	dd if=/dev/zero bs=256 count=1 >>fuzix.romwbw
-	cat ../../fuzix.bin >>fuzix.romwbw
+	cat fuzix.bin >>fuzix.romwbw
 
 IMAGES = $(FUZIX_ROOT)/Images/$(TARGET)
 
