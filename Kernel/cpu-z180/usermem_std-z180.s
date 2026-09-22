@@ -36,6 +36,18 @@ TICKSPERSEC                 .equ 40           ; timer interrupt rate (Hz)
 
 PROGBASE		    .equ 0x0000
 PROGLOAD		    .equ 0x0100
+# 27
+PPIDE_RD_LINE	.equ	0x40
+PPIDE_WR_LINE	.equ	0x20
+PPIDE_PPI_BUS_READ	.equ	0x92
+PPIDE_PPI_BUS_WRITE	.equ	0x80
+
+ppi_port_a	.equ	0x88
+ppi_port_b	.equ	0x89
+ppi_port_c	.equ	0x8A
+ppi_control	.equ	0x8B
+
+ppide_data	.equ	0x08
 # 1 "cpu-z180/../cpu-z180/z180.def"
 ; ASCI serial ports
 ASCI_CNTLA0                 .equ Z180_IO_BASE+0x00     ; ASCI control register A channel 0

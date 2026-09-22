@@ -10,7 +10,6 @@
         ; exported symbols
         .export z180_init_hardware
         .export z180_init_early
-        .export _init_hardware_c
         .export _program_vectors
         .export _copy_and_map_proc
         .export interrupt_table ; not used elsewhere but useful to check correct alignment
@@ -18,10 +17,22 @@
         .export _irqvector
         .export _need_resched
 	.export _int_disabled
-	.export _udata
+
+	.export map_kernel_restore
+	.export map_buffers
+	.export map_kernel_di
+	.export map_kernel
+	.export map_proc_always_di
+	.export map_proc_always
+	.export map_for_swap
+	.export map_save_kernel
+	.export map_restore
+
+	.export _plt_switchout
+	.export _switchin
+	.export _dofork
 
 #ifdef CONFIG_SWAP
-	.export _do_swapout
 	.export _swapout
 #endif
 
@@ -704,7 +715,7 @@ _swapout:
 	out0	(MMU_CBR), c	; Restore map first in case we takn an IRQ
 	ld	sp,hl		; Switch stack
 	ex	de,hl		; Return value back into HL
-	pop	bx		; Restore BC
+	pop	bc		; Restore BC
 	jp	map_kernel	; Ensure the lower mapping is fixed up if needed
 #endif
 ;
@@ -778,8 +789,6 @@ _switchin:
         ; contains a copy of this code, eh?
 
 #ifdef CONFIG_SWAP
-	.export _swapper
-
         ld	a, (hl)
 	or	a
 	jr	nz, is_resident

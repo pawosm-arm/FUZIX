@@ -62,6 +62,18 @@ TICKSPERSEC                 .equ 40           ; timer interrupt rate (Hz)
 
 PROGBASE		    .equ 0x0000
 PROGLOAD		    .equ 0x0100
+# 27
+PPIDE_RD_LINE	.equ	0x40
+PPIDE_WR_LINE	.equ	0x20
+PPIDE_PPI_BUS_READ	.equ	0x92
+PPIDE_PPI_BUS_WRITE	.equ	0x80
+
+ppi_port_a	.equ	0x88
+ppi_port_b	.equ	0x89
+ppi_port_c	.equ	0x8A
+ppi_control	.equ	0x8B
+
+ppide_data	.equ	0x08
 # 42 "cpu-z180/../cpu-z80u/lowlevel-z80u.S"
 	; This up and down makes sure we can include it from cpu-z180.
 # 1 "cpu-z180/../cpu-z80u/../cpu-z80u/kernel-z80.def"
