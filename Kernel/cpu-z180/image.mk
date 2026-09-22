@@ -1,35 +1,21 @@
-tools/analysemap: tools/analysemap.c
+tools/visualizefcc: tools/visualizefcc.c
 
-tools/visualize: tools/visualize.c
+tools/hogfather: tools/hogfather.c
 
-tools/bihx: tools/bihx.c
+tools/pack85: tools/pack85.c
 
-tools/binmunge: tools/binmunge.c
+tools/packdiscard: tools/packdiscard.c
 
-tools/memhogs: tools/analysemap
-	cp tools/analysemap tools/memhogs
-
-tools/binman: tools/binman.c
-
-tools/bintomdv: tools/bintomdv.c
-
-tools/bankld/sdldz80:
-	+(cd tools/bankld; make)
-
-cpm-loader/cpmload.bin:	cpm-loader/cpmload.s cpm-loader/fuzixload.s cpm-loader/makecpmloader.c
-	+make -C cpm-loader
+tools/doubleup: tools/doubleup.c
 
 tools/makejv3: tools/makejv3.c
 
-fuzix.ihx: target $(OBJS) platform/platform-$(TARGET)/fuzix.lnk tools/bankld/sdldz80
-	$(CROSS_LD) -n -k $(LIBZ80) -f platform/platform-$(TARGET)/fuzix.lnk
+tools/trslabel: tools/trslabel.c
 
-fuzix.bin: fuzix.ihx tools/bihx tools/analysemap tools/memhogs tools/binman tools/bintomdv cpm-loader/cpmload.bin tools/visualize
-	-cp hogs.txt hogs.txt.old
-	tools/memhogs <fuzix.map |sort -nr >hogs.txt
-	head -5 hogs.txt
-	tools/visualize < fuzix.map
-	tools/bihx fuzix.ihx
-	tools/binprep
-	+make -C platform/platform-$(TARGET) image
+cpm-loader-fcc/cpmload.bin: cpm-loader-fcc/cpmload.S cpm-loader-fcc/fuzixload.S cpm-loader-fcc/makecpmloader.c
+	+$(MAKE) -C cpm-loader-fcc
 
+fuzix.bin: target $(OBJS) tools/pack85 tools/packdiscard tools/visualizefcc tools/doubleup cpm-loader-fcc/cpmload.bin tools/makejv3 tools/trslabel tools/hogfather
+	+$(MAKE) -C platform/platform-$(TARGET) image
+	(cd platform/platform-$(TARGET); ../../tools/visualizefcc <../../fuzix.map)
+	tools/hogfather fuzix.map | sort -nr >fuzix.hogs
