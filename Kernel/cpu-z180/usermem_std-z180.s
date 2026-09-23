@@ -291,7 +291,7 @@ __uzero:
 	ldir
 pop_out:
 	pop	bc
-	ret
+	jp	map_kernel_restore
 
 
 
@@ -309,7 +309,7 @@ __uputc:
 	ld	a,(hl)
 	inc	hl
 	ld	h,(hl)
-	ld	h,a
+	ld	l,a
 	call	map_proc_always
 	ld	(hl), e
 uputc_out:
@@ -327,12 +327,12 @@ __uputw:
 	ld	a,(hl)
 	inc	hl
 	ld	h,(hl)
-	ld	h,a
+	ld	l,a
 	call	map_proc_always
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
-	jp	map_kernel_restore
+	jr	uputc_out
 
 __ugetc:
 	pop	de
