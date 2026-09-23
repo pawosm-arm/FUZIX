@@ -74,7 +74,7 @@ init_early:
 init_hardware:
 	sta 0xffd9	; fast mode
 	sta 0xffdf	; 64K RAM (loader should already have done this)
-	jsr size_ram
+	jsr _size_ram
 	; Turn on PIA CB1 (FSync interrupt)
 	lda 0xff03
 	ora #1

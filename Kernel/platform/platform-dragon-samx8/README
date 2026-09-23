@@ -15,7 +15,8 @@ RAM top set to F000.  Video mapped to $C000+ while modifying.
 
 It's expected that a boot loader will position the kernel within pages 0--3.
 One of the first things the start code does is copy the common area from page 3
-to page 31.
+to page 31.  After initialisation, page 3 is added to the pool for user
+processes.
 
 Like the MOOH and the GIME, the SAMx8 has two tasks, so data copying is mostly
 restricted to stashing the udata per-process (hidden "behind" the real udata in
@@ -50,6 +51,8 @@ SDRIVE1"FUZIX.VHD"
 
 Then type BOOT.  Type 'hda1' at the boot prompt.
 
+Swap appears to work.
+
 
 RUNNING UNDER EMULATION
 =======================
@@ -73,9 +76,13 @@ XRoar should automatically type "BOOT" to boot off the mounted floppy.  Type
 'dw' at the boot prompt.  Remember when you finish that you have a socat job
 running in the background.
 
+Swap will not work in this configuration, as the swap partition is not visible
+over DriveWire.
 
-TODO (test/debug)
-=================
 
- * swap
- * probably loads of other things
+COMPRESSING THE KERNEL
+======================
+
+Completely optional, but if you have dzip installed, appending
+FZLOAD09_FORMAT=dzip to the make command in the examples above will compress
+the kernel, which loads faster.

@@ -69,7 +69,7 @@ endif
 # Emulation - IDE and becker port
 ifeq ($(SUBTARGET),emu)
 ifndef WANT_COCOIDE
-WANT_COCOIDE = yes
+WANT_COCOIDE = no
 endif
 ifndef WANT_DRIVEWIRE
 WANT_DRIVEWIRE = yes
