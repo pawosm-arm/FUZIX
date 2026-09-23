@@ -36,13 +36,13 @@ init_early:
 init_hardware:
         ; enable ASCI interrupts
         in0 a, (ASCI_STAT0)
-        or #x08                ; enable ASCI0 receive interrupts
+        or 0x08                ; enable ASCI0 receive interrupts
         out0 (ASCI_STAT0), a
         in0 a, (ASCI_ASEXT0)
         and 0x7f               ; disable RDRF interrupt inhibit
         out0 (ASCI_ASEXT0), a
         in0 a, (ASCI_STAT1)
-        or #x08                ; enable ASCI1 receive interrupts
+        or 0x08                ; enable ASCI1 receive interrupts
         out0 (ASCI_STAT1), a
         in0 a, (ASCI_ASEXT1)
         and 0x7f               ; disable RDRF interrupt inhibit
