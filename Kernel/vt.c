@@ -30,7 +30,7 @@
  *	For the simple case of a vt permanently mapped into the kernel space
  *	and using character mode the driver can provide all the other logic
  *	for free.
- *	
+ *
  *	In that case
  *	define CONFIG_VT_SIMPLE
  *	VT_BASE is the base address in kernelspace
@@ -306,7 +306,7 @@ void vtoutput(register unsigned char *p, register unsigned int len)
 				vtattr_notify();
 				continue;
 			} else if (vtmode == 7) {
-				charout(c);
+				charout(c & 31);
 				vtmode = 0;
 				continue;
 			}
@@ -345,7 +345,7 @@ int vt_ioctl(uint_fast8_t minor, uarg_t request, register char *data)
 				keyrepeat.first *= (TICKSPERSEC/10);
 				keyrepeat.continual *= (TICKSPERSEC/10);
 				return 0;
-#endif					
+#endif
 			case VTSIZE:
 				return (VT_BOTTOM + 1) << 8 | (VT_RIGHT + 1);
 			case VTATTRS:
