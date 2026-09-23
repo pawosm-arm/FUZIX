@@ -1007,3 +1007,44 @@ mis_low:
 ret0:		ld	hl,0
 		pop	bc
 		ret
+
+;
+;	strcmp
+;
+		.export _strcmp
+_strcmp:
+		push	bc
+#ifdef BANKED_Z80
+		ld	hl,11
+#else
+		ld	hl,9
+#endif
+		add	hl,sp
+		ld	b,(hl)	; Count
+		dec	hl
+		ld	c,(hl)
+		dec	hl
+		ld	d,(hl)	; Source 1
+		dec	hl
+		ld	e,(hl)
+		dec	hl
+		ld	a,(hl)	; Source 2
+		dec	hl
+		ld	l,(hl)
+		ld	h,a
+
+snext:
+		ld	a,b
+		or	c
+		jr	z,ret0
+
+		ld	a,(de)		; get src 2
+		cp	(hl)		; check v src 1
+		jr	nz, mismatch	; and C if src2 < src1
+		or	a		; Same and end
+		jr	z,ret0
+
+		inc	de
+		inc	hl
+		dec	bc
+		jr	snext
