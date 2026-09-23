@@ -39,7 +39,6 @@
 
 OS_RAM1	.equ	FIRST_RAM_BANK + OS_BANK
 RAM64K	.equ	FIRST_RAM_BANK + 0x20
-TSCALE	.equ	1000/Z180_TIMER_SCALE
 
 ; -----------------------------------------------------------------------------
 ; Initialisation code
@@ -153,7 +152,7 @@ z180_init_hardware:
         ; set up system tick timer
         xor	a
         out0	(TIME_TCR), a
-        ld	hl, CPU_CLOCK_KHZ*TSCALE/TICKSPERSEC-1
+        ld	hl, TCR_CLOCK
         out0	(TIME_RLDR0L), l
         out0	(TIME_RLDR0H), h
         ld	a, 0x11         ; enable downcounting and interrupts for timer 0 only

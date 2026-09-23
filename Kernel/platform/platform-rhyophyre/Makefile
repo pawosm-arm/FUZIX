@@ -46,7 +46,7 @@ clean:
 
 z180.o: z180.S kernelu.def ../../cpu-z180/z180.S
 
-bootblock:
+boot-romwbw.bin:
 	fcc -mz80 -c boot-romwbw.S
 	# This makes us a binary from physical 0
 	ldz80 -b boot-romwbw.o -o boot-romwbw.tmp
@@ -56,7 +56,7 @@ bootblock:
 #
 #	Compile up the boot block
 #
-image: bootblock
+image: boot-romwbw.bin
 	$(CROSS_LD) -b -C 0x0100 -S 0xF600 -f CLDBbXSs -o ../../fuzix.bin \
 	crt0.o commonmem.o z180.o rph.o main.o devices.o discard.o \
 	devtty.o ../../dev/tinyide.o ../../dev/tinyide_discard.o \
