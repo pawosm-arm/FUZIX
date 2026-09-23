@@ -44,7 +44,7 @@ void copy_and_map_proc(uint16_t *pageptr);
 #define ASCI_ASTC1L	Z180_IO_BASE + 0x1C	/* ASCI time constant register channel 1 low  */
 #define ASCI_ASTC1H	Z180_IO_BASE + 0x1D	/* ASCI time constant register channel 1 high */
 
-#define CSIO_CNTRL	Z180_IO_BASE + 0x0A	/* CSI/O control/status register              */
+#define CSIO_CNTR	Z180_IO_BASE + 0x0A	/* CSI/O control/status register              */
 #define CSIO_TRDR	Z180_IO_BASE + 0x0B	/* CSI/O transmit/receive data register       */
 
 #define Z180_RCR	Z180_IO_BASE + 0x36	/* Refresh control register */

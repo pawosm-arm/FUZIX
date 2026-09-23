@@ -53,6 +53,10 @@ TIME_RLDR1L                 .equ Z180_IO_BASE+0x16     ; Timer reload register, 
 TIME_RLDR1H                 .equ Z180_IO_BASE+0x17     ; Timer reload register,  channel 1H
 TIME_FRC                    .equ Z180_IO_BASE+0x18     ; Timer Free running counter
 
+; CSIO
+CSIO_CNTR		    .equ Z180_IO_BASE+0x0A     ; CSIO control/status register
+CSIO_TRDR		    .equ Z180_IO_BASE+0x0B     ; CSIO transmit/receive data register
+
 ; Z180 Interrupts
 INT_IL                      .equ Z180_IO_BASE+0x33     ; Interrupt vector low register
 INT_ITC                     .equ Z180_IO_BASE+0x34     ; Interrupt vector low register

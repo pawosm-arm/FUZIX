@@ -2,7 +2,8 @@ LIBOBJ = start.o version.o timer.o kdata.o usermem.o \
          devio.o filesys.o blk512.o process.o inode.o \
          syscall_exec.o syscall_exec16.o syscall_fs.o \
          syscall_fs2.o syscall_fs3.o syscall_proc.o \
-         syscall_other.o tty.o mm.o mm/memalloc_none.o \
+         syscall_other.o syscall_net.o network.o \
+         tty.o mm.o mm/memalloc_none.o \
          mm/banksplit.o swap.o devsys.o devinput.o vt.o
 
 LIBOBJ += cpu-z180/lowlevel-z180.o cpu-z180/usermem_std-z180.o
