@@ -212,7 +212,7 @@ waitrx3:
         inc	de		; ptr++
         bit	5, h
         jr	nz, rxnextbyte	; go again if not yet done
-        jr transferdone		; we are done
+        jr	transferdone	; we are done
 
 _sd_spi_tx_sector:
         ; load parameters
