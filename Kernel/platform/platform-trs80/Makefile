@@ -33,7 +33,7 @@ $(DISCARD_COBJS): %.o: %.c
 clean:
 	rm -f $(OBJS) *~ *.tmp *.raw fuzix.bin fuzix.tmpmap *.jv3
 
-image: trs80load.bin bin hdboot.bin
+image: trs80load.bin hdboot.bin
 	$(CROSS_LD) -b -C 0x0100 -S 0xE400 -f CLDBbXSs -o ../../fuzix.bin \
 	crt0.o commonmem.o trs80.o trs80-bank.o ../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
