@@ -155,7 +155,7 @@ _sd_spi_rx_sector:
 	push	bc
 waitrx: 
         in0	a, (CSIO_CNTR)	; wait for any current tx or rx operation to complete
-;FIXME        tst	a, 0x30
+        tst	0x30
         jr	nz, waitrx
         set	5, a		; set CSIO_CNTR_RE, enable rx operation for first byte
         out0	(CSIO_CNTR), a
