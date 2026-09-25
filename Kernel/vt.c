@@ -42,8 +42,6 @@
  *
  *	Extensions in use (we mostly follow Atari ST)
  *
- *	^V quotes next code even if control code (so can print symbols 0-31)
- *
  *	- Esc a c	Set vtattr bits (inverse, etc)
  *
  *	- Esc b c	Set ink colour
@@ -140,17 +138,12 @@ static void charout(register unsigned char c)
 			vtmode = 1;
 			return;
 		}
-		if (c == 22) {
-			vtmode = 7;
-			return;
-		}
 	}
 	plot_char(cursory, cursorx, c);
 	cursorx++;
 fix:
 	cursor_fix();
 }
-
 
 static int escout(register unsigned char c)
 {
@@ -176,6 +169,16 @@ static int escout(register unsigned char c)
 	}
 	if (c == 'E') {
 		clear_lines(0, VT_BOTTOM + 1);
+		return 0;
+	}
+	if (c == 'F') {
+		vtattr |= VTA_ALTCHAR;
+		vtattr_notify();
+		return 0;
+	}
+	if (c == 'G') {
+		vtattr &= ~VTA_ALTCHAR;
+		vtattr_notify();
 		return 0;
 	}
 	if (c == 'H') {
@@ -291,7 +294,8 @@ void vtoutput(register unsigned char *p, register unsigned int len)
 					cursorx = ncursorx;
 				vtmode = 0;
 			} else if (vtmode == 4 ){
-				vtattr = c;
+				vtattr &= VTA_ALTCHAR;
+				vtattr |= c & ~VTA_ALTCHAR;
 				vtmode = 0;
 				vtattr_notify();
 				continue;
@@ -304,10 +308,6 @@ void vtoutput(register unsigned char *p, register unsigned int len)
 				vtpaper = c;
 				vtmode = 0;
 				vtattr_notify();
-				continue;
-			} else if (vtmode == 7) {
-				charout(c & 31);
-				vtmode = 0;
 				continue;
 			}
 		}
