@@ -1,35 +1,11 @@
-# 1 "usermem.S"
 ;
 ;	For now use the generic Z80 setup. The Z180 ones assuee a
 ;	specific memory mapping we don't use due to our limited
 ;	RAM.
 ;
-# 1 "kernelu.def"
-;
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256
-Z80_TYPE                    .equ 2
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-OS_BANK                     .equ 0x00         ; value from include/kernel.h
-
-; Memory layout
-FIRST_RAM_BANK              .equ 0x40         ; 128K of RAM
-Z180_IO_BASE                .equ 0xC0
-
-CPU_CLOCK_KHZ               .equ 6144         ; 6.144MHz * 1
-TICKSPERSEC                 .equ 40           ; timer interrupt rate (Hz)
-TCR_CLOCK		    .equ 7680
-
-PROGBASE		    .equ 0x0000
-PROGLOAD		    .equ 0x0100
-
-; disabling this saves around approx 0.5KB
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 9 "usermem.S"
         ; exported symbols
         .export __uget
         .export __ugetc
@@ -107,7 +83,7 @@ uputget:
 	ret	z	; no work
 	dec	de	; we return BC as a count for two 8bit loops
 	ld	b, e	; not a 16bit value
-	inc	b	; See http:
+	inc	b	; See http://map.grauw.nl/articles/fast_loops.php
 	inc	d
 	ld	c, d
         ; load HL with the source address

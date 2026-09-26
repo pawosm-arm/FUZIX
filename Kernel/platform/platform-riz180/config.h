@@ -56,9 +56,9 @@
 #define CONFIG_RTC_DS1302
 
 #ifndef CONFIG_WITH_SD
-#define CONFIG_NET
-#define CONFIG_NET_WIZNET
-#define CONFIG_NET_W5500
+//#define CONFIG_NET
+//#define CONFIG_NET_WIZNET
+//#define CONFIG_NET_W5500
 #endif
 
 /* We need a tidier way to do this from the loader */
