@@ -1,4 +1,3 @@
-# 1 "crt0.S"
 	; We are entered at 0x0100 in the first RAM bank with the low 32K
 	; sanely mapped but quite possibly not the rest, and with interrupts
 	; off.
