@@ -10,7 +10,6 @@
 
 #define IDE_REG_DATA	0x10
 
-/* Due to our strange banking needs */
 #define IDE_NONSTANDARD_XFER
 
 #define ide_read(x)	in(x)
