@@ -3,83 +3,25 @@
 ;	(Keyboard)
 ;
 
-	.globl _ps2kbd_get
-	.globl _ps2kbd_put
-	.globl _ps2kbd_beep
+	.export _ps2kbd_get
+	.export _ps2kbd_put
+	.export _ps2kbd_beep
 
-	.globl _kbsave
+	.export _kbsave
 
-	.globl abort_sp
+	.export abort_sp
 
-	.module ps2bitbang-rc2014-kbd
-
-	.include "../../dev/ps2bitbang-z80.def"
-
-	.area _DATA
+	.data
 
 abort_sp:
 	.word	0
 _kbsave:
 	.byte	0
 
-	.area _CODE
+	.code
 
 _ps2kbd_beep:
 	ret
-
-;
-;	Keyboard: clock on bit 6 data on bit 7
-;	Keyboard: data in on bit 7 of port C clock in on bit 6 of port C
-;
-.macro HOLD_OFF
-	; Critical path is reading port C so we point C at that by default
-	; We need port A
-	dec	c
-	dec	c
-	in	a,(c)
-	and	a,#0xBF		; force clock down
-	or	a,#0x80		; float data
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-.macro GET_CLOCK
-	in	a,(c)		; needs to be very fast
-	and	#0x40		; caller already deals with timeout
-.endm
-
-.macro FLOAT_CLOCK
-	dec	c
-	dec	c
-	in	a,(c)
-	or	a,#0x40		; float the clock
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-.macro LOWER_CLOCK
-	dec	c
-	dec	c
-	in	a,(c)
-	and	a,#0xBF
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-.macro LOWER_DATA
-	dec	c
-	dec	c
-	in	a,(c)
-	and	a,#0x7F
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-ps2_handlers kbd 0x42 0x42 255 255 kbd_bit_in kbd_bit_out
 
 ;
 ;	This lets us avoid worrying about timeouts everywhere, instead
@@ -156,11 +98,11 @@ kbd_bit_out:
 	dec	c
 	dec	c
 	in	a,(c)
-	and	#0x3F
-	or	#0x40			; we need to leave the clock floating
+	and	0x3F
+	or	0x40			; we need to leave the clock floating
 	rr	l
 	jr	nc, kbdout0		; write a 0 bit then
-	or	#0x80			; write a 1 bit
+	or	0x80			; write a 1 bit
 kbdout0:
 	out	(c),a
 	inc	c

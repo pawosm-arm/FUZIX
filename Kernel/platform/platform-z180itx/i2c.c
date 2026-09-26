@@ -8,37 +8,35 @@
 #include <ds1302.h>
 #include <i2c.h>
 #include <i2c_bitbang.h>
+#include "z180itx.h"
 
 uint8_t rtc_defer;
-__sfr __at 0x40 ppi_a;
-__sfr __at 0x41 ppi_b;
 
 /* There isn't a huge point optimizing this, we are not supposed to go over
    100 or 400KHz anyway. The expectations of the caller are that
    - any delays needed are made before the signal is changed
    - on a read a delay is made before the signal is read
-   
+
    But basically it only matters that both are the same side. */
 
 void i2c_set(uint_fast8_t bus, uint_fast8_t val)
 {
-	ppi_a |= val;
+	out(PPI_A, in(PPI_A) | val);
 }
 
 void i2c_clear(uint_fast8_t bus, uint_fast8_t val)
 {
-	ppi_a &= ~val;
+	out(PPI_A, in(PPI_A) & ~val);
 }
 
 uint_fast8_t i2c_sda(uint_fast8_t bus)
 {
-	return ppi_b & I2C_RX_SDA;
+	return in(PPI_B) & I2C_RX_SDA;
 }
 
-/* The SC126 cannot handle clock stretching */
 uint_fast8_t i2c_scl(uint_fast8_t bus)
 {
-	return ppi_b & I2C_RX_SCL;
+	return in(PPI_B) & I2C_RX_SCL;
 }
 
 int i2c_claim_bus(uint_fast8_t bus)
@@ -54,7 +52,6 @@ int i2c_claim_bus(uint_fast8_t bus)
 
 void i2c_release_bus(uint_fast8_t bus)
 {
-	used(bus);
 	rtc_defer = 0;
 }
 

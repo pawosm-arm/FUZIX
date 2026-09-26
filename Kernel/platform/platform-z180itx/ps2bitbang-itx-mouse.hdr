@@ -3,72 +3,10 @@
 ;	(Keyboard)
 ;
 
-	.globl _ps2mouse_get
-	.globl _ps2mouse_put
+	.export _ps2mouse_get
+	.export _ps2mouse_put
 
-	.globl abort_sp
-
-	.module ps2bitbang-itx-mouse
-
-	.include "../../dev/ps2bitbang-z80.def"
-
-	.area _DATA
-
-	.area _CODE
-
-;
-;	Keyboard: clock on bit 6 data on bit 7
-;	Keyboard: data in on bit 7 of port C clock in on bit 6 of port C
-;
-.macro HOLD_OFF
-	; Critical path is reading port C so we point C at that by default
-	; We need port A
-	dec	c
-	dec	c
-	in	a,(c)
-	and	a,#0xEF		; force clock down
-	or	a,#0x20		; float data
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-.macro GET_CLOCK
-	in	a,(c)		; needs to be very fast
-	and	#0x10		; caller already deals with timeout
-.endm
-
-.macro FLOAT_CLOCK
-	dec	c
-	dec	c
-	in	a,(c)
-	or	a,#0x10		; float the clock
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-.macro LOWER_CLOCK
-	dec	c
-	dec	c
-	in	a,(c)
-	and	a,#0xEF
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-.macro LOWER_DATA
-	dec	c
-	dec	c
-	in	a,(c)
-	and	a,#0xDF
-	out	(c),a
-	inc	c
-	inc	c
-.endm
-
-ps2_handlers mouse 0x42 0x42 255 255 mouse_bit_in mouse_bit_out
+	.code
 
 ;
 ;	This lets us avoid worrying about timeouts everywhere, instead
@@ -125,7 +63,7 @@ mouse_bit_in:
 	bit	4,a
 	jr nz,  mouse_bit_in
 	and	#0x20
-	add	d		; data bit into carry
+	add	a,d		; data bit into carry
 	rr	e		; into the result
 	push	af		; save the carry bit for the caller
 mouse_bit_in_2:
