@@ -100,7 +100,7 @@ _copy_and_map_proc:
 	ld	hl, 0x4000	; Dest
 	jr	z, camp
 	; to process 2: 44:000 to 51:FFF
-	ld	bc,0x0504	; 04:400 to 05:200
+	ld	bc, 0x0504	; 04:400 to 05:200
 	ex	de,hl		; Copying the other direction
 camp:
 	ld	e,a		; Save the MMU value
@@ -129,6 +129,7 @@ camp:
         ; note this replaces the stack, but we just copied it over.
 
         out0	(MMU_CBR), e
+	pop	bc
         ret ; was jp map_kernel but we never change MMU_BBR
 
 	.data

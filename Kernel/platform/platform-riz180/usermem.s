@@ -63,6 +63,7 @@ __uputw:
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
+	ld	d,(hl)
 	inc	hl
 	ld	a,(hl)
 	inc	hl

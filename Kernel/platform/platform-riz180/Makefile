@@ -1,11 +1,12 @@
 ASRCS = crt0.S z180.S commonmem.S riz180.S monitor.S usermem.S ide.S
-CSRCS += devices.c main.c devtty.c spi.c
+CSRCS += devices.c main.c devtty.c spi.c wiznet.c
 DISCARD_CSRCS = discard.c
 DISCARD_DSRCS = ../../dev/tinyide_discard.c ../../dev/ds1302_discard.c ../../dev/tinysd_discard.c
 DISCARD_DSRCS += ../../dev/tinydisk_discard.c
 DSRCS = ../../dev/tinydisk.c ../../dev/tinyide.c ../../dev/ds1302.c
 DSRCS += ../../dev/tinysd.c
 DASRCS = ../../dev/ds1302_rcbusu_z180.S
+NSRCS = ../../dev/net/net_w5x00.c
 
 AOBJS = $(ASRCS:.S=.o)
 COBJS = $(CSRCS:.c=.o)
@@ -13,10 +14,11 @@ DISCARD_COBJS = $(DISCARD_CSRCS:.c=.o)
 DISCARD_DOBJS = $(patsubst ../../dev/%.c,%.o, $(DISCARD_DSRCS))
 DOBJS = $(patsubst ../../dev/%.c,%.o, $(DSRCS))
 DAOBJS = $(patsubst ../../dev/%.S,%.o, $(DASRCS))
+NOBJS = $(patsubst ../../dev/net/%.c,%.o, $(NSRCS))
 
-OBJS  = $(AOBJS) $(COBJS) $(DOBJS) $(DISCARD_DOBJS) $(DISCARD_COBJS) $(DAOBJS)
+OBJS  = $(AOBJS) $(COBJS) $(DOBJS) $(DISCARD_DOBJS) $(DISCARD_COBJS) $(DAOBJS) $(NOBJS)
 
-CROSS_CCOPTS += -I../../dev/
+CROSS_CCOPTS += -I../../dev/ -I../../dev/net/
 
 all:	$(OBJS)
 
@@ -53,7 +55,7 @@ image:
 	ide.o ../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
 	../../dev/tinysd.o ../../dev/tinysd_discard.o \
 	monitor.o ../../dev/ds1302.o ../../dev/ds1302_discard.o \
-	../../dev/ds1302_rcbusu.o \
+	../../dev/ds1302_rcbusu.o ../../dev/net/net_w5x00.o wiznet.o \
 	../../libfuzix.a ../../libfuzix.a /opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
 	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap  |  sort -n |  cut -d" " -f 2- >../../fuzix.map
 	dd if=../../fuzix.bin of=fuzix.rom bs=262488 conv=sync

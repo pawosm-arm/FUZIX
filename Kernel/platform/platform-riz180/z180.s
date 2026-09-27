@@ -210,7 +210,7 @@ _copy_and_map_proc:
 	ld	hl, 0x4000	; Dest
 	jr	z, camp
 	; to process 2: 44:000 to 51:FFF
-	ld	bc,0x0504	; 04:400 to 05:200
+	ld	bc, 0x0504	; 04:400 to 05:200
 	ex	de,hl		; Copying the other direction
 camp:
 	ld	e,a		; Save the MMU value
@@ -239,6 +239,7 @@ camp:
         ; note this replaces the stack, but we just copied it over.
 
         out0	(MMU_CBR), e
+	pop	bc
         ret ; was jp map_kernel but we never change MMU_BBR
 
 	.data
@@ -800,7 +801,7 @@ map_buffers:
 map_kernel_di:
 map_kernel: ; map the kernel into the low 60K, leaves common memory unchanged
         push	af
-# 697
+# 698
 	ld a,	0xFD		; Split at D000 and F000
 	out0	(MMU_CBAR),a
 	ld	a, 0x33		; Low 8K of RAM appears at D000
@@ -811,7 +812,7 @@ map_kernel: ; map the kernel into the low 60K, leaves common memory unchanged
 map_proc_always_di:
 map_proc_always: ; map the process into the low 60K based on current common mem (which is unchanged)
         push	af
-# 711
+# 712
 	; Switch to a flat user mapping with common
 	ld	a, 0xF0
 	out0	(MMU_CBAR),a
@@ -826,11 +827,11 @@ map_proc_always: ; map the process into the low 60K based on current common mem 
         ret
 
 map_for_swap:
-# 732
+# 733
 	out0	(MMU_BBR),a	; the page is passed in A, so we just do an out0
 	ld	a, 0xF0
 	out0	(MMU_CBAR),a
-# 739
+# 740
 	ret
 
 map_save_kernel:   ; save the current process/kernel mapping
@@ -839,7 +840,7 @@ map_save_kernel:   ; save the current process/kernel mapping
         ld	(map_store), a
         in0	a, (MMU_CBAR)
         ld	(map_store + 1), a
-# 751
+# 752
 	ld	a,0xFD
 	out0	(MMU_CBAR),a
         ld	a, 0x33
@@ -849,7 +850,7 @@ map_save_kernel:   ; save the current process/kernel mapping
 
 map_restore: ; restore the saved process/kernel mapping
         push	af
-# 764
+# 765
         ld	a, (map_store + 1)
 	out0	(MMU_CBAR),a
 	ld	a, (map_store)

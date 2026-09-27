@@ -33,8 +33,8 @@ void sd_spi_slow(void)
     unsigned char c;
 
     c = in(CSIO_CNTR) & 0xf8; /* clear low three bits, gives fastest rate (clk/20) */
-    c = c | 0x03;     /* set low two bits, clk/160 (can go down to clk/1280, see data sheet) */
-    out(CSIO_CNTR, c);
+    /* set low two bits, clk/160 (can go down to clk/1280, see data sheet) */
+    out(CSIO_CNTR, c | 0x03);
 }
 
 /* TODO: we need to work out what to borrow for CS */
@@ -54,7 +54,7 @@ void sd_spi_raise_cs(void)
     out(ASCI_CNTLA0, in (ASCI_CNTLA0) | 0x10);		/* RTS back up */
 }
 
-void sd_spi_transmit_byte(unsigned char byte)
+void sd_spi_tx_byte(uint_fast8_t byte)
 {
     unsigned char c;
 //    kprintf("[W%d]", byte);
@@ -72,7 +72,7 @@ void sd_spi_transmit_byte(unsigned char byte)
     out(CSIO_CNTR, c | CSIO_CNTR_TE);
 }
 
-uint8_t sd_spi_receive_byte(void)
+uint_fast8_t sd_spi_rx_byte(void)
 {
     unsigned char c;
 

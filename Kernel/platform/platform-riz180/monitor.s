@@ -13,6 +13,7 @@ Z180_IO_BASE                .equ 0xC0
 
 CPU_CLOCK_KHZ               .equ 6144         ; 6.144MHz * 1
 TICKSPERSEC                 .equ 40           ; timer interrupt rate (Hz)
+TCR_CLOCK		    .equ 7680
 
 PROGBASE		    .equ 0x0000
 PROGLOAD		    .equ 0x0100
