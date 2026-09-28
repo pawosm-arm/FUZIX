@@ -111,7 +111,6 @@ void tty_setup(uint_fast8_t minor, uint_fast8_t flags)
 /* For the moment */
 int tty_carrier(uint_fast8_t minor)
 {
-    minor;
     return 1;
 }
 
@@ -151,7 +150,6 @@ void tty_putc(uint_fast8_t minor, uint_fast8_t c)
 
 void tty_sleeping(uint_fast8_t minor)
 {
-    minor;
 }
 
 void tty_data_consumed(uint_fast8_t minor)
@@ -160,8 +158,9 @@ void tty_data_consumed(uint_fast8_t minor)
 
 ttyready_t tty_writeready(uint_fast8_t minor)
 {
-    minor;
-    return TTY_READY_NOW;
+    if (minor == 1)
+	    return in(ASCI_STAT0) & 2 ? TTY_READY_NOW: TTY_READY_SOON;
+    return in(ASCI_STAT1) & 2 ? TTY_READY_NOW: TTY_READY_SOON;
 }
 
 /* kernel writes to system console -- never sleep! */

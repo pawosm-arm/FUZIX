@@ -28,11 +28,9 @@ void plt_discard(void)
 
 void z180_timer_interrupt(void)
 {
-    unsigned char a;
-
     /* we have to read both of these registers in order to reset the timer */
-    a = in(TIME_TCR);
-    a = in(TIME_TMDR0L);
+    in(TIME_TCR);
+    in(TIME_TMDR0L);
 
     timer_interrupt();
 }
