@@ -17,8 +17,8 @@ struct s_queue ttyinq[NUM_DEV_TTY + 1] = {	/* ttyinq[0] is never used */
 
 tcflag_t termios_mask[NUM_DEV_TTY + 1] = {
 	0,
-	_CSYS | CBAUD | PARENB | PARODD | CSIZE | CSTOPB | CRTSCTS,
-	_CSYS | CBAUD | PARENB | PARODD | CSIZE | CSTOPB | CRTSCTS,
+	_CSYS | CBAUD | PARENB | PARODD | CSIZE | CSTOPB,
+	_CSYS | CBAUD | PARENB | PARODD | CSIZE | CSTOPB,
 };
 
 /* bit 5: turn on divide by 30 v 10
@@ -95,7 +95,6 @@ void tty_setup(uint_fast8_t minor, uint_fast8_t flags)
 	uint8_t cntlb;
 	uint16_t cflag = t->c_cflag;
 	uint8_t baud;
-	uint8_t ecr = 0;
 
 	/* Handle the baud table. Right now this is hardcoded for our clock */
 	baud = cflag & CBAUD;
@@ -125,23 +124,14 @@ void tty_setup(uint_fast8_t minor, uint_fast8_t flags)
 	if (cflag & CSTOPB)
 		cntla |= 1;
 
-
-	if (minor == 1) {
-		if (cflag & CRTSCTS)
-			ecr = 0x20;
-		/* FIXME: need to do software RTS side */
-	} else {
-		cflag &= ~CRTSCTS;
-	}
-
 	t->c_cflag = cflag;
 
 	/* ASCI serial set up */
+	/* no RTS/CTS as the line is used for \CS on the SPI */
 	if (minor == 1) {
 		out(ASCI_CNTLA0, cntla);
 		out(ASCI_CNTLB0, cntlb);
 		out(ASCI_ASEXT0, in(ASCI_ASEXT0) & ~0x20);
-		out(ASCI_ASEXT1, in(ASCI_ASEXT1) | ecr);
 	} else if (minor == 2) {
 		out(ASCI_CNTLA1, cntla);
 		out(ASCI_CNTLB1, cntlb);
