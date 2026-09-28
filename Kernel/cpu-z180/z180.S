@@ -378,14 +378,11 @@ _dofork:
         add	hl, de
         push	hl
         call	_copy_and_map_proc
-        pop	hl
 
         ; now the copy operation is complete we can get rid of the stuff
         ; _switchin will be expecting from our copy of the stack.
-        ; now the copy operation is complete we can get rid of the stuff
-        ; _switchin will be expecting from our copy of the stack.
 	; ix/iy are untouched so don't need a restore BC is not so does
-	ld	hl, 18
+	ld	hl, 20	; clean up the copy/map and the stacked frame
 	add	hl, sp
 	ld	sp, hl
         pop	bc
