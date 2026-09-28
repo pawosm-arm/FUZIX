@@ -36,7 +36,7 @@ void pio_setup(void)
 
 void sd_spi_raise_cs(void)
 {
-    out(PIOB_C, spi_piostate |= 0x18);
+    out(PIOB_D, spi_piostate |= 0x18);
 }
 
 void sd_spi_lower_cs(void)
