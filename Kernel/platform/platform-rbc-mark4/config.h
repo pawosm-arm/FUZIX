@@ -58,10 +58,6 @@ extern uint16_t swap_dev;
 #define CONFIG_TD_SD
 #define TD_SD_NUM		1
 
-/* On-board SD on Mark IV */
-#define CONFIG_SD
-#define SD_DRIVE_COUNT 1
-
 /* On-board DS1302 on Mark IV, we can read the time of day from it */
 #define CONFIG_RTC_DS1302
 #define CONFIG_RTC
