@@ -1,4 +1,3 @@
-# 1 "smallz80.S"
 ;
 ;	SmallZ80 support
 ;
@@ -29,45 +28,10 @@
 	.export _plt_monitor
 	.export _plt_reboot
 	.export outchar
-# 1 "kernelu.def"
-;	FUZIX mnemonics for memory addresses etc
-;
-;
-;	The U_DATA address. If we are doing a normal build this is the start
-;	of common memory. We do actually have a symbol for udata so
-;	eventually this needs to go away
-;
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 bytes @ F000
-;
-;	Space for the udata of a switched out process within the bank of
-;	memory that it uses. Normally placed at the very top
-;
-U_DATA_STASH		    .equ 0xBE00	      ; BE00-BFFF
-;
-;	We can't run CP/M stuff in emulation as our banks are in odd places
-;
-PROGBASE		    .equ 0x4000
-PROGLOAD		    .equ 0x4000
-;
-;	For special platforms that have external memory protection hardware
-;	Just say 0.
-;
 
-;
-;	Set this if the platform has swap enabled in config.h
-;
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-;
-;	The number of disk buffers. Must match config.h
-;
-NBUFS			    .equ 5
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 35 "smallz80.S"
 ;
 ; Buffers (we use asm to set this up as we need them in a special segment
 ; so we can recover the discard memory into the buffer pool
@@ -77,7 +41,7 @@ NBUFS			    .equ 5
 	.buffers
 
 _bufpool:
-	.ds 520  * NBUFS
+	.ds BUFSIZE * NBUFS
 
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (kept even when we task switch)
@@ -244,7 +208,7 @@ _program_vectors:
 	ld	hl, interrupt_handler
 	ld	(0x0039), hl
 
-	ld	(0x0000), a   
+	ld	(0x0000), a
 	ld	hl, null_handler   ;   to Our Trap Handler
 	ld	(0x0001), hl
 
@@ -311,7 +275,7 @@ map_proc_always_di:
 map_proc_always:
 	push af
 	push hl
-	ld hl, _udata + 2     
+	ld hl, _udata + U_DATA__U_PAGE
 	call map_proc_hl
 	pop hl
 	pop af
@@ -348,7 +312,7 @@ map_restore:
 	pop	hl
 	pop	af
 	ret
-	
+
 	;
 	; Used for low level debug. Output the character in A without
 	; corrupting other registers. May block. Interrupts and memory

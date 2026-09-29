@@ -1,4 +1,3 @@
-# 1 "crt0.S"
 
 	; Common comes first so this is at 0x0100
 
@@ -15,7 +14,7 @@ start:
 
 	; Zero the data area
 	ld 	hl, __bss
-	ld	de, __bss + 1 
+	ld	de, __bss + 1
 	ld	bc, __bss_size - 1
 	ld	(hl), 0
 	ldir
