@@ -46,13 +46,17 @@ everything in a sensibly laid out location.
 - Nascom
 - NC100 (Amstrad)
 - NC200 (Amstrad)
+- RBC Mark 4
 - RC2014-Tiny
 - Rcbus-TP128
 - Rcbus-SBC64
+- Rcbus-z180
 - Rhyophyre
+- RIZ180
 - SBC2g
 - SBCv2
 - SC108
+- SC111
 - SC720
 - Searle
 - Simple80
@@ -60,6 +64,8 @@ everything in a sensibly laid out location.
 - Tom's SBC (ROM based and banked form)
 - TRS80 (Model 4/4D/4P)
 - Z1013
+- Z180ITX
+- Z1RCC
 - Z80All
 - Z80-MBC2
 - Z80 Membership Card
@@ -70,7 +76,6 @@ everything in a sensibly laid out location.
 
 ### In Progress
 
-- rcbus-z180 (works except for SD card)
 - TRS80 Model 1 (weird crash to debug)
 
 ### To Complete
@@ -85,11 +90,8 @@ everything in a sensibly laid out location.
 - Pentagon (base and 1024)
 - P112
 - PCW8256 (Amstrad)
-- RBC Mark 4
 - RC2014
-- RIZ180
 - Sam Coupe
-- SC111
 - Scorpion
 - Scrumpel
 - Small Z80
@@ -97,7 +99,6 @@ everything in a sensibly laid out location.
 - TC2068 (Sinclair)
 - VZ200
 - YAZ180
-- Z180ITX
 - ZX+3 (Sinclair)
 - ZXDiv (Sinclair)
 - ZXUno (Sinclair)
@@ -247,6 +248,10 @@ Builds, passes basic tests
 Builds, passes basic tests 
 
 ## Micro80 (Plasmo)
+
+Builds, passes basic tests
+
+## MicroZ (Plasmo)
 
 Builds, passes basic tests
 
@@ -559,11 +564,11 @@ Builds, passes basic tests
 
 Experiment only, may well not be possible
 
-## yaz180
-
-Builds
-
 ## z1013 (Robotron)
+
+Builds, passes basic tests
+
+## Z1RCC
 
 Builds, passes basic tests
 
