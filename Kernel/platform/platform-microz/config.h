@@ -30,8 +30,8 @@
 #define SWAPDEV     (swap_dev)	/* A variable for dynamic, or a device major/minor */
 extern uint16_t swap_dev;
 #define SWAP_SIZE   0x60 	/* 48K in 512 byte blocks */
-#define SWAPBASE    0x1000	/* We swap the lot in one, include the */
-#define SWAPTOP	    0xD000	/* vectors so its a round number of sectors */
+#define SWAPBASE    0x1000
+#define SWAPTOP	    0xD000
 
 #define MAX_SWAPS	16	/* Maximum number of swapped out processes.
                                    As we use the default 15 process max this

@@ -41,7 +41,7 @@ setup:
 	di
 	ld	a,2		; CSBR
 	out	(0xEE),a
-	ld	a,0x0B		; ROM low 16K RAM C000-FFFF high RAM
+	ld	a,0x0C		; ROM low 12K RAM D000-FFFF high RAM
 	out	(0xEF),a
 	ld	a,3
 	out	(0xEE),a	; MISC
@@ -65,8 +65,8 @@ setup:
 	ld	a,2		; Select CSBR
 	out	(0xEE),a
 	ld	c,0xEF		; Data port
-	ld	de,0x0B0F
-	ld	hl,0xC000
+	ld	de,0x0C0F
+	ld	hl,0xD000
 copy_over:
 	out	(c),e		; ROM in
 	ld	b,(hl)
@@ -78,9 +78,10 @@ copy_over:
 
 	;	Our kernel memory map is now completed
 	;	We have
-	;	0000-BFFF	Kernel ROM
-	;	C000-FFFF	Kernel RAM (high RAM)
-	;	We need to figure how the best use of the other 0xC000 block
+	;	0000-CFFF	Kernel ROM
+	;	D000-FFFF	Kernel RAM (high RAM)
+	;	We need to figure how the best use of the other 0D000 block
+	;	(the other 0000-0FFF is inaccessible)
 
 	di
 	ld sp, kstack_top

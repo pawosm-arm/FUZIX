@@ -195,19 +195,22 @@ map_proc_di:
 	or	l			; HL == 0?
 	jr	z,map_kernel		; HL == 0 - map the kernel
 	ld	a,(hl)
+map_for_swap:
 map_proc_a:
 	ld	(map_reg),a
-	out	(0xEF),a		;
 	or	a
 	jr	z, map_kernel
+	push	af
 	dec	a
 	jr	z, map_user1
 	xor	a			; ROM 0000-0FFF, high RAM 1000-FFFF
 	out	(0xEF),a
+	pop	af
 	ret
 map_user1:
-	ld	a,0xB0			; low RAM 1000-BFFF, ROM 0000-0FFF
-	out	(0xEF),a		; high ram C000-FFFF
+	ld	a,0xC0			; low RAM 1000-CFFF, ROM 0000-0FFF
+	out	(0xEF),a		; high ram D000-FFFF
+	pop	af
 	ret	
 map_buffers:
 map_kernel:
@@ -216,7 +219,7 @@ map_kernel_restore:
 	push	af
 	xor	a
 	ld	(map_reg),a
-	ld	a,0x0B			; ROM 0000-BFFF, high RAM C000-FFFF
+	ld	a,0x0C			; ROM 0000-CFFF, high RAM D000-FFFF
 	out	(0xEF),a
 	pop	af
 	ret
@@ -225,8 +228,6 @@ map_kernel_restore:
 ;	Map the requested block for swap. In our case this is the same as
 ;	mapping the process as our block I/O routines just sit high
 ;
-map_for_swap:
-	; fall through
 map_proc_always:
 map_proc_always_di:
 	push	af
