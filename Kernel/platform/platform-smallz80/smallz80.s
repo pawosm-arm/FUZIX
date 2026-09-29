@@ -244,7 +244,7 @@ _program_vectors:
 	ld	hl, interrupt_handler
 	ld	(0x0039), hl
 
-	ld	(0x0000), a   
+	ld	(0x0000), a
 	ld	hl, null_handler   ;   to Our Trap Handler
 	ld	(0x0001), hl
 
@@ -348,7 +348,7 @@ map_restore:
 	pop	hl
 	pop	af
 	ret
-	
+
 	;
 	; Used for low level debug. Output the character in A without
 	; corrupting other registers. May block. Interrupts and memory

@@ -4,6 +4,7 @@
 #include <printf.h>
 #include <devtty.h>
 #include <tinyide.h>
+#include "smallz80.h"
 
 /*
  *	Everything in this file ends up in discard which means the moment
@@ -58,5 +59,9 @@ void pagemap_init(void)
 
 void device_init(void)
 {
+	if (uart_base[1] == 0x10)
+		ide_base = 0x38;
+	else
+		ide_base = 0x68;
 	ide_probe();
 }

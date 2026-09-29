@@ -4,10 +4,8 @@
 
 	.common
 
-#define IDE_REG_DATA	0x0038
-
 ide_setup:
-	ld bc, IDE_REG_DATA		; port and count
+	ld bc, (_ide_base)			; port and count
 	ld a, (_td_raw)
 	or a
 	jp z, map_buffers

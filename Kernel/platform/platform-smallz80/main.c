@@ -8,7 +8,7 @@
 uint16_t ramtop = PROGTOP;
 uint16_t swap_dev = 0xFFFF;
 uint8_t num_banks;
-
+uint16_t ide_base;
 /*
  *	This routine is called continually when the machine has nothing else
  *	it needs to execute. On a machine with entirely interrupt driven

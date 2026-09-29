@@ -648,7 +648,7 @@ sp_patch:
 ;
 setdone:
 	ld	hl,copyct
-	dec	(hl)	
+	dec	(hl)
 	jr	z, copy_over
 	ld	a,252
 	jr	copy_cont
