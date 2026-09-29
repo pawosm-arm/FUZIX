@@ -37,9 +37,8 @@ void map_init(void)
  */
 void pagemap_init(void)
 {
-	/* For now just code them 1 and 2 */
-	pagemap_add(1);
-	pagemap_add(2);
+	pagemap_add(0xC1);	/* 1 higher than value to avoid 0 */
+	pagemap_add(0x01);
 }
 
 /*

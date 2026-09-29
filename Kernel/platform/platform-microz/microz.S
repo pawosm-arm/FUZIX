@@ -197,29 +197,19 @@ map_proc_di:
 	ld	a,(hl)
 map_for_swap:
 map_proc_a:
-	ld	(map_reg),a
-	or	a
-	jr	z, map_kernel
 	push	af
-	dec	a
-	jr	z, map_user1
-	xor	a			; ROM 0000-0FFF, high RAM 1000-FFFF
+	dec	a			; Shifted by one to avoid 0 confusion
+	ld	(map_reg),a
 	out	(0xEF),a
 	pop	af
 	ret
-map_user1:
-	ld	a,0xC0			; low RAM 1000-CFFF, ROM 0000-0FFF
-	out	(0xEF),a		; high ram D000-FFFF
-	pop	af
-	ret	
 map_buffers:
 map_kernel:
 map_kernel_di:
 map_kernel_restore:
 	push	af
-	xor	a
-	ld	(map_reg),a
 	ld	a,0x0C			; ROM 0000-CFFF, high RAM D000-FFFF
+	ld	(map_reg),a
 	out	(0xEF),a
 	pop	af
 	ret
@@ -239,7 +229,8 @@ map_proc_always_di:
 map_restore:
 	push	af
 	ld	a,(map_save)
-	call	map_proc_a
+	ld	(map_reg),a
+	out	(0xEF),a
 	pop	af
 	ret
 
@@ -247,7 +238,9 @@ map_save_kernel:
 	push	af
 	ld	a,(map_reg)
 	ld	(map_save),a
-	call	map_kernel
+	ld	a,0x0C
+	ld	(map_reg),a
+	out	(0xEF),a
 	pop	af
 	ret
 

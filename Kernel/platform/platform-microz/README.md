@@ -1,9 +1,8 @@
 # Fuzix for Bill Shen's MicroZ
 
-The MicroZ is the follow up to the Micro80. It uses the Z84C15 rather
-differently in order to get a more friendly memory map. Fuzix for this
-machine is designed to run from flash as this allows two processes in main
-memory plus the kernel mostly in ROM.
+The MicroZ is the follow up to the Micro80. It uses the Z84C15 in the same
+way but because it has 64K of EPROM mappable not the 16K limit on the
+Micro80 we can actually run from ROM.
 
 ## Supported Hardware
 
@@ -25,3 +24,11 @@ Our map is thus
 D000-FDFF	UData, common data, data, bss for kernel
 FE00-FEFF	Ring buffer for SIO A
 FF00-FFFF	Ring buffer for SIO B
+
+D000-FFFF on the low 64K bank is currently unused.
+
+In ROM the upper 16K holds a 1:1 map of the high memory space. This could be
+packed lower to get other things into the ROM, or as the kernel wipes the
+BSS and buffer spaces then the ROM version of this space could be used to
+hold other things easily enough, and would probably allow E000-FFFF to be
+used pretty reliably to hold something else in ROM space.
