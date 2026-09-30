@@ -145,6 +145,8 @@ void tty_poll(void)
 							queue_input(keyboard[i][n]);
 						}
 						keysdown--;
+						if (i == keybyte && n == keybit)
+                            kbd_timer = 0;
 					}
 
 				if ((key & m) && !(keymap[i] & m)) {
