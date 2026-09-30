@@ -77,6 +77,8 @@ _m6847_plot_char:
 	ldb 2,s			; A := y, B := x
 	bsr vidaddr
 	ldd 3,s			; D := c
+plot_patch:
+	andb #0x7f		; mask char - patched on vtattr change
 	lslb			; multiply by 8
 	rola
 	lslb
@@ -339,7 +341,17 @@ _m6847_cursor_off:
 	jmp _unmap_video	; tail call
 nocursor:
 _m6847_cursor_disable:
+	rts
 _m6847_vtattr_notify:
+	lda _vtattr
+	anda #0x40		; VTA_ALTCHAR
+	beq lowchar
+        ldd #0xCA80
+	bra setmode
+lowchar:
+        ldd #0xC47F
+setmode
+	std plot_patch+1
 	rts
 
 ;
