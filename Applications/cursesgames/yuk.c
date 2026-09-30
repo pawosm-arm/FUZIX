@@ -171,6 +171,7 @@ static const char *card_str(register Card *card) {
 
 void prn_card_name_l(int y, int x, Card *card) {
     mvprintw(y, x, card_str(card));
+    addch(card_suit(card));
 }
 
 void prn_card_name_r(int y, int x, register Card *card) {
