@@ -1,4 +1,3 @@
-# 1 "zxvideo.S"
 ;
 ;        Timex VT primitives but at 0xC0 instead
 ;
@@ -19,7 +18,7 @@
 	; Build the video library as the only driver
 	; We will make this includable at some point
 
-
+#define TMXVID_ONLY
 
 	.common
 
@@ -65,9 +64,9 @@ rightside:
         ld	d, a
 	jp	map_video_save
 
-
+#ifdef TMXVID_ONLY
 _plot_char:
-
+#endif
 tmx_plot_char:
 	push	bc
 	ld	hl, 4
@@ -160,9 +159,9 @@ last_ul:
 	ld	a, 0xff
 	jr	plot_attr
 
-
+#ifdef TMXVID_ONLY
 _clear_lines:
-
+#endif
 tmx_clear_lines:
 	push	bc
 	ld	hl,4
@@ -191,9 +190,9 @@ nextline:
  	jp	map_kernel
 
 
-
+#ifdef TMXVID_ONLY
 _clear_across:
-
+#endif
 tmx_clear_across:
 	push	bc
 	ld	hl, 4
@@ -313,9 +312,9 @@ copy_pixel_line_r:
 
         ; TODO: the LDIR way should be much faster
 
-
+#ifdef TMXVID_ONLY
 _scroll_down:
-
+#endif
 tmx_scroll_down:
         ; set HL = (0, 22), DE = (0, 23)
 	push	bc
@@ -348,9 +347,9 @@ loop_scroll_down:
         jp	map_kernel
 
 
-
+#ifdef TMXVID_ONLY
 _scroll_up:
-
+#endif
 tmx_scroll_up:
         ; set HL = (0, 1), DE = (0, 0)
 	push	bc
@@ -381,9 +380,9 @@ loop_scroll_up:
 	pop	bc
 	jp	map_kernel
 
-
+#ifdef TMXVID_ONLY
 _cursor_on:
-
+#endif
 tmx_cursor_on:
 	push	bc
 	ld	hl, 4
@@ -404,10 +403,10 @@ tmx_cursor_on:
 	pop	bc
         jp	map_kernel
 
-
+#ifdef TMXVID_ONLY
 _cursor_disable:
 _cursor_off:
-
+#endif
 tmx_cursor_disable:
 tmx_cursor_off:
         ld	de, (cursorpos)
@@ -420,9 +419,9 @@ tmx_cursor_off:
         ld	(de), a
 	jp	map_kernel
 
-
+#ifdef TMXVID_ONLY
 _do_beep:
-
+#endif
 tmx_do_beep:
         ret
 
@@ -434,3 +433,4 @@ cursorpos:
 	.commondata
 _curattr:
 	.byte	7
+

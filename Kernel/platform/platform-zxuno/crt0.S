@@ -1,26 +1,29 @@
-# 1 "crt0.S"
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
+#if 0
+	;
+	;	Our common lives low
+	;
+	;	0x0000-0x1FFF is read only and we can't use 1FF8-1FFF for
+	;	code because of hardware design flaws
+	;
+	;	TODO: page align font and put low
+	.area _FONTCOMMON
+        .area _VIDEO
+        .area _COMMONMEM
+        .area _CONST
+        .area _INITIALIZER
 
-; We stick it straight after the tag
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 @ FE00
+	;	0x2000-0x3FFF - avoid code in 3D00-3DFF for similar reasons
 
-U_DATA_STASH		    .equ 0xFE00	      ; FE00-FFFF
+	.area _COMMONDATA
+        .area _INITIALIZED
+        .area _DATA
+        .area _BSEG
+#endif
 
-PROGBASE		    .equ 0x4000
-PROGLOAD		    .equ 0x4000
+#include	"kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-NBUFS			    .equ 5
 
-BANK_BITS		    .equ 0x18		; Spectrum ROM select
-						; Video high
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 27 "crt0.S"
 ;	We are run from 0x0000
 ;	On entry we have main memory mapped, DIVMMC bank 0 mapped over
 ;	the ROM space and the top 16K is an undefined bank. SP is not
@@ -129,4 +132,4 @@ stop:   halt
 	.buffers
 
 _bufpool:
-	.ds	520  * NBUFS
+	.ds	BUFSIZE * NBUFS

@@ -1,4 +1,3 @@
-# 1 "zx128.S"
 ;
 ;    ZX Uno hardware support
 ;
@@ -29,28 +28,10 @@
         .export _plt_monitor
 	.export _plt_reboot
         .export outchar
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-; We stick it straight after the tag
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 @ FE00
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-U_DATA_STASH		    .equ 0xFE00	      ; FE00-FFFF
-
-PROGBASE		    .equ 0x4000
-PROGLOAD		    .equ 0x4000
-
-NBUFS			    .equ 5
-
-BANK_BITS		    .equ 0x18		; Spectrum ROM select
-						; Video high
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 35 "zx128.S"
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (below 0x4000)
 ; -----------------------------------------------------------------------------
@@ -161,7 +142,7 @@ map_proc_always:
 map_proc_always_di:
 	push	af
 	push	bc
-	ld	a, (_udata+2     )
+	ld	a, (_udata+U_DATA__U_PAGE)
 	jp	map_user
 
 map_proc_hl:
