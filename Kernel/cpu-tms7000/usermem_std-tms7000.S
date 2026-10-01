@@ -9,20 +9,28 @@
 .export __uputc
 
 __uputc:
-	clr	r13
-	call	@__gargr4	; r2-r3 val, r4-r5 ptr
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	15	; r2-r3 val, r4-r5 ptr
 	call	@map_proc_always
 	mov	r3,a
 	sta	*r5
 	movd	%0,r5
 	call	@map_kernel
-	br	@__cleanup4
+	br	@__cleanup_4
 
 .export __uputw
 
 __uputw:
-	clr	r13
-	call	@__gargr4	; r2-r3 val, r4-r5 ptr
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	15	; r2-r3 val, r4-r5 ptr
 	call	@map_proc_always
 	mov	r2,a
 	sta	*r5
@@ -32,25 +40,33 @@ __uputw:
 	sta	*r5
 	movd	%0,r5
 	call	@map_kernel
-	br	@__cleanup4
+	br	@__cleanup_4
 
 .export __ugetc
 
 __ugetc:
-	clr	r13
-	call	@__garg10r2
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	18
 	call	@map_proc_always
 	lda	*r11
 	mov	a,r5
 	clr	r4
 	call	@map_kernel
-	br	@__cleanup2
+	br	@__cleanup_2
 
 .export __ugetw
 
 __ugetw:
-	clr	r13
-	call	@__garg10r2
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	18
 	call	@map_proc_always
 	lda	*r11
 	mov	a,r5
@@ -59,7 +75,7 @@ __ugetw:
 	lda	*r11
 	mov	a,r4
 	call	@map_kernel
-	br	@__cleanup2
+	br	@__cleanup_2
 
 .export __uget
 
@@ -67,10 +83,14 @@ __ugetw:
 ;	Stacked arguments are src.w, dst.w, count.w
 ;
 __uget:
-	clr	r13
-	call	@__gargr4	; r2/r3 = src r4/r5 = dest
-	mov	%2,r13
-	call	@__garg10r2	; r10/r11 = count
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	15	; r2/r3 = src r4/r5 = dest
+	mov	%2,b
+	trap	18	; r10/r11 = count
 
 	; Now see if there is work to do
 	decd	r11
@@ -93,15 +113,19 @@ ugetcopy:
 	decd	r11
 	jnc	ugetcopy
 	movd	%0,r5
-	br	@__cleanup6
+	br	@__cleanup_6
 
 .export __uput
 
 __uput:
-	clr	r13
-	call	@__gargr4	; r2/r3 = src r4/r5 = dest
-	mov	%2,r13
-	call	@__garg10r2	; r10/r11 = count
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	15	; r2/r3 = src r4/r5 = dest
+	mov	%2,b
+	trap	18	; r10/r11 = count
 
 	; Now see if there is work to do
 	decd	r11
@@ -125,13 +149,17 @@ uputcopy:
 	jnc	ugetcopy
 nowork:
 	movd	%0,r5
-	br	@__cleanup6
+	br	@__cleanup_6
 
 .export __uzero
 
 __uzero:
-	clr	r13
-	call	@__gargr4	;	2-3 ptr 4-5 length
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	15	;	2-3 ptr 4-5 length
 
 	decd	r5
 	jnc	nowork
@@ -150,4 +178,4 @@ zeroloop:
 	jnc	zeroloop
 	movd	%0,r5
 	call	@map_kernel
-	br	@__cleanup4
+	br	@__cleanup_4

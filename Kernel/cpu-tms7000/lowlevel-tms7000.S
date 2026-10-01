@@ -4,6 +4,12 @@
 ;
 #include "../cpu-tms7000/kernel-tms7000.def"
 
+#define _int_disabled	r16
+/* R17/R18 */
+#define istack_switched_sp r17
+#define istack_switched_sph r17
+#define istack_switched_spl r16
+
 ;
 ;	CPU setup and properties. For our purposes all TMS7000 is the same
 ;
@@ -95,7 +101,7 @@ raced:
 	sta	*r13		; Saved SP
 	movd	%kstack_top,r15
 
-;FIXME	clr	_int_disabled	; we keep this in register space as its asm only
+	clr	_int_disabled ; we keep this in register space as its asm only
 	call	@map_kernel_di
 	call	@_chksigs
 	call	@map_proc_always_di
@@ -362,7 +368,7 @@ nmimsg:
 
 reinterrupt:
 	; Interrupt during interrupt but on alt stack (eg swap)
-;TODO	mov	%1,_int_disabled
+	mov	%1,_int_disabled
 	push	r0
 	push	r1
 	push	r2
@@ -406,7 +412,7 @@ interrupt_handler:
 	lda	*r13
 	jnz	reinterrupt
 
-;TODO	movd	r15,istack_switched_sp+1
+	movd	r15,istack_switched_sp
 	movd	%istack_top,r15
 
 	;
@@ -419,7 +425,7 @@ interrupt_handler:
 	movd	%U_DATA__U_ININTERRUPT,r13
 	mov	%1,a
 	sta	*r13
-;TODO	mov	a,_int_disabled
+	mov	a,_int_disabled
 
 	call	@_plt_interrupt
 
@@ -433,7 +439,7 @@ interrupt_handler:
 	; Switch stacks back
 	;
 	call	@map_restore
-;TODO	movd	istack_switched_sp+1,15
+	movd	istack_switched_sp,r15
 intout:
 	movd	%U_DATA__U_ININTERRUPT,r13
 	clr	a
@@ -447,7 +453,7 @@ intout:
 	; Restore registers and done
 	;
 interrupt_pop:
-;FIXME	clr	_int_disabled
+	clr	_int_disabled
 	pop	r13
 	pop	r12
 	pop	r11
@@ -490,10 +496,10 @@ preemption:
 	;
 ;TODO
 	movd	%U_DATA__U_SYSCALL_SP+1,r13
-;FIXME	mov	istack_switched_sp+1,a
+	mov	istack_switched_sph,a
 	sta	*r13
 	decd	r13
-;FIXME	mov	istack_switched_sp+1,a
+	mov	istack_switched_spl,a
 	sta	*r13
 	movd	%kstack_top,r15
 	;
@@ -645,31 +651,36 @@ numeral:
 .export ___hard_ei
 
 ___hard_ei:
-;FIXME	clr	_int_disabled
+	clr	_int_disabled
 	eint
 	rets
 
 .export ___hard_di
 
 ___hard_di:
-;FIXME	mov	_int_disabled,r5
+	mov	_int_disabled,r5
 	clr	r4
 	dint
-;FIXME	mov	%1,_int_disabled
+	mov	%1,_int_disabled
 	rets
 
 .export ___hard_irqrestore
 
 ___hard_irqrestore:
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
 	; need to grab low byte of first arg TODO check w v b
+	; FIXME: use proper arg get
 	lda	*r15
-;FIXME	mov	a,_int_disabled
+	mov	a,_int_disabled
 	dint
 	or	a,a
 	jnz	diret
 	eint
 diret:
-	br	@__cleanup2
+	br	@__cleanup_2
 
 ;
 ;	We have no variants to care about
@@ -690,13 +701,15 @@ _set_cpu_type:
 	.export _swab
 	.export _swab32
 
-; FIXME can't use cleanup helpers if not switching return to stacks
-
 _memcpy:
-	clr	r13
-	call	@__gargr4
-	mov	%4,r13
-	call	@__garg10r2
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	mov	%2,b
+	trap	15
+	mov	%6,b
+	trap	18
 	; r10/11 is length
 	; r2/r3 dest
 	; r4/r5 src
@@ -716,18 +729,18 @@ mcloop:
 mdn:
 	; r2/r3 is dest so return iit
 	movd	r3,r5
-	jmp	__cleanup6
+	br	@__cleanup_6
 	
 _memset:
-	clr	r13
-	call	@__gargr4	; r2/r3 is pointer r5 is write value
-	mov	%4,r13
-	call	@__garg10r2
-	; r12/13 is length
-	mov	r5,a
-	mov	r10,r4
-	or	r11,r4
-	jz	msdone
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	clr	b
+	trap	15		; r2/r3 is pointer r5 is write value
+	mov	%4,b
+	trap	18
+	; r10/11 is length
 	decd	r11		; we want to catch ffff wrap
 	jnc	msdone
 	add	r11,r3
@@ -741,11 +754,15 @@ msloop:
 	;	return it
 msdone:
 	movd	r3,r5
-	br	@__cleanup6
+	br	@__cleanup_6
 
 _strlen:
-	clr	r13
-	call	@__garg10r2
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	mov	%2,b
+	trap	18
 	; r10,r11 is now ptr
 	movd	%0,r5
 count:
@@ -757,23 +774,31 @@ count:
 	adc	%0,r4
 	jmp	count
 strlen_done:
-	br	@__cleanup2
+	br	@__cleanup_2
 
 _swab:
-	clr	r13
-	call	@__gargr2
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	mov	%2,b
+	trap	5
 	mov	r3,a
 	mov	r2,r3
 	mov	a,r2
-	br	@__cleanup2
+	br	@__cleanup_2
 
 _swab32:
-	clr	r13
-	call	@__gargr4
+	pop	a
+	pop	b
+	clr	r11
+	trap	10
+	mov	%2,b
+	trap	15
 	mov	r5,a
 	mov	r2,r5
 	mov	a,r2
 	mov	r4,a
 	mov	r3,r4
 	mov	a,r3
-	br	@__cleanup4
+	br	@__cleanup_4
