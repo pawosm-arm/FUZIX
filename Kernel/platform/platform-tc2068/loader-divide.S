@@ -1,4 +1,3 @@
-# 1 "loader-divide.S"
 ;
 ;	We are run from the ROM start of the cartridge. Because this is a
 ;	TS2068/TC2068 the DivIDE will have the ROM paging disabled
@@ -138,3 +137,4 @@ rst_38:
 	.ds	0x66-0x3B
 nmi:	ret		; magic...
 	retn
+

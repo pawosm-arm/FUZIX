@@ -1,4 +1,3 @@
-# 1 "tc2068.S"
 ;
 ;    TC2068 hardware support
 ;
@@ -31,28 +30,10 @@
         .export _plt_monitor
 	.export _plt_reboot
         .export outchar
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-; We stick it straight after the tag
-U_DATA                      .equ 0x0080       ; (this is struct u_data from kernel.h)
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256+256 bytes.
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-Z80_TYPE		    .equ 1
-
-PROGBASE		    .equ 0x7800
-PROGLOAD		    .equ 0x7800
-
-NBUFS			    .equ 5
-
-Z80_MMU_HOOKS		    .equ 0
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 37 "tc2068.S"
 ; -----------------------------------------------------------------------------
 ; COMMON MEMORY BANK (below 0x4000)
 ; -----------------------------------------------------------------------------

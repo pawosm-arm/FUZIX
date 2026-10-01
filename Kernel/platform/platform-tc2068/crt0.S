@@ -1,26 +1,6 @@
-# 1 "crt0.S"
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-; We stick it straight after the tag
-U_DATA                      .equ 0x0080       ; (this is struct u_data from kernel.h)
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256+256 bytes.
-
-Z80_TYPE		    .equ 1
-
-PROGBASE		    .equ 0x7800
-PROGLOAD		    .equ 0x7800
-
-NBUFS			    .equ 5
-
-Z80_MMU_HOOKS		    .equ 0
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 4 "crt0.S"
 	;
         ; startup code
 	;
@@ -72,7 +52,7 @@ stop:   halt
 	.export _bufpool
 
 _bufpool:
-	.ds 520  * NBUFS
+	.ds BUFSIZE * NBUFS
 
 ; Force pad the binary
 
