@@ -120,6 +120,10 @@ Passes basic tests.
 
 Work in progress, not targeted for 0.6
 
+## Agon (Agon Light, Olimex AgonLight2)
+
+Passes basic tests.
+
 ## AmproLb (Ampro Littleboard)
 
 Passes basic tests.
