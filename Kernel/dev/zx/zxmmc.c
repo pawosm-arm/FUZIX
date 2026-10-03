@@ -2,8 +2,6 @@
 #include <tinysd.h>
 #include <printf.h>
 
-/* FIXME: optimise by unrolling inir and otir 16 ways */
-
 #define ZXMMC_CS	0x1F
 #define ZXMMC_DATA	0x3F
 

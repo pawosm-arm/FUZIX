@@ -19,6 +19,7 @@ setup:
 	ld	e,(hl)
 	inc	hl
 	ld	d,(hl)
+	ex	de,hl
 	ld	bc,0x3F
 	ld	a,(_td_raw)
 	or	a
@@ -49,7 +50,7 @@ out:
 	ret	z
 	jp	map_kernel
 
-_spi_tx_sector:
+_sd_spi_tx_sector:
 	push	bc
 	call	setup
 	push	af

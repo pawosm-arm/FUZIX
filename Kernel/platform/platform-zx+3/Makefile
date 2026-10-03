@@ -6,7 +6,7 @@ DZSRCS = ../../dev/zx/zxkeyboard.c ../../dev/zx/devinput.c ../../dev/zx/zxmmc.c
 DDZSRCS =
 ASRCS = crt0.S plus3.S zxvideo.S fdc765.S
 ASRCS += tricks.S commonmem.S
-AZSRCS = ../../dev/zx/zxmmc-io.S ../../dev/zx/divide.S
+AZSRCS = ../../dev/zx/zxmmc-spi.S ../../dev/zx/divide.S
 NSRCS = ../../dev/net/net_w5x00.c
 
 COBJS = $(CSRCS:.c=.o)
@@ -82,8 +82,8 @@ image:	loader.bin
 	../../devinput.o ../../dev/zx/devinput.o ../../dev/zx/keyscan.o \
 	devtty.o ../../dev/tinydisk.o \
 	../../dev/tinydisk_discard.o ../../dev/tinysd.o \
-	../../dev/tinysd_discard.o ../../dev/zx/divmmc.o \
-	../../dev/zx/divmmc-spi.o ../../dev/zx/divide.o \
+	../../dev/tinysd_discard.o ../../dev/zx/zxmmc.o \
+	../../dev/zx/zxmmc-spi.o ../../dev/zx/divide.o \
 	../../dev/tinyide_discard.o ../../dev/tinyide.o \
 	../../dev/net/net_w5x00.o fdc765.o ../../dev/devfdc765.o \
 	 zxvideo.o ../../dev/zx/zxkeyboard.o ../../mm/bankfixed.o \
