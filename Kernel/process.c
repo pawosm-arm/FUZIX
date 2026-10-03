@@ -686,7 +686,7 @@ static uint_fast8_t chksigset(struct sigbits *sb, uint_fast8_t b)
 	}
 
 	/* Dispatch the lowest numbered signal */
-	for (; j < 15; ++j) {
+	for (; j < 16; ++j) {
 		svec++;
 		/* FIXME: optimise by setting up m once and shifting */
 		m = 1 << j;
