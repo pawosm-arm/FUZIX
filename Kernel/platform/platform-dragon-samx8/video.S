@@ -350,8 +350,8 @@ _m6847_vtattr_notify:
 	bra setmode
 lowchar:
         ldd #0xC47F
-setmode
-	std plot_patch+1
+setmode:
+	std plot_patch
 	rts
 
 ;
