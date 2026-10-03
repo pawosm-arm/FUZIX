@@ -68,9 +68,9 @@ zx_plot_char:
         ld	b, 0		; calculating offset in font table
         ld	a, c
 
-; FIXME VTA_ALTCHAR support
-
-	or	a		; clear carry
+	.export _altmod
+_altmod:	; patched for altchars between and 127 and or 128
+	and	0x7F		; also clear carry
         rla
         rl	b
         rla
@@ -349,6 +349,7 @@ zx_cursor_on:
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
+	inc	hl
 	ld	d,(hl)
         ld	(cursorpos), de
 
@@ -356,7 +357,8 @@ zx_cursor_on:
         ld	a, 7
         add	a, d
         ld	d, a
-        ld	a, 0xFF
+        ld	a, (de)
+	cpl
         ld	(de), a
 	VIDEO_UNMAP
         ret
@@ -371,7 +373,8 @@ zx_cursor_off:
         ld	a, 7
         add	a, d
         ld	d, a
-        xor	a
+	ld	a,(de)
+	cpl
         ld	(de), a
 	VIDEO_UNMAP
 #ifdef	ZXVID_ONLY

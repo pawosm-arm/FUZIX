@@ -71,6 +71,8 @@ uint16_t cursorpos;
 
 void vtattr_notify(void)
 {
+	/* This actually patches the asm driver */
+	extern uint8_t *altmod;
 	/* Attribute byte fixups: not hard as the colours map directly
 	   to the spectrum ones */
 	if (vtattr & VTA_INVERSE)
@@ -82,6 +84,14 @@ void vtattr_notify(void)
 	/* How to map the bright bit - we go by either */
 	if ((vtink | vtpaper) & 0x10)
 		curattr |= 0x40;
+	/* Either OR 0x80 or AND 0x7F */
+	if (vtattr & VTA_ALTCHAR) {
+		*altmod = 0xF6;
+		altmod[1] = 0x80;
+	} else {
+		*altmod = 0xE6;
+		altmod[1] = 0x7F;
+	}
 }
 
 #define BORDER	0xFE
