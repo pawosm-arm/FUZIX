@@ -29,7 +29,7 @@ struct s_queue ttyinq[NUM_DEV_TTY + 1] = {	/* ttyinq[0] is never used */
 /* tty1 is the screen */
 
 /* Output for the system console (kprintf etc) */
-void kputchar(char c)
+void kputchar(uint_fast8_t c)
 {
 	if (c == '\n')
 		tty_putc(0, '\r');
@@ -37,35 +37,31 @@ void kputchar(char c)
 }
 
 /* Both console and debug port are always ready */
-ttyready_t tty_writeready(uint8_t minor)
+ttyready_t tty_writeready(uint_fast8_t minor)
 {
-	minor;
 	return TTY_READY_NOW;
 }
 
-void tty_putc(uint8_t minor, unsigned char c)
+void tty_putc(uint_fast8_t minor, uint_fast8_t c)
 {
-	minor;
-	vtoutput(&c, 1);
+	uint8_t ch = c;
+	vtoutput(&ch, 1);
 }
 
-int tty_carrier(uint8_t minor)
+int tty_carrier(uint_fast8_t minor)
 {
-	minor;
 	return 1;
 }
 
-void tty_setup(uint8_t minor, uint8_t flags)
+void tty_setup(uint_fast8_t minor, uint_fast8_t flags)
 {
-	minor;
 }
 
-void tty_sleeping(uint8_t minor)
+void tty_sleeping(uint_fast8_t minor)
 {
-	minor;
 }
 
-void tty_data_consumed(uint8_t minor)
+void tty_data_consumed(uint_fast8_t minor)
 {
 }
 
@@ -88,16 +84,16 @@ void vtattr_notify(void)
 		curattr |= 0x40;
 }
 
-__sfr __at 0xFE border;
+#define BORDER	0xFE
 
-int zxvt_ioctl(uint8_t minor, uarg_t arg, char *ptr)
+int zxvt_ioctl(uint_fast8_t minor, uarg_t arg, char *ptr)
 {
 	uint8_t c;
 	if (minor == 1 && arg == VTBORDER) {
 		c = ugetc(ptr);
 		vtborder &= 0xF8;
 		vtborder |= c & 0x07;
-		border = vtborder;
+		out(BORDER, vtborder);
 		return 0;
 	}
 	return vt_ioctl(minor, arg, ptr);

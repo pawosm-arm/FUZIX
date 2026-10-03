@@ -1,4 +1,3 @@
-# 1 "fdc765.S"
 ;
 ;		765 Floppy Controller Support
 ;
@@ -27,27 +26,9 @@
 ;	(12ms step 30ms head stabilize, 4ms head load, max (0xf) head
 ;	unload)
 ;
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-; We stick it straight after the tag
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256@F000
-
-Z80_TYPE		    .equ 1
-
-PROGBASE		    .equ 0x0000
-PROGLOAD		    .equ 0x0100
-
-NBUFS			    .equ 5
-
-Z80_MMU_HOOKS		    .equ 0
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 32 "fdc765.S"
 	.export _fd765_do_nudge_tc
 	.export _fd765_do_recalibrate
 	.export _fd765_do_seek
@@ -241,7 +222,7 @@ _fd765_do_read:
 
 	; FIXED: need to return a last cmd byte here and write it
 	; after this crap or we may miss if we write just as the sector hits
-	; the head (BACKPORT ME ]
+	; the head (BACKPORT ME ??)
 	call	setup_read_or_write
 
 	ld	a, (_fd765_is_user)

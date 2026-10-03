@@ -2,7 +2,7 @@
 ;	Boot block for +2A/+3
 ;
 
-	.area BOOT (ABS)	; 0xFE00 max 512 bytes
+	.abs
 
 	.org 0xFE00
 
@@ -25,8 +25,8 @@
 ;
 start:
 	di
-	ld bc,#0x7ffd
-	ld a,#0x08		; screen on 7
+	ld bc,0x7ffd
+	ld a,0x08		; screen on 7
 	out (c),a
 ;
 ;	The boot loader turns the motor off, so turn it back on but wait
@@ -35,27 +35,27 @@ start:
 
 motor_on:
 	; Wait for the motor to catch back up - clear the screen !
-	ld bc,#0x1ffd
-	ld a,#0x0F		; motor on
+	ld bc,0x1ffd
+	ld a,0x0F		; motor on
 	out (c),a
-	ld hl,#0x4000
-	ld de,#0x4001
-	ld bc,#0x6911
+	ld hl,0x4000
+	ld de,0x4001
+	ld bc,0x6911
 	xor a
 	ld (hl),a
 	ldir
 
 
-	ld bc,#0x1ffd
-	ld a,#0x0D		; special paging 4/5/6/3. motor on
+	ld bc,0x1ffd
+	ld a,0x0D		; special paging 4/5/6/3. motor on
 	out (c),a
 
 ;
 ;	Grab the ROM font using a helper
 ;
-	ld hl,#fontget
-	ld de,#0x5D00
-	ld bc,#0x0100
+	ld hl,fontget
+	ld de,0x5D00
+	ld bc,0x0100
 	ldir
 
 	call 0x5D00
@@ -64,8 +64,8 @@ motor_on:
 ;	Ok now we can try and load stuff
 ;	9 sectors per track and we need to start from 0/2
 
-	ld de,#0x02
-	ld hl,#0x0100
+	ld de,0x02
+	ld hl,0x0100
 	jr dosector
 
 ;
@@ -73,10 +73,10 @@ motor_on:
 ;
 load_track:
 	inc d			; Next track
-	ld e,#1			; Sectors start at 1
+	ld e,1			; Sectors start at 1
 	ld a,d			; Cycle border colour
-	and #0x03
-	add #4
+	and 0x03
+	add a,4
 	out (0xFE),a
 	push de			; Seek to the needed track
 	call seek_track
@@ -85,11 +85,11 @@ dosector:			; Loop through track D loading sector E
 	push de
 	call load_sector	; Load 512 bytes into HL and adjust HL
 	pop de
-	ld a,#0xFD		; Load up to FD00
+	ld a,0xFD		; Load up to FD00
 	cp h
 	jp z, 0x0100		; And then run it
 	inc e			; Next sector
-	ld a,#10		; New track ?
+	ld a,10		; New track ?
 	cp e
 	jr nz, dosector		; Nope
 	jr load_track		; Move on and seek a track
@@ -97,26 +97,26 @@ dosector:			; Loop through track D loading sector E
 ;	Helpers - seek to track D
 ;
 seek_track:
-	ld a,#0x0f
+	ld a,0x0f
 	call fd765_tx
 	xor a
 	call fd765_tx		;	disk 0 side 0
 	ld a,d
 	call fd765_tx
 wait_done:
-	ld a,#0x08
+	ld a,0x08
 	call fd765_tx
 	call read_status
 	bit 5, a
 	jr z, wait_done
-	ld a, #30		; 30ms
+	ld a, 30		; 30ms
 ;
 ;	Head settle
 ;
 ;	This assumes uncontended timing
 ;
 wait_ms:
-	ld b,#0xDC
+	ld b,0xDC
 wait_ms_loop2:
 	dec b
 	jr nz, wait_ms_loop2
@@ -130,7 +130,7 @@ wait_ms_loop2:
 ;	Look at just doing track loads in one command! FIXME
 ;
 load_sector:
-	ld a,#0x46
+	ld a,0x46
 	call fd765_tx		; read MFM
 	xor a			; Drive 0 head 0
 	call fd765_tx
@@ -140,40 +140,40 @@ load_sector:
 	call fd765_tx
 	ld a,e			; Sector E
 	call fd765_tx
-	ld a,#2			; 512 bytes
+	ld a,2			; 512 bytes
 	call fd765_tx
 	ld a,e			; Last sector (inclusive)
 	call fd765_tx
-	ld a,#27
+	ld a,27
 	call fd765_tx
 	xor a
 	call fd765_tx
 
-	ld c,#0xfd		; low bits of I/O
-	ld d,#0x20		; mask 
+	ld c,0xfd		; low bits of I/O
+	ld d,0x20		; mask 
 	jp read_begin
 read_loop:
-	ld b,#0x3f
+	ld b,0x3f
 	ini
 read_begin:
-	ld b,#0x2f
+	ld b,0x2f
 read_wait:
 	in a,(c)
 	jp p,read_wait
 	and d
 	jp nz,read_loop
 read_status:
-	ld c,#0xfd
+	ld c,0xfd
 	push hl
-	ld hl,#status
+	ld hl,status
 read_status_loop:
-	ld b,#0x2f
+	ld b,0x2f
 	in a,(c)
 	rla
 	jr nc, read_status_loop
 	rla
 	jr nc, done_status
-	ld b,#0x3f
+	ld b,0x3f
 	ini
 	ex (sp),hl
 	ex (sp),hl
@@ -188,15 +188,15 @@ status: .ds 8
 
 fd765_tx:
 	ex af, af'
-	ld bc,#0x2ffd			; floppy register (16bit access)
+	ld bc,0x2ffd			; floppy register (16bit access)
 fd765_tx_loop:
 	in a, (c)
-	add a
+	add a,a
 	jr nc, fd765_tx_loop
-	add a
+	add a,a
 	ret c
 	ex af, af'
-	ld b,#0x3f
+	ld b,0x3f
 	out (c), a
 	ex (sp),ix
 	ex (sp),ix
@@ -208,25 +208,25 @@ fd765_tx_loop:
 ;	On entry +3 mode map 4/5/6/3
 ;
 fontget:
-	ld bc,#0x1FFD
-	ld a,#0x0C		; 128K mode keep motor on, 48K ROM
+	ld bc,0x1FFD
+	ld a,0x0C		; 128K mode keep motor on, 48K ROM
 	out (c),a
 	; Now in 128K mode, bank 5 holding our code hasn't moved
-	ld b,#0x7F
-	ld a,#0x17		; 48K ROM, bank 3 high
+	ld b,0x7F
+	ld a,0x17		; 48K ROM, bank 3 high
 	out (c),a
 	; 48K ROM is now 0000-3FFF and bank 7 is C000-FFFF and display
 	; Now copy the font where we can get it easily and in future also
 	; set it
-	ld hl,#0x3D00
-	ld de,#0xFD00
-	ld bc,#0x0300
+	ld hl,0x3D00
+	ld de,0xFD00
+	ld bc,0x0300
 	ldir
 	; Now to get back to sanity
-	ld bc,#0x7FFD
-	ld a,#0x0C		; screen on 7, don't care about high bank
+	ld bc,0x7FFD
+	ld a,0x0C		; screen on 7, don't care about high bank
 	out (c),a		; but need bits 2-1 set to 10 for 4/5/6/3
-	ld b,#0x1F
-	ld a,#0x0D		; back to 4 5 6 3
+	ld b,0x1F
+	ld a,0x0D		; back to 4 5 6 3
 	out (c),a
 	ret			; our stack is back so this is now safe

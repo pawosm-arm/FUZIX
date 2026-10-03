@@ -1,4 +1,3 @@
-# 1 "plus3.S"
 ;
 ;    Spectrum +3 support
 
@@ -31,27 +30,11 @@
         .export _plt_monitor
 	.export _plt_reboot
         .export outchar
-# 1 "kernelu.def"
-; UZI mnemonics for memory addresses etc
 
-; We stick it straight after the tag
-U_DATA__TOTALSIZE           .equ 0x200        ; 256+256@F000
 
-Z80_TYPE		    .equ 1
+#include "kernelu.def"
+#include "../../cpu-z80u/kernel-z80.def"
 
-PROGBASE		    .equ 0x0000
-PROGLOAD		    .equ 0x0100
-
-NBUFS			    .equ 5
-
-Z80_MMU_HOOKS		    .equ 0
-# 1 "../../cpu-z80u/kernel-z80.def"
- 
-# 26
- 
-# 44
- 
-# 38 "plus3.S"
 	.code
 
 _plt_idle:
@@ -242,3 +225,4 @@ _need_resched:
 
 diskmotor:
 	.byte 0
+

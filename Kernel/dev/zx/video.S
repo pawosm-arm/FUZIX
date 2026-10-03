@@ -1,28 +1,3 @@
-# 1 "zxvideo.S"
-;
-;        zx128 vt primitives
-;
-
-        ; exported symbols
-        .export _plot_char
-        .export _scroll_down
-        .export _scroll_up
-        .export _cursor_on
-        .export _cursor_off
-	.export _cursor_disable
-        .export _clear_lines
-        .export _clear_across
-        .export _do_beep
-	.export _fontdata_8x8
-	.export _curattr
-
-	; Build the video library as the only driver
-# 25
-_fontdata_8x8	.equ	0x7D00		; routines expect this
-					; to point to space char
-
-	.common
-# 1 "../../dev/zx/video.S"
 ;
 ;        zx128 vt primitives
 ;
@@ -50,9 +25,9 @@ videopos:
         ld	e,a
         ld	a,d
         and	0x18
-        or	0x40 	    ; Standard screen
+        or	SCREENBASE	    ; Standard screen
         ld	d,a
-	call map_video 
+	VIDEO_MAP
 	ret
 
 videoattr:
@@ -64,7 +39,7 @@ videoattr:
 				; into the low 2 bits
 	ld	l,a
 	and	3		; Extract the low 2 bits for the high
-	add	a, 0x40 +0x18	; Attributes start 0x5800
+	add	a, SCREENBASE+0x18	; Attributes start 0x5800
 	ld	h,a
 	ld	a,l
 	and	0xE0		; mask the bits that are valid
@@ -72,9 +47,9 @@ videoattr:
 	ld	l,a		; and done (the add can't overflow)
 	ret
 
-
+#ifdef ZXVID_ONLY
 _plot_char:
-
+#endif
 zx_plot_char:
 	push	bc
 	ld	hl,4
@@ -158,7 +133,7 @@ plot_attr:
 	call	videoattr
 	ld	a,(_curattr)
 	ld	(hl),a
-	call map_kernel 
+	VIDEO_UNMAP
 	pop	bc
         ret
 
@@ -166,9 +141,9 @@ last_ul:
 	ld	a,0xff
 	jr	plot_attr
 
-
+#ifdef ZXVID_ONLY
 _clear_lines:
-
+#endif
 zx_clear_lines:
 	push	bc
 	ld	hl,4
@@ -197,9 +172,9 @@ nextline:
         ret
 
 
-
+#ifdef ZXVID_ONLY
 _clear_across:
-
+#endif
 zx_clear_across:
 	push	bc
 	ld	hl,4
@@ -249,7 +224,7 @@ setattr:
 	ld	(hl),a
 	inc	hl
 	djnz	setattr
-	call map_kernel 
+	VIDEO_UNMAP
         ret
 
 copy_line:
@@ -284,14 +259,14 @@ copy_pixel_line:
         inc	h
         dec	c
         jr	nz, copy_line_nextchar
-	call map_kernel 
+	VIDEO_UNMAP
         ret
 
         ; TODO: the LDIR way should be much faster
 
-
+#ifdef ZXVID_ONLY
 _scroll_down:
-
+#endif
 zx_scroll_down:
         ; set HL = (0,22), DE = (0, 23)
         xor	a
@@ -317,20 +292,20 @@ loop_scroll_down:
         dec	c
         jr	nz, loop_scroll_down
 
-	call map_video 
+	VIDEO_MAP
 	; Attributes
 	ld	hl,0x5ADF
 	ld	de,0x5AFF
 	ld	bc,0x02E0
 	lddr
 
-	call map_kernel 
+	VIDEO_UNMAP
         ret
 
 
-
+#ifdef ZXVID_ONLY
 _scroll_up:
-
+#endif
 zx_scroll_up:
 	push	bc
         ; set HL = (0,1), DE = (0, 0)
@@ -357,18 +332,18 @@ loop_scroll_up:
         dec	c
         jr	nz, loop_scroll_up
 
-	call map_video 
+	VIDEO_MAP
 	ld	hl,0x5820
 	ld	de,0x5800
 	ld	bc,0x02E0
 	ldir
-	call map_kernel 
+	VIDEO_UNMAP
 	pop	bc
         ret
 
-
+#ifdef ZXVID_ONLY
 _cursor_on:
-
+#endif
 zx_cursor_on:
 	ld	hl,2
 	add	hl,sp
@@ -383,12 +358,12 @@ zx_cursor_on:
         ld	d, a
         ld	a, 0xFF
         ld	(de), a
-	call map_kernel 
+	VIDEO_UNMAP
         ret
-
+#ifdef ZXVID_ONLY
 _cursor_disable:
 _cursor_off:
-
+#endif
 zx_cursor_disable:
 zx_cursor_off:
         ld	de, (cursorpos)
@@ -398,10 +373,10 @@ zx_cursor_off:
         ld	d, a
         xor	a
         ld	(de), a
-	call map_kernel 
-
+	VIDEO_UNMAP
+#ifdef	ZXVID_ONLY
 _do_beep:
-
+#endif
 zx_do_beep:
         ret
 
