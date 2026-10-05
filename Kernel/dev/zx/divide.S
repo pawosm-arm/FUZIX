@@ -4,9 +4,21 @@
 
 	.common
 
+#include "../../build/kernelu.def"
+
 #define IDE_REG_DATA	0xA3
 
 ide_setup:
+#ifdef BANKED_Z80
+	ld	hl,8
+#else
+	ld	hl,6
+#endif
+	add	hl,sp
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)
+	ex	de,hl
 	ld	bc, IDE_REG_DATA		; port and count
 	ld	a, (_td_raw)
 	or	a
@@ -17,10 +29,6 @@ ide_setup:
 	jp	map_for_swap
 
 _devide_read_data:
-	pop	de
-	pop	hl
-	push	hl
-	push	de
 	push	bc
 	call	ide_setup
 	ld 	a,0x05
@@ -35,10 +43,6 @@ _devide_read_data:
 	jp	map_kernel_restore
 
 _devide_write_data:
-	pop	de
-	pop	hl
-	push	hl
-	push	de
 	push	bc
 	call	ide_setup
 	ld 	a,0x05
