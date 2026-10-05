@@ -135,7 +135,6 @@ plot_attr:
 	pop	de
 	call	videoattr
 	ld	a,(_curattr)
-	or	0x20
 	ld	(hl),a
 	VIDEO_UNMAP
 	pop	bc
