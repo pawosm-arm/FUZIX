@@ -72,7 +72,7 @@ void dwrite(uint16_t blk, char *addr)
 char *zerobuf(void)
 {
     static char buf[512];
-    
+
     memset(buf, 0, 512);
     return buf;
 }
@@ -116,6 +116,7 @@ void mkfs(uint16_t fsize, uint16_t isize)
 
     /* Initialize the super-block */
     fs_tab.s_mounted = SMOUNTED;	/* Magic number */
+    fs_tab.s_fmod = FMOD_CLEAN;		/* New fs is clean */
     fs_tab.s_isize = isize;
     fs_tab.s_fsize = fsize;
     fs_tab.s_nfree = 1;
@@ -190,8 +191,8 @@ int main(int argc, char *argv[])
 
     if (argc-optind < 3)
         printopts();
-    
-    
+
+
     if (stat(argv[optind], &statbuf) != 0) {
         fprintf(stderr, "mkfs: can't stat %s\n", argv[optind]);
         exit(-1);
