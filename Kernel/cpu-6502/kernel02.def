@@ -35,3 +35,5 @@ PFL_BATCH		    .equ 4            ; value from include/kernel.h
 OS_BANK                     .equ 0            ; value from include/kernel.h
 
 EAGAIN                      .equ 11           ; value from include/kernel.h
+
+BUFSIZE		.equ	520		; CHECK
