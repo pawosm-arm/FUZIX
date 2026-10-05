@@ -84,15 +84,15 @@ __uget_blk:
 		dex			; one less block to do
 		bne	__uget_blk	; out of blocks ?
 
-__uget_tail:	cpy @tmp2		; finished ?
-		beq __uget_done
+__uget_tail:	cpy	@tmp2		; finished ?
+		beq	__uget_done
 
-		jsr map_proc_always	; map the user process
-		lda (@tmp4),y		; get a byte of user data
-		jsr map_kernel		; map the kernel back in
-		sta (@tmp3),y		; save it to the kernel buffer
+		jsr	map_proc_always	; map the user process
+		lda	(@tmp4),y	; get a byte of user data
+		jsr	map_kernel	; map the kernel back in
+		sta	(@tmp3),y	; save it to the kernel buffer
 		iny			; move on
-		bne __uget_tail		; always taken (y will be non zero)
+		bne	__uget_tail	; always taken (y will be non zero)
 
 __uget_done:
 		lda	#0
@@ -205,7 +205,7 @@ __uzero:	ldy	#3
 		sta	@tmp3
 
 		; Our C stack vanishes at this point
-		jsr map_proc_always
+		jsr	map_proc_always
 
 		ldy	#0
 		tya
