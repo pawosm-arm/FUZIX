@@ -145,6 +145,7 @@ typedef struct filesys {
     int16_t     s_ninode;
     uint16_t    s_inode[50];
     uint8_t     s_fmod;
+#define FMOD_CLEAN	2
     uint8_t	s_timeh;	/* top bits of time */
     uint32_t    s_time;
     blkno_t     s_tfree;
