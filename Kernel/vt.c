@@ -458,7 +458,7 @@ void cursor_on(int8_t y, int8_t x)
 
 void plot_char(int8_t y, int8_t x, uint16_t c)
 {
-	if (vtattr & VT_ALTCHAR)
+	if (vtattr & VTA_ALTCHAR)
 		c |= 0x80;
 	else
 		c &= 0x7F;
