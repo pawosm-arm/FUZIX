@@ -7,14 +7,14 @@
 #define IDE_REG_DATA	0xA3
 
 ide_setup:
-	ld bc, IDE_REG_DATA		; port and count
-	ld a, (_td_raw)
-	or a
-	jp z, map_buffers
-	dec a
-	jp z, map_proc_always
-	ld a,(_td_page)
-	jp map_for_swap
+	ld	bc, IDE_REG_DATA		; port and count
+	ld	a, (_td_raw)
+	or	a
+	jp	z, map_buffers
+	dec	a
+	jp	z, map_proc_always
+	ld	a, (_td_page)
+	jp	map_for_swap
 
 _devide_read_data:
 	pop	de
@@ -32,7 +32,7 @@ _devide_read_data:
 	ld 	a, (_vtborder)
 	out	(0xfe),a
 	pop	bc
-	jp	map_kernel
+	jp	map_kernel_restore
 
 _devide_write_data:
 	pop	de
@@ -50,4 +50,4 @@ _devide_write_data:
 	ld 	a, (_vtborder)
 	out	(0xfe),a
 	pop	bc
-	jp	map_kernel
+	jp	map_kernel_restore
