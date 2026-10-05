@@ -2,8 +2,8 @@ CSRCS = devtty.c devices.c main.c buffers.c devrd.c
 CDSRCS = discard.c
 # We force tinyide_discard into .overlay4 as it uses tmpbuf which is only
 # mapped in this overlay.
-DSRCS = ../../dev/tinydisk.c ../../dev/tinyide.c ../../dev/tinyide_discard.c
-DDSRCS = ../../dev/tinydisk_discard.c
+DSRCS = ../../dev/tinydisk.c ../../dev/tinyide.c
+DDSRCS = ../../dev/tinydisk_discard.c ../../dev/tinyide_discard.c
 DZSRCS = ../../dev/zx/zxkeyboard.c
 DZSRCS += ../../dev/zx/devinput.c
 DDZSRCS =
@@ -38,7 +38,7 @@ $(DOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG4) -c $<
 
 $(DDOBJS): %.o: ../../dev/%.c
-	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
+	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG4) -c $<
 
 $(AZOBJS): %.o: ../../dev/zx/%.S
 	$(CROSS_AS) $(ASOPTS) $<

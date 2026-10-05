@@ -61,8 +61,16 @@ stub_end:
 	.overlay4
 ;
 ;	Buffers live with overlay 4 where we have a little bit of room
+;	We link them first at 0x80
 ;
-	.export _bufdata
-_bufdata:
+	.export	bufdata
+bufdata:
 	.ds 512 * NBUFS
 
+; Hack so they don't get turned into a stub reference by the bankman
+
+	.abs
+	.org	0x80
+	.export	_bufdata
+
+_bufdata:

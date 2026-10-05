@@ -2,6 +2,9 @@
 #include <kdata.h>
 #include <printf.h>
 
+extern uint8_t bufdata[];
+
+
 /*
  * Allocate a buffer for scratch use by the kernel. This buffer can then
  * be freed with tmpfree. We will be given a buffer where bp->__bf_data
@@ -21,7 +24,11 @@ void *tmpbuf(void)
 
 void tmpfree(void *p)
 {
-	brelse(p);
+        /* We need to work back from the data pointer to the buffer
+           number. */
+        uint16_t off = ((uint8_t *)p - bufdata) >> 9;
+        struct blkbuf *buf = bufpool + off;
+	brelse(buf);
 }
 
 
@@ -66,8 +73,6 @@ void blkzero(struct blkbuf *buf)
 {
     memset(buf->__bf_data, 0, BLKSIZE);
 }
-
-extern uint8_t bufdata[];
 
 /* This is called at start up to assign data to the first buffers, and then
    again to assign data to the extra allocated buffers */
