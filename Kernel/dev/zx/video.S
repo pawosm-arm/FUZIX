@@ -11,7 +11,6 @@
         .export zx_clear_lines
         .export zx_clear_across
         .export zx_do_beep
-	.export _fontdata_8x8
 	.export _curattr
 
 videopos:
@@ -52,7 +51,11 @@ _plot_char:
 #endif
 zx_plot_char:
 	push	bc
+#ifdef BANKED_Z80
+	ld	hl,6
+#else
 	ld	hl,4
+#endif
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
@@ -132,6 +135,7 @@ plot_attr:
 	pop	de
 	call	videoattr
 	ld	a,(_curattr)
+	or	0x20
 	ld	(hl),a
 	VIDEO_UNMAP
 	pop	bc
@@ -146,7 +150,11 @@ _clear_lines:
 #endif
 zx_clear_lines:
 	push	bc
+#ifdef BANKED_Z80
+	ld	hl,6
+#else
 	ld	hl,4
+#endif
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
@@ -177,7 +185,11 @@ _clear_across:
 #endif
 zx_clear_across:
 	push	bc
+#ifdef BANKED_Z80
+	ld	hl,6
+#else
 	ld	hl,4
+#endif
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
@@ -345,7 +357,11 @@ loop_scroll_up:
 _cursor_on:
 #endif
 zx_cursor_on:
+#ifdef BANKED_Z80
+	ld	hl,4
+#else
 	ld	hl,2
+#endif
 	add	hl,sp
 	ld	e,(hl)
 	inc	hl
