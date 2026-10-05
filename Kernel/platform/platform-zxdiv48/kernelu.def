@@ -8,5 +8,8 @@ Z80_TYPE		    .equ 1
 PROGBASE		    .equ 0x8000
 PROGLOAD		    .equ 0x8000
 
-NBUFS			    .equ 7
+NBUFS			    .equ 5
 
+
+#define BANKED_Z80
+#define HELPER_BANK	.overlay4

@@ -1,4 +1,4 @@
-#define CONFIG_TD_NUM		1
+#define CONFIG_TD_NUM		2	/* Can have a slave drive */
 #define CONFIG_TD_IDE
 #define CONFIG_TINYIDE_SDCCPIO
 #define IDE_IS_8BIT(x)	0
@@ -69,12 +69,11 @@
 #define NUM_DEV_TTY 1
 
 #define TTYDEV   BOOT_TTY /* Device used by kernel for messages, panics */
-#define NBUFS    7       /* Number of block buffers */
-#define NMOUNTS	 2	  /* Number of mounts at a time */
-#define MAX_BLKDEV 2	    /* 2 IDE drives, 2 SD drive */
+#define NBUFS    5       /* Number of block buffers */
+#define NMOUNTS	 3	  /* Number of mounts at a time */
 
 #define SWAPBASE 0x8000
-#define SWAPTOP  0x1000UL	/* FE00+ is udata, stacks etc */
+#define SWAPTOP  0x10000UL	/* FE00+ is udata, stacks etc */
 #define SWAP_SIZE 0x41		/* 0x40 for image and 1 for udata */
 /* We need to set the swaps up dynamically. In theory the counts are
    14 for DivIDE plus (512K RAM, of which 64K is kernel banks), and
