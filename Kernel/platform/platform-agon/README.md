@@ -15,6 +15,7 @@ Adapted from the 2063, ZRC and EZ-Retro ports.
 - VDP console in terminal mode (tty1)
 - 100Hz timer from PRT0
 - SD card (tinysd)
+- Wiznet 5500 on the AgonLight2 UEXT connector
 
 Tested on an AgonLight2 with MOS 3.0.2 and VDP 2.16.0.
 
@@ -66,6 +67,14 @@ To use an existing card, make partition 2 type 7E and at least 32MB, copy
 filesys.img onto it and put fuzix.bin on the FAT partition.
 
 The root .profile sets TERM=xterm, the closest match to the VDP terminal.
+
+## Networking
+
+Set the Wiznet address from /etc/rc, for example
+
+```
+ifconfig eth0 192.168.1.50 netmask 255.255.255.0 gw 192.168.1.1
+```
 
 ## TODO
 

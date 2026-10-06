@@ -3,6 +3,8 @@
 #include <printf.h>
 #include <timer.h>
 #include <devtty.h>
+#include <tinysd.h>
+#include <net_w5x00.h>
 #include <agon.h>
 
 uint16_t ramtop = PROGTOP;
@@ -39,7 +41,13 @@ void plt_discard(void)
 void plt_interrupt(void)
 {
 	/* Reading clears the interrupt */
-	if (in(TMR0_CTL) & 0x80)
+	if (in(TMR0_CTL) & 0x80) {
 		timer_interrupt();
+#ifdef CONFIG_NET_WIZNET
+		/* We can't poll the Wiznet if the SD card is mid transaction */
+		if (tinysd_busy == 0)
+			w5x00_poll();
+#endif
+	}
 	tty_poll();
 }

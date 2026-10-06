@@ -499,7 +499,7 @@ static void netproto_cleanup(struct socket *s)
 	uint16_t i = s->proto.slot;
 
 	irqmask &= ~(1 << i);
-	w5x00_writecb(IMR, irqmask);
+	w5x00_writecb(SIMR, irqmask);
 	w5x00_cmd(i, CLOSE);
 	s->s_state = SS_UNUSED;
 	netproto_free(s);
@@ -517,8 +517,7 @@ static int do_netproto_bind(struct socket *s)
 	uint8_t r = SOCK_INIT;
 
 	w5x00_writesb(i, Sn_MR, s->s_type);
-	/* Make an open request to open the socket */
-	w5x00_cmd(i, OPEN);
+	/* Port and protocol must be set before the open */
 	switch (s->s_type) {
 	case W5100_UDP:
 		r = SOCK_UDP;
@@ -532,6 +531,8 @@ static int do_netproto_bind(struct socket *s)
 		r = SOCK_IPRAW;
 #endif		
 	}
+	/* Make an open request to open the socket */
+	w5x00_cmd(i, OPEN);
 	/* If the reply is not immediately SOCK_INIT we failed */
 	if (w5x00_readsb(i, Sn_SR) != r) {
 		udata.u_error = EADDRINUSE;	/* Something broke ? */
@@ -579,6 +580,12 @@ static void w5x00_event_s(uint8_t i)
 		s->s_wake = 1;
 		w5x00_eof(s);
 		/* Fall through and let CLOSE state processing do the work */
+	}
+	if ((stat & 0x400) && s->s_state == SS_CLOSING) {
+		/* Data after close is lost so abort */
+		w5x00_writesb(i, Sn_IR, stat >> 8);
+		netproto_cleanup(s);
+		return;
 	}
 	if (stat & 0x400) {
 		/* Receive wake: Poke the user in case they are reading */
@@ -685,8 +692,6 @@ static void w5x00_event_s(uint8_t i)
 	case 0x22:		/* SOCK_UDP */
 	case 0x32:		/* SOCK_IPRAW */
 	case 0x42:		/* SOCK_MACRAW */
-		/* Socket has been created */
-		s->s_state = SS_UNCONNECTED;
 		s->s_wake = 1;
 		break;
 	}
@@ -825,6 +830,8 @@ int netproto_begin_connect(struct socket *s)
 		/* UDP/RAW - note have to do our own filtering for 'connect' */
 		memcpy(&s->src_addr, &udata.u_net.addrbuf, sizeof(struct ksockaddr));
 		s->s_state = SS_CONNECTED;
+		/* Complete now, no event will wake the caller */
+		sock_wake[s->s_num] = 1;
 	}
 	return 0;
 }
@@ -844,7 +851,9 @@ int netproto_close(struct socket *s)
 			n++;
 		}
 	}
-	if (s->s_type == W5100_TCP && s->s_state >= SS_CONNECTING && s->s_state <= SS_CONNECTED) {
+	/* Closing with unread data loses it so abort rather than wait */
+	if (s->s_type == W5100_TCP && s->s_state >= SS_CONNECTING && s->s_state <= SS_CONNECTED &&
+	    w5x00_readsw(s->proto.slot, Sn_RX_RSR) == 0) {
 		w5x00_cmd(s->proto.slot, DISCON);
 		s->s_state = SS_CLOSING;
 	} else

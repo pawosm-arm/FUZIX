@@ -2,6 +2,8 @@
 ;	SD card on the eZ80 SPI, CS on PB4. MOS has set up the pins. In
 ;	common as raw I/O runs with the user bank mapped.
 ;
+;	A Wiznet on UEXT shares the bus, CS on PC2.
+;
 	.z180
 
 #include "kernelu.def"
@@ -16,6 +18,7 @@
 	.export	_sd_spi_tx_byte
 	.export	_sd_spi_rx_sector
 	.export	_sd_spi_tx_sector
+	.export	_spi_select_port
 
 _sd_spi_slow:
 	ld	a, 23			; 18.432MHz / (2 * 23) = 400KHz
@@ -43,6 +46,24 @@ _sd_spi_lower_cs:
 	in0	a, (PB_DR)
 	and	0xEF
 	out0	(PB_DR), a
+	ret
+
+;
+;	Port in L, 0 for none
+;
+_spi_select_port:
+	pop	de
+	pop	hl
+	push	hl
+	push	de
+	in0	a, (PC_DR)
+	or	0x04
+	inc	l
+	dec	l
+	jr	z, spi_select
+	and	0xFB
+spi_select:
+	out0	(PC_DR), a
 	ret
 
 ;
