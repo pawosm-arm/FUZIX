@@ -499,7 +499,7 @@ static void netproto_cleanup(struct socket *s)
 	uint16_t i = s->proto.slot;
 
 	irqmask &= ~(1 << i);
-	w5x00_writecb(IMR, irqmask);
+	w5x00_writecb(SIMR, irqmask);
 	w5x00_cmd(i, CLOSE);
 	s->s_state = SS_UNUSED;
 	netproto_free(s);
@@ -580,6 +580,12 @@ static void w5x00_event_s(uint8_t i)
 		s->s_wake = 1;
 		w5x00_eof(s);
 		/* Fall through and let CLOSE state processing do the work */
+	}
+	if ((stat & 0x400) && s->s_state == SS_CLOSING) {
+		/* Data after close is lost so abort */
+		w5x00_writesb(i, Sn_IR, stat >> 8);
+		netproto_cleanup(s);
+		return;
 	}
 	if (stat & 0x400) {
 		/* Receive wake: Poke the user in case they are reading */
@@ -845,7 +851,9 @@ int netproto_close(struct socket *s)
 			n++;
 		}
 	}
-	if (s->s_type == W5100_TCP && s->s_state >= SS_CONNECTING && s->s_state <= SS_CONNECTED) {
+	/* Closing with unread data loses it so abort rather than wait */
+	if (s->s_type == W5100_TCP && s->s_state >= SS_CONNECTING && s->s_state <= SS_CONNECTED &&
+	    w5x00_readsw(s->proto.slot, Sn_RX_RSR) == 0) {
 		w5x00_cmd(s->proto.slot, DISCON);
 		s->s_state = SS_CLOSING;
 	} else
