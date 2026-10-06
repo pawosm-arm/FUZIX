@@ -200,7 +200,7 @@ _program_vectors:
 	; a map_kernel_{restore}
 
 map_buffers:
-	ld	a, 3
+	ld	a, 3		; .overlay4
 map_restore_kmap:
 map_bank_a:
         ; bank switching procedure. On entrance:
@@ -544,7 +544,8 @@ __stub_3_ret:
 ;
 ;	The basic operations are copied from the standard one. Only the
 ;	blk transfers are different. uputget is a bit different as we are
-;	not doing 8bit loop pairs.
+;	not doing 8bit loop pairs. Sit in overlay4 so tha`t we have access
+;	to the buffer space.
 ;
 
 __uputc:
@@ -557,9 +558,10 @@ __uputc:
 	inc	hl
 	ld	h,(hl)
 	ld	l,a
-	call	map_proc_always
+;	call	map_proc_always
 	ld	(hl), e
-	jp	map_kernel			; map the kernel back below common
+	ret
+;	jp	map_kernel			; map the kernel back below common
 
 __uputw:
 	ld	hl,4
@@ -572,11 +574,12 @@ __uputw:
 	inc	hl
 	ld	h,(hl)
 	ld	l,a
-	call	map_proc_always
+;	call	map_proc_always
 	ld	(hl), e
 	inc	hl
 	ld	(hl),d
-	jp	map_kernel
+	ret
+;	jp	map_kernel
 
 __ugetc:
 	ld	hl,4
@@ -585,10 +588,11 @@ __ugetc:
 	inc	hl
 	ld	d,(hl)
 	ex	de,hl
-	call	map_proc_always
+;	call	map_proc_always
         ld	l, (hl)
 	ld	h, 0
-	jp	map_kernel
+	ret
+;	jp	map_kernel
 
 __ugetw:
 	ld	hl,4
@@ -597,10 +601,13 @@ __ugetw:
 	inc	hl
 	ld	d,(hl)
 	ex	de,hl
-	call	map_proc_always
-        ld	l, (hl)
-	ld	h, 0
-	jp	map_kernel
+;	call	map_proc_always
+        ld	a, (hl)
+	inc	hl
+	ld	h, (hl)
+	ld	l,a
+	ret
+;	jp	map_kernel
 
 
 __uget:
@@ -625,9 +632,9 @@ __uput:
 	ld	a, b
 	or	c
 	jr	z, uput_out	; no work
-	call	map_proc_always
+;	call	map_proc_always
 	ldir
-	call	map_kernel
+;	call	map_kernel
 uput_out:
 	pop	bc
 	ld	hl,0
@@ -647,7 +654,7 @@ __uzero:
 	ld	a, b	; check for 0 copy
 	or	c
 	ret	z
-	call	map_proc_always
+;	call	map_proc_always
 	ex	de,hl
 	ld	(hl), 0
 	dec	bc
@@ -660,4 +667,5 @@ __uzero:
 	ldir
 uz_out:
 	pop	bc
-	jp	map_kernel
+;	jp	map_kernel
+	ret

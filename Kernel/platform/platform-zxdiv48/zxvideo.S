@@ -22,6 +22,11 @@
 #define VIDEO_UNMAP
 #define BANKED_Z80
 
+	.commondata
+	.export _vtborder
+_vtborder:
+	.byte	0
+
 	.overlay1		; TODO where to land this ?
 
 #include "../../dev/zx/video.S"

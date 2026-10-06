@@ -13,7 +13,7 @@
 static char tbuf1[TTYSIZ];
 
 uint8_t vtattr_cap = VTA_INVERSE|VTA_FLASH|VTA_UNDERLINE;
-uint8_t vtborder;
+extern uint8_t vtborder;
 extern uint8_t curattr;
 
 tcflag_t termios_mask[NUM_DEV_TTY + 1] = {
