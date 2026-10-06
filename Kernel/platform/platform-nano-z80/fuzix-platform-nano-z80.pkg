@@ -10,5 +10,3 @@ f 0644 /etc/inittab userspace/inittab
 r /etc/passwd
 f 0755 /etc/passwd userspace/passwd
 
-f 0755 /root/.profile userspace/profile-root
-
