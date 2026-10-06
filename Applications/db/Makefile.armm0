@@ -24,6 +24,23 @@ CPPFLAGS += -DFUZIX -D_DEFAULT_SOURCE
 # Default target
 all: $(APPS) size.report
 
+$(OBJS_MECH): dbgen db_booking_layout.h db_customer_layout.h db_staff_layout.h db_state_layout.h
+
+dbgen: dbgen.c
+	cc dbgen.c -o ./dbgen
+
+db_booking_layout.h: dbgen booking-layout.def
+	./dbgen BOOKING <booking-layout.def >db_booking_layout.h
+
+db_customer_layout.h: dbgen customer-layout.def
+	./dbgen CUSTOMER <customer-layout.def >db_customer_layout.h
+
+db_staff_layout.h: dbgen staff-layout.def
+	./dbgen STAFF <staff-layout.def >db_staff_layout.h
+
+db_state_layout.h: dbgen state-layout.def
+	./dbgen STATE <state-layout.def >db_state_layout.h
+
 # Booking build
 booking: $(CRT0) $(OBJS_MECH)
 	$(LINKER) $^ -o $@.debug -ltermcap$(PLATFORM) $(LINKER_OPT)
