@@ -22,6 +22,6 @@
 #define VIDEO_UNMAP
 #define BANKED_Z80
 
-	.overlay3		; TODO where to land this ?
+	.overlay1		; TODO where to land this ?
 
 #include "../../dev/zx/video.S"

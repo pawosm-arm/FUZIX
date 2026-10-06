@@ -1,7 +1,5 @@
 CSRCS = devtty.c devices.c main.c buffers.c devrd.c
 CDSRCS = discard.c
-# We force tinyide_discard into .overlay4 as it uses tmpbuf which is only
-# mapped in this overlay.
 DSRCS = ../../dev/tinydisk.c ../../dev/tinyide.c
 DDSRCS = ../../dev/tinydisk_discard.c ../../dev/tinyide_discard.c
 DZSRCS = ../../dev/zx/zxkeyboard.c
@@ -19,7 +17,7 @@ DDOBJS = $(patsubst ../../dev/%.c,%.o, $(DDSRCS))
 AZOBJS = $(patsubst ../../dev/zx/%.S,%.o, $(AZSRCS))
 DZOBJS = $(patsubst ../../dev/zx/%.c,%.o, $(DZSRCS))
 DDZOBJS = $(patsubst ../../dev/zx/%.c,%.o, $(DDZSRCS))
-OBJS  = $(COBJS) $(CDOBJS) $(AOBJS) $(DOBJS) $(DDOBJS) $(DZOBJS) $(DDZOBJS) $(AZOBJS)
+OBJS = font8x8.o $(COBJS) $(CDOBJS) $(AOBJS) $(DOBJS) $(DDOBJS) $(DZOBJS) $(DDZOBJS) $(AZOBJS)
 
 CROSS_CCOPTS += -I../../dev/ -I../../dev/zx/
 
@@ -27,6 +25,9 @@ CROSS_CC_SEG3 = -Toverlay3
 CROSS_CC_SEG4 = -Toverlay4
 
 all:	$(OBJS)
+
+font8x8.o: ../../font/font8x8.c force_over1.peep
+	$(CROSS_CC) $(CROSS_CCOPTS) -c ../../font/font8x8.c -o $@ -p force_over1.peep
 
 $(COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG4) -c $<
@@ -38,7 +39,7 @@ $(DOBJS): %.o: ../../dev/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG4) -c $<
 
 $(DDOBJS): %.o: ../../dev/%.c
-	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEG4) -c $<
+	$(CROSS_CC) $(CROSS_CCOPTS) $(CROSS_CC_SEGDISC) -c $<
 
 $(AZOBJS): %.o: ../../dev/zx/%.S
 	$(CROSS_AS) $(ASOPTS) $<
@@ -85,7 +86,7 @@ image: loader loader-zxcf
 	../../network.o ../../tty.o ../../mm.o ../../mm/memalloc_none.o \
 	../../swap.o ../../mm/simple.o ../../devsys.o ../../vt.o \
 	../../devinput.o ../../dev/zx/devinput.o ../../dev/zx/keyscan.o \
-	../../font/font8x8.o devtty.o zxvideo.o buffers.o \
+	font8x8.o devtty.o zxvideo.o buffers.o \
 	../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
 	../../dev/tinyide.o ../../dev/tinyide_discard.o \
 	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap -R fuzix.relocs

@@ -55,7 +55,7 @@ stop:   halt
 	.export stub
 	.export stub_end
 stub:
-	.ds	540
+	.ds	560
 stub_end:
 
 	.overlay4

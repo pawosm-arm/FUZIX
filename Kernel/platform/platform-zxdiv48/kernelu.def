@@ -13,3 +13,4 @@ NBUFS			    .equ 5
 
 #define BANKED_Z80
 #define HELPER_BANK	.overlay4
+#define CONFIG_SWAP

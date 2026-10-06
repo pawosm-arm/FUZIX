@@ -3,6 +3,9 @@
 ;
 ;	We will make even COMMONMEM vanish whilst we work!
 ;
+;	Userspace is 8000-FFFF so always mapped which is fine
+;	for swapping. To do real disk I/O on it we'd need to consider
+;	buffers overlapping this.
 
 	.commondata
 
@@ -27,6 +30,7 @@ _rd_io:
 	jr	z, is_wr
 do_io:
 	ldir
+	pop	bc
 	call	map_kernel_restore
 	ld	a,(_int_disabled)
 	or	a

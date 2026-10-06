@@ -189,6 +189,12 @@ _plt_idle:
 _program_vectors:
 	ret
 
+;
+;	We need this above the "fake" common area at 0x3000 otherwise
+;	when we switch to ramdisk pages we won't be there!
+;
+	.commondata
+
 	; Swap helper. Map the page in A into the address space such
 	; that swap_map() gave the correct pointer to use. Undone by
 	; a map_kernel_{restore}
@@ -225,6 +231,8 @@ switch_bank:
 	pop	bc
         ret
 
+	.common
+
 map_proc:
         ld	a, h
         or	l
@@ -248,6 +256,7 @@ map_proc_always_di:
 	pop	af
 	ret
 
+	.commondata
 ;
 ;	Save and switch to kernel
 ;
@@ -273,6 +282,8 @@ map_kernel_restore:
 	call	switch_bank
 	pop	af
 	ret
+
+	.common
 
 map_restore:
 	push	af
