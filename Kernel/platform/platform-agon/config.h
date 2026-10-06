@@ -34,6 +34,11 @@
 #define CONFIG_TD_NUM	1
 #define CONFIG_TD_SD
 
+/* WizNET 5500 on UEXT */
+#define CONFIG_NET
+#define CONFIG_NET_WIZNET
+#define CONFIG_NET_W5500
+
 /* tty1 is the VDP on UART0 */
 #define NUM_DEV_TTY 1
 #define BOOT_TTY (512 + 1)

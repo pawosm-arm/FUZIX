@@ -1,18 +1,20 @@
 ASRCS = crt0.S commonmem.S agon.S tricks.S sd.S
-CSRCS = devices.c main.c devtty.c
+CSRCS = devices.c main.c devtty.c wiznet.c
 DISCARD_CSRCS = discard.c
 DISCARD_DSRCS = ../../dev/tinydisk_discard.c ../../dev/tinysd_discard.c
 DSRCS = ../../dev/tinydisk.c ../../dev/tinysd.c
+NSRCS = ../../dev/net/net_w5x00.c
 
 AOBJS = $(ASRCS:.S=.o)
 COBJS = $(CSRCS:.c=.o)
 DISCARD_COBJS = $(DISCARD_CSRCS:.c=.o)
 DISCARD_DOBJS = $(patsubst ../../dev/%.c,%.o, $(DISCARD_DSRCS))
 DOBJS = $(patsubst ../../dev/%.c,%.o, $(DSRCS))
+NOBJS = $(patsubst ../../dev/net/%.c,%.o, $(NSRCS))
 
-OBJS  = $(AOBJS) $(COBJS) $(DOBJS) $(DISCARD_DOBJS) $(DISCARD_COBJS)
+OBJS  = $(AOBJS) $(COBJS) $(DOBJS) $(DISCARD_DOBJS) $(DISCARD_COBJS) $(NOBJS)
 
-CROSS_CCOPTS += -I../../dev/
+CROSS_CCOPTS += -I../../dev/ -I../../dev/net/
 
 JUNK = *.lst *.asm *.sym *.rst *.s *.\^ *.\# *.\% *.\@
 
@@ -25,6 +27,9 @@ $(COBJS): %.o: %.c
 	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
 
 $(DOBJS): %.o: ../../dev/%.c
+	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
+
+$(NOBJS): %.o: ../../dev/net/%.c
 	$(CROSS_CC) $(CROSS_CCOPTS) -c $<
 
 $(DISCARD_COBJS): %.o: %.c
@@ -52,6 +57,7 @@ image:
 	../../mm/bankfixed.o ../../devsys.o \
 	../../dev/tinydisk.o ../../dev/tinydisk_discard.o \
 	../../dev/tinysd.o ../../dev/tinysd_discard.o \
+	../../dev/net/net_w5x00.o wiznet.o \
 	/opt/fcc/lib/z80/libz80.a -m fuzix.tmpmap
 	perl -lpe '$$_=hex' fuzix.tmpmap | paste -d" " - fuzix.tmpmap | sort -n | cut -d" " -f 2- >../../fuzix.map
 	../../tools/pack85 <../../fuzix.map fuzix.bin ../../fuzix.bin

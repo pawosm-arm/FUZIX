@@ -61,4 +61,8 @@ void device_init(void)
 	td_register(0, sd_xfer, td_ioctl_none, 1);
 	/* hda1 is the MOS FAT partition */
 	set_boot_line("hda2");
+#ifdef CONFIG_NET
+	/* sd_init leaves the card selected until its first transfer */
+	sock_init();
+#endif
 }

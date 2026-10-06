@@ -74,6 +74,20 @@ init_hardware:
 	and	0xFD
 	out0	(PB_ALT2), a
 
+	; PC2 is the Wiznet chip select on UEXT
+	in0	a, (PC_DR)
+	or	0x04
+	out0	(PC_DR), a
+	in0	a, (PC_ALT1)
+	and	0xFB
+	out0	(PC_ALT1), a
+	in0	a, (PC_ALT2)
+	and	0xFB
+	out0	(PC_ALT2), a
+	in0	a, (PC_DDR)
+	and	0xFB
+	out0	(PC_DDR), a
+
 	; UART0 to the VDP. Keep the MOS speed but MOS 3 uses RTS/CTS on
 	; PD2/PD3 and the VDP stops sending if RTS drops
 	in0	a, (PD_DDR)

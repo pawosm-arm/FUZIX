@@ -32,6 +32,10 @@ WDT_CTL			.equ	0x93
 PB_DR			.equ	0x9A
 PB_ALT1			.equ	0x9C
 PB_ALT2			.equ	0x9D
+PC_DR			.equ	0x9E
+PC_DDR			.equ	0x9F
+PC_ALT1			.equ	0xA0
+PC_ALT2			.equ	0xA1
 PD_DDR			.equ	0xA3
 PD_ALT1			.equ	0xA4
 PD_ALT2			.equ	0xA5
