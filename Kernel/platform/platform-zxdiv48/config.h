@@ -55,7 +55,7 @@
 #define TICKSPERSEC 50   /* Ticks per second */
 #define PROGBASE    0x8000U  /* also data base */
 #define PROGLOAD    0x8000U  /* also data base */
-#define PROGTOP	    0x10000UL  /* Top of program */
+#define PROGTOP	    0xFFFFUL  /* Top of program */
 #define PROC_SIZE   32	  /* Memory needed per process */
 #define MAXTICKS    10	  /* As our task switch is so expensive */
 
