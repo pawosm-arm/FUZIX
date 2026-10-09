@@ -21,11 +21,13 @@ setup:
 	ld	d,(hl)
 	ex	de,hl
 	ld	bc,0x3F
+	ld	a,5
+	out	(0xFE),a
 	ld	a,(_td_raw)
 	or	a
 	ret	z
 	dec	a
-	jp	z, map_kernel
+	jp	z, map_proc_always
 	ld	a,(_td_page)
 	jp	map_for_swap
 
@@ -36,7 +38,7 @@ _sd_spi_rx_sector:
 	ld	a,2
 	out	(0xFE),a
 	inir
-	; Required accordign to CP/M driver
+	; Required according to CP/M driver
 	in	a,(0x3F)
 	nop
 	nop
@@ -53,7 +55,6 @@ out:
 _sd_spi_tx_sector:
 	push	bc
 	call	setup
-	push	af
 	otir
 	ld	a,2
 	out	(0xFE),a
