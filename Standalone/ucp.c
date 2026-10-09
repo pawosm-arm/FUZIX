@@ -1321,7 +1321,7 @@ static void fuzix_sync(void)
 
 	for (j = 0; j < NDEVS; ++j) {
 		if (fs_tab[j].s_mounted && fs_tab[j].s_fmod) {
-			fs_tab[j].s_fmod = 0;
+			fs_tab[j].s_fmod = FMOD_CLEAN;
 			buf = bread(j, 1, 1);
 			memcpy(buf, (char *) &fs_tab[j],
 			       sizeof(struct filesys));
