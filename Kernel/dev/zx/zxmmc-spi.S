@@ -25,13 +25,15 @@ setup:
 	or	a
 	ret	z
 	dec	a
-	jp	z, map_kernel
+	jp	z, map_proc_always
 	ld	a,(_td_page)
 	jp	map_for_swap
 
 _sd_spi_rx_sector:
 	push	bc
 	call	setup
+	ld	a,5
+	out	(0xFE),a
 	inir
 	ld	a,2
 	out	(0xFE),a
@@ -53,7 +55,6 @@ out:
 _sd_spi_tx_sector:
 	push	bc
 	call	setup
-	push	af
 	otir
 	ld	a,2
 	out	(0xFE),a
