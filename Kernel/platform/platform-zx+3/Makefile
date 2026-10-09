@@ -6,7 +6,7 @@ DZSRCS = ../../dev/zx/zxkeyboard.c ../../dev/zx/devinput.c ../../dev/zx/zxmmc.c
 DDZSRCS =
 ASRCS = crt0.S plus3.S zxvideo.S fdc765.S
 ASRCS += tricks.S commonmem.S
-AZSRCS = ../../dev/zx/zxmmc-spi.S ../../dev/zx/divide.S
+AZSRCS = ../../dev/zx/zxmmc-spi.S ../../dev/zx/divide.S ../../dev/zxkeyscan.S
 NSRCS = ../../dev/net/net_w5x00.c
 
 COBJS = $(CSRCS:.c=.o)
