@@ -128,7 +128,7 @@ int main(int argc, char *argval[])
 				nextline++;
 			}
 		}
-
+		printf("%s\n", line);
 		cmd[0] = '\0';
 		*arg1 = '\0';
 		arg2[0] = '\0';
@@ -2534,19 +2534,25 @@ static bufptr freebuf(void)
 {
 	register bufptr bp;
 	register bufptr oldest;
-	register int oldtime;
+	register uint16_t oldtime, age;;
 
 	/* Try to find a non-busy buffer and write out the data if it is dirty */
 	oldest = NULL;
 	oldtime = 0;
 	for (bp = bufpool; bp < bufpool + NBUFS; ++bp) {
-		if (bufclock - bp->bf_time >= oldtime && !bp->bf_busy) {
+		age = bufclock - bp->bf_time;
+		if (age >= oldtime && !bp->bf_busy) {
 			oldest = bp;
-			oldtime = bufclock - bp->bf_time;
+			oldtime = age;
 		}
 	}
-	ifnot(oldest)
+	ifnot(oldest) {
+	    for (bp = bufpool; bp < bufpool + NBUFS; bp++) {
+	    	printf("%u %u\n",
+	    		bp->bf_time, bp->bf_busy);
+	    }
 	    panic("no free buffers");
+	}
 
 	if (oldest->bf_dirty) {
 		if (bdwrite(oldest->bf_blk, oldest->bf_data) == -1)
