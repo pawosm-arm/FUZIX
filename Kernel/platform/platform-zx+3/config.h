@@ -76,18 +76,18 @@
 #define swap_map(x)		((uint8_t *)(x))
 
 #define CONFIG_TD
-#define CONFIG_TD_NUM	2
+#define CONFIG_TD_NUM	1
 /* IDE/CF support */
-#define CONFIG_TD_IDE
-#define CONFIG_TINYIDE_SDCCPIO
-#define CONFIG_TINYIDE_8BIT
-#define IDE_IS_8BIT(x)		1
+#undef CONFIG_TD_IDE
+#undef CONFIG_TINYIDE_SDCCPIO
+#undef CONFIG_TINYIDE_8BIT
+#undef IDE_IS_8BIT
 /* SD support */
-#define TD_SD_NUM 2
+#define TD_SD_NUM 1
 #define CONFIG_TD_SD
 /* Emulator for this platform needs bug workarounds */
 #define CONFIG_TD_SD_EMUBUG
-#define SD_SPI_CALLTYPE	__z88dk_fastcall
+#define SD_SPI_CALLTYPE
 
 #define BOOTDEVICENAMES "hd#,fd#"
 
